@@ -85,26 +85,63 @@ class GoogleFormsHandler:
         try:
             responses = form_data.get("responses", {})
             
+            # Parse first and last name
+            first_name = responses.get("First and Last Name", "").split()[0] if responses.get("First and Last Name", "") else ""
+            last_name = " ".join(responses.get("First and Last Name", "").split()[1:]) if len(responses.get("First and Last Name", "").split()) > 1 else ""
+            
+            # Parse availability into formatted string
+            date = responses.get("Date:", "")
+            start_time = responses.get("I am available from...", "")
+            end_time = responses.get("Until...", "")
+            availability_formatted = f"{date}, {start_time}-{end_time}" if all([date, start_time, end_time]) else ""
+            
             # Map expected form fields to internal structure
-            # These field names should match the actual Google Form questions
             tutoring_request = {
-                "tutee_name": responses.get("Full Name", ""),
-                "tutee_email": responses.get("Email Address", ""),
+                "school": responses.get("School", "White Oaks S.S."),
+                "tutee_first_name": first_name,
+                "tutee_last_name": last_name,
+                "tutee_pronouns": responses.get("Pronouns", ""),
+                "tutee_email": responses.get("Email", ""),
+                "grade_level": responses.get("Grade", ""),
                 "subject": responses.get("Subject", ""),
-                "grade_level": responses.get("Grade Level", ""),
-                "school": responses.get("School", ""),
-                "availability": responses.get("Availability", ""),
-                "location_preference": responses.get("Location Preference", ""),
-                "additional_notes": responses.get("Additional Notes", ""),
+                "specific_topic": responses.get("What specific unit/topic/concept do you need help with?", ""),
+                "course_level": responses.get("Level of Course/Program", ""),
+                "urgency_level": int(responses.get("How Urgent?", 5)),  # Default to 5 if not provided
+                "session_location": responses.get("Where do you want your session?", ""),
+                "availability_date": date,
+                "availability_start_time": start_time,
+                "availability_end_time": end_time,
+                "availability_formatted": availability_formatted,
                 "timestamp": form_data.get("timestamp")
             }
             
             # Validate required fields
-            required_fields = ["tutee_name", "tutee_email", "subject"]
+            required_fields = ["tutee_first_name", "tutee_email", "subject", "grade_level", "specific_topic", "course_level", "session_location"]
             for field in required_fields:
                 if not tutoring_request.get(field):
                     logger.warning(f"Missing required field: {field}")
                     return None
+            
+            # Validate grade level
+            if tutoring_request["grade_level"] not in ["9", "10", "11", "12"]:
+                logger.warning(f"Invalid grade level: {tutoring_request['grade_level']}")
+                return None
+            
+            # Validate course level
+            valid_course_levels = ["ESL", "Academic", "ALP", "IB", "College", "University"]
+            if tutoring_request["course_level"] not in valid_course_levels:
+                logger.warning(f"Invalid course level: {tutoring_request['course_level']}")
+                return None
+            
+            # Validate session location
+            if tutoring_request["session_location"] not in ["In person", "Online"]:
+                logger.warning(f"Invalid session location: {tutoring_request['session_location']}")
+                return None
+            
+            # Validate urgency level
+            if not (1 <= tutoring_request["urgency_level"] <= 10):
+                logger.warning(f"Invalid urgency level: {tutoring_request['urgency_level']}")
+                tutoring_request["urgency_level"] = 5  # Default to 5
                     
             return tutoring_request
         except Exception as e:

@@ -43,14 +43,21 @@ def google_forms_webhook():
     try:
         db = get_db_manager()
         opportunity = db.insert_record("tutoring_opportunities", {
-            "tutee_name": tutoring_request["tutee_name"],
+            "school": tutoring_request["school"],
+            "tutee_first_name": tutoring_request["tutee_first_name"],
+            "tutee_last_name": tutoring_request["tutee_last_name"],
+            "tutee_pronouns": tutoring_request["tutee_pronouns"],
             "tutee_email": tutoring_request["tutee_email"],
+            "grade_level": tutoring_request["grade_level"],
             "subject": tutoring_request["subject"],
-            "grade_level": tutoring_request.get("grade_level", ""),
-            "school": tutoring_request.get("school", ""),
-            "availability": tutoring_request.get("availability", ""),
-            "location_preference": tutoring_request.get("location_preference", ""),
-            "additional_notes": tutoring_request.get("additional_notes", ""),
+            "specific_topic": tutoring_request["specific_topic"],
+            "course_level": tutoring_request["course_level"],
+            "urgency_level": tutoring_request["urgency_level"],
+            "session_location": tutoring_request["session_location"],
+            "availability_date": tutoring_request["availability_date"],
+            "availability_start_time": tutoring_request["availability_start_time"],
+            "availability_end_time": tutoring_request["availability_end_time"],
+            "availability_formatted": tutoring_request["availability_formatted"],
             "status": "open",
             "priority": "normal"
         })

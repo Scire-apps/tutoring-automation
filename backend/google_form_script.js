@@ -18,7 +18,8 @@
  */
 
 // Configuration - PRODUCTION READY
-const WEBHOOK_URL = "https://tutoring-automation-sdt9.onrender.com/api/webhook/google-forms";
+const WEBHOOK_URL =
+  "https://tutoring-automation-sdt9.onrender.com/api/webhook/google-forms";
 const WEBHOOK_SECRET = "tutoring_webhook_secret_2024";
 // Must match GOOGLE_FORMS_WEBHOOK_SECRET in backend .env
 
@@ -31,8 +32,26 @@ function onFormSubmit(e) {
     const formResponse = e.response;
     const itemResponses = formResponse.getItemResponses();
     const timestamp = formResponse.getTimestamp();
-    const form = formResponse.getEditResponseUrl().split("/")[5]; // Extract form ID
-    const formTitle = FormApp.openById(form).getTitle();
+
+    // Get form information using a more compatible approach
+    let formId = "unknown-form-id";
+    let formTitle = "Tutoring Request Form";
+
+    try {
+      // Try to get form info from the response
+      const form = formResponse.getForm();
+      formId = form.getId();
+      formTitle = form.getTitle();
+    } catch (formError) {
+      // Fallback: try to extract from source info if available
+      Logger.log(
+        "Could not get form directly, using fallback: " + formError.toString()
+      );
+      if (e.source) {
+        formId = e.source.getId();
+        formTitle = e.source.getTitle();
+      }
+    }
 
     // Format data
     const responses = [];
@@ -49,7 +68,7 @@ function onFormSubmit(e) {
 
     // Prepare payload
     const payload = {
-      formId: form,
+      formId: formId,
       formTitle: formTitle,
       timestamp: timestamp.toISOString(),
       responses: responses,
@@ -78,46 +97,4 @@ function onFormSubmit(e) {
     Logger.log("Error: " + error.toString());
     return false;
   }
-}
-
-/**
- * Test function to verify the script works
- */
-function testWebhook() {
-  // Create a mock form response
-  const mockPayload = {
-    formId: "test-form-id",
-    formTitle: "Tutoring Request Form",
-    timestamp: new Date().toISOString(),
-    responses: [
-      { questionTitle: "Full Name", answer: "John Doe" },
-      { questionTitle: "Email Address", answer: "john.doe@example.com" },
-      { questionTitle: "Subject", answer: "Mathematics" },
-      { questionTitle: "Grade Level", answer: "11th Grade" },
-      { questionTitle: "School", answer: "Example High School" },
-      { questionTitle: "Availability", answer: "Weekdays after 4pm" },
-      { questionTitle: "Location Preference", answer: "Online" },
-      { questionTitle: "Additional Notes", answer: "Need help with calculus" },
-    ],
-  };
-
-  // Send to webhook
-  const options = {
-    method: "post",
-    contentType: "application/json",
-    payload: JSON.stringify(mockPayload),
-    headers: {
-      "X-Webhook-Secret": WEBHOOK_SECRET,
-    },
-    muteHttpExceptions: true,
-  };
-
-  // Send the HTTP request
-  const response = UrlFetchApp.fetch(WEBHOOK_URL, options);
-
-  // Log the result
-  Logger.log("Webhook response: " + response.getContentText());
-  Logger.log("Status code: " + response.getResponseCode());
-
-  return response.getResponseCode() === 201; // 201 Created
 }

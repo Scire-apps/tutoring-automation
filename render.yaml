@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: tutoring-automation-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd backend && gunicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SUPABASE_URL
+        value: https://gbhblshntiwdupjbsmqq.supabase.co
+      - key: SUPABASE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdiaGJsc2hudGl3ZHVwamJzbXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2ODYzMjQsImV4cCI6MjA2ODI2MjMyNH0.s0CscWpv1r1JssRomLm0kQFOJ-Wg4oM1XlW9Kl3jtCg
+      - key: GOOGLE_FORMS_WEBHOOK_SECRET
+        value: tutoring_webhook_secret_2024
+      - key: FLASK_ENV
+        value: production

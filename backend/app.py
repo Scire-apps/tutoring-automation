@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from routes.api import api_bp
 from routes.admin_invitations import admin_invitations_bp
+from routes.tutor_management import tutor_management_bp
 
 # Load environment variables
 load_dotenv()
@@ -16,6 +17,7 @@ def create_app():
     # Register blueprints
     app.register_blueprint(api_bp)
     app.register_blueprint(admin_invitations_bp)
+    app.register_blueprint(tutor_management_bp)
     
     @app.route('/')
     def hello():

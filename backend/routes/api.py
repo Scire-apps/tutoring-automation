@@ -132,13 +132,8 @@ def create_admin_invitation():
         if not all(key in data for key in ['email', 'role']):
             return jsonify({"error": "Email and role are required"}), 400
         
-        # Create invitation
-        invitation = AdminInvitation.create_invitation(
-            email=data['email'],
-            role=data['role'],
-            invited_by=data.get('invited_by'),  # This should come from auth
-            school_id=data.get('school_id')
-        )
+        # This endpoint is handled by admin_invitations.py, not here
+        return jsonify({"error": "Use /api/admin/invitations endpoint"}), 400
         
         # Send invitation email
         email_service = get_email_service()

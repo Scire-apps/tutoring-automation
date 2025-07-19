@@ -34,8 +34,14 @@ def create_invitation():
         
         print(f"Parsed: email={email}, role={role}, school_id={school_id}")
         
-        # Get the authenticated user's ID from the request context
-        invited_by_id = request.user_id
+        # Get the authenticated user's admin ID from the database
+        supabase = get_supabase_client()
+        admin_result = supabase.table('admins').select('id').eq('auth_id', request.user_id).single().execute()
+        
+        if not admin_result.data:
+            return jsonify({'error': 'Admin record not found'}), 403
+            
+        invited_by_id = admin_result.data['id']
         
         # Validate role
         if role not in ['admin', 'superadmin']:

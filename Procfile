@@ -1,1 +1,1 @@
-web: cd backend && gunicorn app:app --host 0.0.0.0 --port $PORT
+web: cd backend && python app.py

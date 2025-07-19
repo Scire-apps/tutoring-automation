@@ -33,10 +33,15 @@ def google_forms_webhook():
         logger.error("Failed to parse form data")
         return jsonify({"error": "Invalid form data"}), 400
     
+    # Log the actual form data for debugging
+    logger.info(f"Received form data: {form_data}")
+    logger.info(f"Form responses: {form_data.get('responses', {})}")
+    
     # Extract tutoring request
     tutoring_request = GoogleFormsHandler.extract_tutoring_request(form_data)
     if not tutoring_request:
         logger.error("Failed to extract tutoring request")
+        logger.error(f"Available form fields: {list(form_data.get('responses', {}).keys())}")
         return jsonify({"error": "Invalid tutoring request"}), 400
     
     # Store tutoring opportunity in database

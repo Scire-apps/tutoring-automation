@@ -6,8 +6,13 @@ class AdminInvitation(BaseModel):
     def __init__(self):
         super().__init__('admin_invitations')
     
-    def create_invitation(self, email, role, invited_by_id, school_id=None, expires_in_days=7):
+    def create_invitation(self, email, role, invited_by_id=None, invited_by=None, school_id=None, expires_in_days=7):
         """Create a new admin invitation"""
+        # Handle both parameter names for backward compatibility
+        inviter_id = invited_by_id or invited_by
+        if not inviter_id:
+            raise ValueError("Either invited_by_id or invited_by must be provided")
+            
         invitation_token = secrets.token_urlsafe(32)
         expires_at = datetime.utcnow() + timedelta(days=expires_in_days)
         
@@ -15,7 +20,7 @@ class AdminInvitation(BaseModel):
             'email': email,
             'role': role,
             'school_id': school_id,
-            'invited_by': invited_by_id,
+            'invited_by': inviter_id,
             'invitation_token': invitation_token,
             'expires_at': expires_at.isoformat(),
             'status': 'pending'

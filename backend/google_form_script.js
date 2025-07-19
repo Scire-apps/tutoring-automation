@@ -17,8 +17,8 @@
  * 6. Set up a trigger to run this function on form submit
  */
 
-// Configuration - UPDATE WEBHOOK_URL with your deployed backend URL
-const WEBHOOK_URL = "http://localhost:8002/api/webhook/google-forms"; // UPDATE THIS FOR PRODUCTION
+// Configuration - PRODUCTION READY
+const WEBHOOK_URL = "https://tutoring-automation-sdt9.onrender.com/api/webhook/google-forms";
 const WEBHOOK_SECRET = "tutoring_webhook_secret_2024";
 // Must match GOOGLE_FORMS_WEBHOOK_SECRET in backend .env
 

@@ -107,10 +107,10 @@ class GoogleFormsHandler:
                 "specific_topic": responses.get("What specific unit/topic/concept do you need help with?", ""),
                 "course_level": responses.get("Level of Course/Program", ""),
                 "urgency_level": int(responses.get("How Urgent?", 5)),  # Default to 5 if not provided
-                "session_location": responses.get("Where do you want your session? ", ""),
-                "availability_date": responses.get("Date", ""),
-                "availability_start_time": responses.get("Available from", ""),
-                "availability_end_time": responses.get("Until", ""),
+                "session_location": responses.get("Where do you want your session?", ""),
+                "availability_date": responses.get("Date:", ""),
+                "availability_start_time": responses.get("I am available from...", ""),
+                "availability_end_time": responses.get("Until...", ""),
                 "availability_formatted": availability_formatted,
                 "timestamp": form_data.get("timestamp")
             }

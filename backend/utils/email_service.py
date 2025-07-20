@@ -22,10 +22,12 @@ class EmailService:
             service_type = os.environ.get("EMAIL_SERVICE", "smtp").lower()
             
             if service_type == "brevo":
-                cls._instance = BrevoEmailService()
+                cls._instance = object.__new__(BrevoEmailService)
+                cls._instance.__init__()
             else:
                 # Default to SMTP
-                cls._instance = SMTPEmailService()
+                cls._instance = object.__new__(SMTPEmailService)
+                cls._instance.__init__()
                 
         return cls._instance
     

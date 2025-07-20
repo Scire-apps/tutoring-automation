@@ -77,11 +77,23 @@ def send_session_reminders():
                 if tutor_success and tutee_success:
                     # Log the communication
                     try:
+                        # Log communication for tutor
                         db.insert_record("communications", {
                             "job_id": session['id'],
-                            "type": "reminder",
-                            "recipients": [tutor.get('email', ''), opportunity.get('tutee_email', '')],
-                            "content": f"Session reminder for {session_details['subject']} on {session_details['date']}"
+                            "type": "email",
+                            "recipient": tutor.get('email', ''),
+                            "subject": f"Session reminder for {session_details['subject']}",
+                            "content": f"Session reminder for {session_details['subject']} on {session_details['date']}",
+                            "status": "sent"
+                        })
+                        # Log communication for tutee
+                        db.insert_record("communications", {
+                            "job_id": session['id'],
+                            "type": "email",
+                            "recipient": opportunity.get('tutee_email', ''),
+                            "subject": f"Session reminder for {session_details['subject']}",
+                            "content": f"Session reminder for {session_details['subject']} on {session_details['date']}",
+                            "status": "sent"
                         })
                     except Exception as log_error:
                         logger.error(f"Failed to log reminder communication: {str(log_error)}")

@@ -88,11 +88,23 @@ def send_session_confirmation():
             db = get_db_manager()
             job_id = data.get('job_id')
             if job_id:
+                # Log communication for tutor
                 db.insert_record("communications", {
                     "job_id": job_id,
-                    "type": "confirmation",
-                    "recipients": [tutor_email, tutee_email],
-                    "content": f"Session confirmation for {session_details['subject']} on {session_details['date']} at {session_details['time']}"
+                    "type": "email",
+                    "recipient": tutor_email,
+                    "subject": f"Session confirmation for {session_details['subject']}",
+                    "content": f"Session confirmation for {session_details['subject']} on {session_details['date']} at {session_details['time']}",
+                    "status": "sent"
+                })
+                # Log communication for tutee
+                db.insert_record("communications", {
+                    "job_id": job_id,
+                    "type": "email",
+                    "recipient": tutee_email,
+                    "subject": f"Session confirmation for {session_details['subject']}",
+                    "content": f"Session confirmation for {session_details['subject']} on {session_details['date']} at {session_details['time']}",
+                    "status": "sent"
                 })
         except Exception as e:
             logger.error(f"Failed to log communication: {str(e)}")
@@ -180,9 +192,11 @@ def send_job_assignment_notification():
             if job_id:
                 db.insert_record("communications", {
                     "job_id": job_id,
-                    "type": "assignment",
-                    "recipients": [tutor_email],
-                    "content": f"Job assignment notification for {job_details['subject']}"
+                    "type": "email",
+                    "recipient": tutor_email,
+                    "subject": subject,
+                    "content": f"Job assignment notification for {job_details['subject']}",
+                    "status": "sent"
                 })
         except Exception as e:
             logger.error(f"Failed to log communication: {str(e)}")
@@ -269,11 +283,23 @@ def send_cancellation_notification():
             db = get_db_manager()
             job_id = data.get('job_id')
             if job_id:
+                # Log communication for tutor
                 db.insert_record("communications", {
                     "job_id": job_id,
-                    "type": "cancellation",
-                    "recipients": [tutor_email, tutee_email],
-                    "content": f"Cancellation notification for {cancellation_details['subject']} - {cancellation_details['reason']}"
+                    "type": "email",
+                    "recipient": tutor_email,
+                    "subject": subject,
+                    "content": f"Cancellation notification for {cancellation_details['subject']} - {cancellation_details['reason']}",
+                    "status": "sent"
+                })
+                # Log communication for tutee
+                db.insert_record("communications", {
+                    "job_id": job_id,
+                    "type": "email",
+                    "recipient": tutee_email,
+                    "subject": subject,
+                    "content": f"Cancellation notification for {cancellation_details['subject']} - {cancellation_details['reason']}",
+                    "status": "sent"
                 })
         except Exception as e:
             logger.error(f"Failed to log communication: {str(e)}")
@@ -373,11 +399,23 @@ def send_session_reminder():
             db = get_db_manager()
             job_id = data.get('job_id')
             if job_id:
+                # Log communication for tutor
                 db.insert_record("communications", {
                     "job_id": job_id,
-                    "type": "reminder",
-                    "recipients": [tutor_email, tutee_email],
-                    "content": f"Session reminder for {session_details['subject']} on {session_details['date']}"
+                    "type": "email",
+                    "recipient": tutor_email,
+                    "subject": subject,
+                    "content": f"Session reminder for {session_details['subject']} on {session_details['date']}",
+                    "status": "sent"
+                })
+                # Log communication for tutee
+                db.insert_record("communications", {
+                    "job_id": job_id,
+                    "type": "email",
+                    "recipient": tutee_email,
+                    "subject": subject,
+                    "content": f"Session reminder for {session_details['subject']} on {session_details['date']}",
+                    "status": "sent"
                 })
         except Exception as e:
             logger.error(f"Failed to log communication: {str(e)}")

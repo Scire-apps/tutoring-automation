@@ -1,0 +1,251 @@
+/**
+ * API service for communicating with the backend
+ */
+
+import { supabase } from './supabase';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+/**
+ * Base API request function with error handling and authentication
+ */
+async function apiRequest<T>(
+  endpoint: string, 
+  options: RequestInit = {}
+): Promise<T> {
+  const url = `${API_URL}${endpoint}`;
+  
+  // Get current session for authentication
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(session?.access_token && {
+      'Authorization': `Bearer ${session.access_token}`
+    }),
+    ...options.headers,
+  };
+  
+  const config = {
+    ...options,
+    headers,
+  };
+  
+  try {
+    const response = await fetch(url, config);
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data as T;
+  } catch (error) {
+    console.error('API request failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Check the status of backend services
+ */
+export async function checkServicesStatus() {
+  return apiRequest<{
+    database: { status: string; message?: string };
+    email: { status: string };
+    storage: { status: string };
+    forms: { status: string };
+  }>('/api/services/status');
+}
+
+/**
+ * Get a pre-signed URL for file upload
+ */
+export async function getUploadUrl() {
+  return apiRequest<{
+    upload_url: string;
+    fields: Record<string, string>;
+    expires_in: number;
+  }>('/api/storage/upload-url', {
+    method: 'POST',
+  });
+}
+
+/**
+ * Upload a file using the pre-signed URL
+ */
+export async function uploadFile(file: File, uploadUrl: string, fields: Record<string, string>) {
+  const formData = new FormData();
+  
+  // Add the fields to the form data
+  Object.entries(fields).forEach(([key, value]) => {
+    formData.append(key, value);
+  });
+  
+  // Add the file as the last field
+  formData.append('file', file);
+  
+  const response = await fetch(uploadUrl, {
+    method: 'POST',
+    body: formData,
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+  }
+  
+  return true;
+}
+
+/**
+ * Send a test email
+ */
+export async function sendTestEmail(recipient: string) {
+  return apiRequest<{ message: string }>('/api/email/test', {
+    method: 'POST',
+    body: JSON.stringify({ recipient }),
+  });
+}
+
+/**
+ * Send session confirmation emails
+ */
+export async function sendSessionConfirmation(
+  tutorEmail: string,
+  tuteeEmail: string,
+  sessionDetails: {
+    subject: string;
+    date: string;
+    time: string;
+    location: string;
+    tutor_name: string;
+    tutee_name: string;
+  },
+  jobId?: string
+) {
+  return apiRequest<{ message: string }>('/api/email/session-confirmation', {
+    method: 'POST',
+    body: JSON.stringify({
+      tutor_email: tutorEmail,
+      tutee_email: tuteeEmail,
+      session_details: sessionDetails,
+      job_id: jobId,
+    }),
+  });
+}
+
+/**
+ * Send job assignment notification to tutor
+ */
+export async function sendJobAssignmentNotification(
+  tutorEmail: string,
+  tutorName: string,
+  jobDetails: {
+    subject: string;
+    tutee_name: string;
+    grade_level: string;
+    location: string;
+  },
+  jobId?: string
+) {
+  return apiRequest<{ message: string }>('/api/email/job-assignment', {
+    method: 'POST',
+    body: JSON.stringify({
+      tutor_email: tutorEmail,
+      tutor_name: tutorName,
+      job_details: jobDetails,
+      job_id: jobId,
+    }),
+  });
+}
+
+/**
+ * Send cancellation notification emails
+ */
+export async function sendCancellationNotification(
+  tutorEmail: string,
+  tuteeEmail: string,
+  cancellationDetails: {
+    subject: string;
+    tutor_name: string;
+    tutee_name: string;
+    reason: string;
+  },
+  jobId?: string
+) {
+  return apiRequest<{ message: string }>('/api/email/cancellation', {
+    method: 'POST',
+    body: JSON.stringify({
+      tutor_email: tutorEmail,
+      tutee_email: tuteeEmail,
+      cancellation_details: cancellationDetails,
+      job_id: jobId,
+    }),
+  });
+}
+
+/**
+ * Send session reminder emails
+ */
+export async function sendSessionReminder(
+  tutorEmail: string,
+  tuteeEmail: string,
+  sessionDetails: {
+    subject: string;
+    date: string;
+    time: string;
+    location: string;
+    tutor_name: string;
+    tutee_name: string;
+  },
+  jobId?: string
+) {
+  return apiRequest<{ message: string }>('/api/email/reminder', {
+    method: 'POST',
+    body: JSON.stringify({
+      tutor_email: tutorEmail,
+      tutee_email: tuteeEmail,
+      session_details: sessionDetails,
+      job_id: jobId,
+    }),
+  });
+}
+
+/**
+ * Send subject approval status notification
+ */
+export async function sendApprovalStatusNotification(
+  tutorEmail: string,
+  tutorName: string,
+  approvalDetails: {
+    subject: string;
+    status: string;
+    admin_name: string;
+  }
+) {
+  return apiRequest<{ message: string }>('/api/email/approval-status', {
+    method: 'POST',
+    body: JSON.stringify({
+      tutor_email: tutorEmail,
+      tutor_name: tutorName,
+      approval_details: approvalDetails,
+    }),
+  });
+}
+
+/**
+ * API service object
+ */
+const apiService = {
+  checkServicesStatus,
+  getUploadUrl,
+  uploadFile,
+  sendTestEmail,
+  sendSessionConfirmation,
+  sendJobAssignmentNotification,
+  sendCancellationNotification,
+  sendSessionReminder,
+  sendApprovalStatusNotification,
+};
+
+export default apiService;

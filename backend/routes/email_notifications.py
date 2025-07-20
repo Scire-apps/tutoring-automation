@@ -485,9 +485,18 @@ def debug_email_config():
     """
     import os
     
+    # Show actual EMAIL_FROM value (partially masked for security)
+    email_from = os.environ.get('EMAIL_FROM', 'not_set')
+    if email_from != 'not_set' and '@' in email_from:
+        # Mask the email for security: show first 3 chars + domain
+        parts = email_from.split('@')
+        masked_email = f"{parts[0][:3]}***@{parts[1]}"
+    else:
+        masked_email = email_from
+    
     config_status = {
         'EMAIL_SERVICE': os.environ.get('EMAIL_SERVICE', 'not_set'),
-        'EMAIL_FROM': 'set' if os.environ.get('EMAIL_FROM') else 'not_set',
+        'EMAIL_FROM': masked_email,
         'BREVO_API_KEY': 'set' if os.environ.get('BREVO_API_KEY') else 'not_set',
         'EMAIL_FROM_NAME': os.environ.get('EMAIL_FROM_NAME', 'not_set'),
         'EMAIL_HOST': 'set' if os.environ.get('EMAIL_HOST') else 'not_set',

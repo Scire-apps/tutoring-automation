@@ -90,6 +90,74 @@ def update_subject_approvals(tutor_id):
                     'approved_at': 'now()' if action == 'approve' else None
                 }).execute()
         
+        # Send email notification for approval/rejection (not for removal)
+        if action in ['approve', 'reject']:
+            try:
+                # Get tutor details
+                tutor_result = supabase.table('tutors').select('first_name, last_name, email').eq('id', tutor_id).single().execute()
+                # Get subject details
+                subject_result = supabase.table('subjects').select('name').eq('id', subject_id).single().execute()
+                # Get admin details
+                admin_details = supabase.table('admins').select('first_name, last_name').eq('id', admin_id).single().execute()
+                
+                if tutor_result.data and subject_result.data and admin_details.data:
+                    from utils.email_service import get_email_service
+                    
+                    tutor_name = f"{tutor_result.data['first_name']} {tutor_result.data['last_name']}"
+                    admin_name = f"{admin_details.data['first_name']} {admin_details.data['last_name']}"
+                    subject_name = subject_result.data['name']
+                    
+                    # Create approval notification data
+                    approval_details = {
+                        'subject': subject_name,
+                        'status': 'approved' if action == 'approve' else 'rejected',
+                        'admin_name': admin_name
+                    }
+                    
+                    # Send email notification
+                    email_service = get_email_service()
+                    if action == 'approve':
+                        subject_line = f"Subject Approval: You're now approved for {subject_name}"
+                        html_body = f"""
+                        <html>
+                        <body>
+                            <h2>Subject Approval Notification</h2>
+                            <p>Hello {tutor_name},</p>
+                            <p>Great news! You have been approved to tutor <strong>{subject_name}</strong>.</p>
+                            <p>You can now apply for tutoring opportunities in this subject area.</p>
+                            <p>Approved by: {admin_name}</p>
+                            <p>Log into the tutoring platform to start browsing available opportunities!</p>
+                            <p>Thank you for volunteering!</p>
+                        </body>
+                        </html>
+                        """
+                    else:
+                        subject_line = f"Subject Approval Update: {subject_name}"
+                        html_body = f"""
+                        <html>
+                        <body>
+                            <h2>Subject Approval Update</h2>
+                            <p>Hello {tutor_name},</p>
+                            <p>We have reviewed your request to tutor <strong>{subject_name}</strong>.</p>
+                            <p>Status: <strong>Not Approved</strong></p>
+                            <p>Reviewed by: {admin_name}</p>
+                            <p>If you have questions about this decision, please contact your school administrator.</p>
+                            <p>Thank you for your interest in tutoring!</p>
+                        </body>
+                        </html>
+                        """
+                    
+                    email_service.send_email(
+                        tutor_result.data['email'],
+                        subject_line,
+                        html_body
+                    )
+                    print(f"Approval notification sent to {tutor_result.data['email']} for {subject_name}: {action}")
+                    
+            except Exception as e:
+                print(f"Failed to send approval notification email: {e}")
+                # Don't fail the entire operation if email fails
+        
         return jsonify({'message': f'Subject approval {action}d successfully'}), 200
         
     except Exception as e:

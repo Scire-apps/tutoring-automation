@@ -69,7 +69,8 @@
   - Migrate from simplified admin dashboard to full-featured version
   - _Requirements: 6.1, 6.2_
 
-- [-] 6.2. Implement invitation-based admin registration system
+- [x] 6.2. Implement invitation-based admin registration system
+
   - Create admin invitation table and API endpoints
   - Build invitation creation interface for superadmins
   - Implement secure invitation token generation and validation
@@ -77,9 +78,18 @@
   - Generate registration links with copy-to-clipboard functionality for manual sharing
   - _Requirements: 6.1, 6.2_
 
+- [x] 6.3. Implement school-level admin authentication and dashboard
+  - Fix middleware to properly redirect school-level admins (role: 'admin') to school admin dashboard
+  - Create school admin dashboard interface at `/admin/school/dashboard`
+  - Implement school-specific data filtering for school admins
+  - Add school admin navigation and layout components
+  - Ensure school admins can only see data from their assigned school
+  - Test authentication flow for both superadmins and school admins
+  - _Requirements: 6.1, 6.2_
+
 ## Google Forms Integration
 
-- [-] 7. Build Google Forms webhook handler
+- [x] 7. Build Google Forms webhook handler
 
   - Create Flask endpoint to receive Google Forms submissions
   - Implement form data parsing and validation
@@ -96,7 +106,7 @@
   - Test end-to-end form submission flow
   - _Requirements: 1.1, 1.2, 10.1_
 
-- [ ] 8. Implement tutoring opportunity creation
+- [x] 8. Implement tutoring opportunity creation
   - Process form data to create TutoringOpportunity records
   - Validate tutee email, subject, availability, and location
   - Set initial opportunity status and priority
@@ -105,7 +115,7 @@
 
 ## Tutor Dashboard and Opportunity Management
 
-- [ ] 9. Create tutor dashboard interface
+- [x] 9. Create tutor dashboard interface
 
   - Build Next.js dashboard page with active jobs display
   - Show volunteer hours balance and account status
@@ -113,7 +123,7 @@
   - Add responsive design for mobile access
   - _Requirements: 2.2, 8.4_
 
-- [ ] 10. Implement tutoring opportunities board
+- [x] 10. Implement tutoring opportunities board
 
   - Create opportunities listing page filtered by school
   - Display tutee availability, subject, and location for each job
@@ -121,7 +131,7 @@
   - Add search and filter functionality
   - _Requirements: 3.1, 3.2_
 
-- [ ] 11. Build job application system
+- [x] 11. Build job application system
   - Add apply button with pre-approval validation
   - Implement first-come-first-served assignment logic
   - Remove assigned opportunities from the board immediately
@@ -130,7 +140,7 @@
 
 ## Scheduling and Session Management
 
-- [ ] 12. Create scheduling interface
+- [x] 12. Create scheduling interface
 
   - Display tutee availability window for assigned jobs
   - Allow time selection within availability range
@@ -138,7 +148,7 @@
   - Add "suggest different time" option with tutee email display
   - _Requirements: 5.1, 5.2, 5.3_
 
-- [ ] 13. Implement job cancellation and re-queuing
+- [x] 13. Implement job cancellation and re-queuing
   - Add cancel button for active tutoring jobs
   - Return cancelled jobs to opportunities board with high priority
   - Pin high-priority jobs to top of opportunities list
@@ -164,15 +174,15 @@
 
 ## Email Notification System
 
-- [ ] 16. Build email notification service
+- [x] 16. Build email notification service
 
   - Create email templates for session confirmations
-  - Implement automatic email sending for scheduled sessions
+  - Implement automatic email sending for scheduled sessions using Brevo API
   - Include date, time, location, and contact information
   - Add email delivery logging and error handling
   - _Requirements: 7.1, 7.2, 7.3_
 
-- [ ] 17. Implement notification triggers
+- [x] 17. Implement notification triggers
   - Set up email triggers for job assignments
   - Add confirmation emails for both tutor and tutee
   - Implement cancellation and rescheduling notifications
@@ -181,7 +191,7 @@
 
 ## Session Recording and Volunteer Hours
 
-- [ ] 18. Create session recording upload system
+- [x] 18. Create session recording upload system
 
   - Build file upload interface for audio/video recordings
   - Implement secure file storage with access controls
@@ -189,10 +199,10 @@
   - Create progress indicators for large file uploads
   - _Requirements: 8.1_
 
-- [ ] 19. Implement volunteer hour calculation
+- [x] 19. Implement volunteer hour calculation
 
   - Extract duration from uploaded audio/video files
-  - Calculate volunteer hours based on recording length
+  - Calculate volunteer hours based on exact recording length (no rounding)
   - Add hours to tutor's account balance automatically
   - Create hour calculation audit trail
   - _Requirements: 8.2, 8.3_
@@ -245,3 +255,29 @@
   - Configure production deployment environment
   - Add monitoring and logging for production use
   - _Requirements: 10.3_
+
+## Security Hardening
+
+- [ ] 26. Fix Supabase session/cookie parsing issues and restore proper API architecture
+
+  - Debug and resolve the "Failed to parse cookie string" errors in Supabase client
+  - Fix session token retrieval for backend API authentication
+  - Restore tutor management to use proper backend API endpoints instead of direct Supabase queries
+  - Implement proper server-side validation and audit logging for tutor subject approvals
+  - Add rate limiting and business logic validation in backend API
+  - Test authentication flow works properly across all admin interfaces
+  - Ensure consistent session handling between dashboard and edit pages
+  - _Requirements: Proper API architecture and security_
+
+- [ ] 27. Implement comprehensive Row Level Security (RLS) policies
+  - **Re-enable RLS on all tables** (currently disabled for development)
+  - Create secure RLS policies for `admin_invitations` table with proper admin access controls
+  - Implement RLS policies for `admins` table allowing self-access and superadmin management
+  - Create RLS policies for `tutors` table with school-based access restrictions
+  - Implement RLS policies for `tutoring_opportunities`, `tutoring_jobs`, and `subject_approvals` tables
+  - Add service-level access policies for backend operations using service key
+  - Test all RLS policies with different user roles (tutor, admin, superadmin)
+  - Verify middleware authentication works correctly with RLS enabled
+  - Document security model and access patterns for each table
+  - Ensure no unauthorized data access is possible across all user types
+  - _Requirements: Security for all database operations_

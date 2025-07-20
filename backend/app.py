@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from routes.api import api_bp
 from routes.admin_invitations import admin_invitations_bp
 from routes.tutor_management import tutor_management_bp
+from routes.email_notifications import email_notifications_bp
 
 # Load environment variables
 load_dotenv()
@@ -12,12 +13,21 @@ load_dotenv()
 def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
-    CORS(app)
+    
+    # Configure CORS to allow requests from development frontend
+    CORS(app, origins=[
+        "http://localhost:3000",
+        "https://localhost:3000", 
+        "https://tutoringapp.ca",
+        "https://www.tutoringapp.ca",
+        "https://frontend.tutoringapp.ca"
+    ], supports_credentials=True, methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
     
     # Register blueprints
     app.register_blueprint(api_bp)
     app.register_blueprint(admin_invitations_bp)
     app.register_blueprint(tutor_management_bp)
+    app.register_blueprint(email_notifications_bp)
     
     @app.route('/')
     def hello():

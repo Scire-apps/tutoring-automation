@@ -4,25 +4,167 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List, Dict, Any, Optional
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 class EmailService:
-    """Email service for sending notifications"""
+    """Base email service for sending notifications"""
     
     _instance = None
     
     def __new__(cls):
         """Singleton pattern to ensure only one email service instance"""
         if cls._instance is None:
-            cls._instance = super(EmailService, cls).__new__(cls)
-            cls._instance._initialize()
+            # Determine which email service to use based on configuration
+            service_type = os.environ.get("EMAIL_SERVICE", "smtp").lower()
+            
+            if service_type == "brevo":
+                cls._instance = BrevoEmailService()
+            else:
+                # Default to SMTP
+                cls._instance = SMTPEmailService()
+                
         return cls._instance
     
-    def _initialize(self):
-        """Initialize email service configuration"""
-        self.service = os.environ.get("EMAIL_SERVICE", "smtp")
+    def send_email(self, to_email: str, subject: str, body_html: str, 
+                  body_text: Optional[str] = None, cc: Optional[List[str]] = None) -> bool:
+        """
+        Send an email - to be implemented by subclasses
+        
+        Args:
+            to_email: Recipient email address
+            subject: Email subject
+            body_html: HTML content of the email
+            body_text: Plain text content of the email (optional)
+            cc: List of CC recipients (optional)
+            
+        Returns:
+            bool: True if email was sent successfully, False otherwise
+        """
+        raise NotImplementedError("Subclasses must implement send_email method")
+    
+    def send_session_confirmation(self, tutor_email: str, tutee_email: str, 
+                                 session_details: Dict[str, Any]) -> bool:
+        """
+        Send session confirmation emails to tutor and tutee
+        
+        Args:
+            tutor_email: Tutor's email address
+            tutee_email: Tutee's email address
+            session_details: Dictionary with session details
+            
+        Returns:
+            bool: True if emails were sent successfully, False otherwise
+        """
+        # Extract session details
+        subject_name = session_details.get("subject", "")
+        date = session_details.get("date", "")
+        time = session_details.get("time", "")
+        location = session_details.get("location", "")
+        tutor_name = session_details.get("tutor_name", "")
+        tutee_name = session_details.get("tutee_name", "")
+        
+        # Create email subject
+        email_subject = f"Tutoring Session Confirmation: {subject_name} on {date}"
+        
+        # Create HTML content for tutor
+        tutor_html = f"""
+        <html>
+        <body>
+            <h2>Tutoring Session Confirmation</h2>
+            <p>Hello {tutor_name},</p>
+            <p>Your tutoring session has been confirmed with the following details:</p>
+            <ul>
+                <li><strong>Subject:</strong> {subject_name}</li>
+                <li><strong>Date:</strong> {date}</li>
+                <li><strong>Time:</strong> {time}</li>
+                <li><strong>Location:</strong> {location}</li>
+                <li><strong>Student:</strong> {tutee_name}</li>
+                <li><strong>Student Email:</strong> {tutee_email}</li>
+            </ul>
+            <p>Please remember to record your session and upload it to the platform to receive volunteer hours credit.</p>
+            <p>If you need to cancel or reschedule, please do so at least 24 hours in advance through the tutoring platform.</p>
+            <p>Thank you for volunteering!</p>
+        </body>
+        </html>
+        """
+        
+        # Create text content for tutor
+        tutor_text = f"""
+        Tutoring Session Confirmation
+        
+        Hello {tutor_name},
+        
+        Your tutoring session has been confirmed with the following details:
+        
+        Subject: {subject_name}
+        Date: {date}
+        Time: {time}
+        Location: {location}
+        Student: {tutee_name}
+        Student Email: {tutee_email}
+        
+        Please remember to record your session and upload it to the platform to receive volunteer hours credit.
+        
+        If you need to cancel or reschedule, please do so at least 24 hours in advance through the tutoring platform.
+        
+        Thank you for volunteering!
+        """
+        
+        # Create HTML content for tutee
+        tutee_html = f"""
+        <html>
+        <body>
+            <h2>Tutoring Session Confirmation</h2>
+            <p>Hello {tutee_name},</p>
+            <p>Your tutoring session has been confirmed with the following details:</p>
+            <ul>
+                <li><strong>Subject:</strong> {subject_name}</li>
+                <li><strong>Date:</strong> {date}</li>
+                <li><strong>Time:</strong> {time}</li>
+                <li><strong>Location:</strong> {location}</li>
+                <li><strong>Tutor:</strong> {tutor_name}</li>
+            </ul>
+            <p>If you need to cancel or reschedule, please contact your tutor directly at {tutor_email}.</p>
+            <p>We hope you have a productive tutoring session!</p>
+        </body>
+        </html>
+        """
+        
+        # Create text content for tutee
+        tutee_text = f"""
+        Tutoring Session Confirmation
+        
+        Hello {tutee_name},
+        
+        Your tutoring session has been confirmed with the following details:
+        
+        Subject: {subject_name}
+        Date: {date}
+        Time: {time}
+        Location: {location}
+        Tutor: {tutor_name}
+        
+        If you need to cancel or reschedule, please contact your tutor directly at {tutor_email}.
+        
+        We hope you have a productive tutoring session!
+        """
+        
+        # Send emails
+        tutor_success = self.send_email(tutor_email, email_subject, tutor_html, tutor_text)
+        tutee_success = self.send_email(tutee_email, email_subject, tutee_html, tutee_text)
+        
+        return tutor_success and tutee_success
+
+
+class SMTPEmailService(EmailService):
+    """Email service using SMTP for sending notifications"""
+    
+    def __init__(self):
+        """Initialize SMTP email service configuration"""
         self.host = os.environ.get("EMAIL_HOST")
         self.port = int(os.environ.get("EMAIL_PORT", "587"))
         self.username = os.environ.get("EMAIL_USERNAME")
@@ -31,12 +173,12 @@ class EmailService:
         
         # Validate configuration
         if not all([self.host, self.username, self.password, self.from_email]):
-            logger.warning("Email service not fully configured")
+            logger.warning("SMTP email service not fully configured")
     
     def send_email(self, to_email: str, subject: str, body_html: str, 
                   body_text: Optional[str] = None, cc: Optional[List[str]] = None) -> bool:
         """
-        Send an email
+        Send an email using SMTP
         
         Args:
             to_email: Recipient email address
@@ -49,7 +191,7 @@ class EmailService:
             bool: True if email was sent successfully, False otherwise
         """
         if not all([self.host, self.username, self.password, self.from_email]):
-            logger.error("Email service not configured")
+            logger.error("SMTP email service not configured")
             return False
             
         try:
@@ -80,10 +222,10 @@ class EmailService:
                     
                 server.sendmail(self.from_email, recipients, msg.as_string())
                 
-            logger.info(f"Email sent to {to_email}")
+            logger.info(f"Email sent to {to_email} via SMTP")
             return True
         except Exception as e:
-            logger.error(f"Error sending email: {str(e)}")
+            logger.error(f"Error sending email via SMTP: {str(e)}")
             return False
     
     def send_session_confirmation(self, tutor_email: str, tutee_email: str, 
@@ -158,6 +300,83 @@ class EmailService:
         
         return tutor_success and tutee_success
         
+class BrevoEmailService(EmailService):
+    """Email service using Brevo API for sending notifications"""
+    
+    def __init__(self):
+        """Initialize Brevo email service configuration"""
+        self.api_key = os.environ.get("BREVO_API_KEY")
+        self.from_email = os.environ.get("EMAIL_FROM")
+        self.from_name = os.environ.get("EMAIL_FROM_NAME", "Tutoring System")
+        
+        # Validate configuration
+        if not all([self.api_key, self.from_email]):
+            logger.warning("Brevo email service not fully configured")
+        
+        # Configure API client
+        self.configuration = sib_api_v3_sdk.Configuration()
+        self.configuration.api_key['api-key'] = self.api_key
+        
+    def send_email(self, to_email: str, subject: str, body_html: str, 
+                  body_text: Optional[str] = None, cc: Optional[List[str]] = None) -> bool:
+        """
+        Send an email using Brevo API
+        
+        Args:
+            to_email: Recipient email address
+            subject: Email subject
+            body_html: HTML content of the email
+            body_text: Plain text content of the email (optional)
+            cc: List of CC recipients (optional)
+            
+        Returns:
+            bool: True if email was sent successfully, False otherwise
+        """
+        if not self.api_key:
+            logger.error("Brevo API key not configured")
+            return False
+            
+        try:
+            # Create API instance
+            api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(self.configuration))
+            
+            # Create sender
+            sender = {"email": self.from_email, "name": self.from_name}
+            
+            # Create recipient
+            to = [{"email": to_email}]
+            
+            # Create CC recipients if provided
+            cc_list = None
+            if cc:
+                cc_list = [{"email": email} for email in cc]
+            
+            # Create email
+            send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+                to=to,
+                sender=sender,
+                subject=subject,
+                html_content=body_html,
+                cc=cc_list
+            )
+            
+            # Add text content if provided
+            if body_text:
+                send_smtp_email.text_content = body_text
+                
+            # Send email
+            api_response = api_instance.send_transac_email(send_smtp_email)
+            logger.info(f"Email sent to {to_email} with message ID: {api_response.message_id}")
+            return True
+            
+        except ApiException as e:
+            logger.error(f"Brevo API exception: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Error sending email via Brevo: {str(e)}")
+            return False
+
+
 def get_email_service() -> EmailService:
     """
     Get the email service instance

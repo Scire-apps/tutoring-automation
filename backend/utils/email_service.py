@@ -6,6 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from typing import List, Dict, Any, Optional
 import sib_api_v3_sdk
 from sib_api_v3_sdk.rest import ApiException
+from mailjet_rest import Client
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -23,6 +24,9 @@ class EmailService:
             
             if service_type == "brevo":
                 cls._instance = object.__new__(BrevoEmailService)
+                cls._instance.__init__()
+            elif service_type == "mailjet":
+                cls._instance = object.__new__(MailjetEmailService)
                 cls._instance.__init__()
             else:
                 # Default to SMTP
@@ -376,6 +380,89 @@ class BrevoEmailService(EmailService):
             return False
         except Exception as e:
             logger.error(f"Error sending email via Brevo: {str(e)}")
+            return False
+
+
+class MailjetEmailService(EmailService):
+    """Email service using Mailjet API for sending notifications"""
+    
+    def __init__(self):
+        """Initialize Mailjet email service configuration"""
+        self.api_key = os.environ.get("MAILJET_API_KEY")
+        self.api_secret = os.environ.get("MAILJET_API_SECRET")
+        self.from_email = os.environ.get("EMAIL_FROM")
+        self.from_name = os.environ.get("EMAIL_FROM_NAME", "Tutoring System")
+        
+        # Validate configuration
+        if not all([self.api_key, self.api_secret, self.from_email]):
+            logger.warning("Mailjet email service not fully configured")
+        
+        # Initialize Mailjet client
+        self.mailjet = Client(auth=(self.api_key, self.api_secret), version='v3.1')
+        
+    def send_email(self, to_email: str, subject: str, body_html: str, 
+                  body_text: Optional[str] = None, cc: Optional[List[str]] = None) -> bool:
+        """
+        Send an email using Mailjet API
+        
+        Args:
+            to_email: Recipient email address
+            subject: Email subject
+            body_html: HTML content of the email
+            body_text: Plain text content of the email (optional)
+            cc: List of CC recipients (optional)
+            
+        Returns:
+            bool: True if email was sent successfully, False otherwise
+        """
+        if not all([self.api_key, self.api_secret, self.from_email]):
+            logger.error("Mailjet API credentials not configured")
+            return False
+            
+        try:
+            # Prepare recipients
+            recipients = [{"Email": to_email}]
+            
+            # Add CC recipients if provided
+            if cc:
+                for cc_email in cc:
+                    recipients.append({"Email": cc_email})
+            
+            # Prepare email data
+            email_data = {
+                'Messages': [
+                    {
+                        "From": {
+                            "Email": self.from_email,
+                            "Name": self.from_name
+                        },
+                        "To": [{"Email": to_email}],
+                        "Subject": subject,
+                        "HTMLPart": body_html,
+                    }
+                ]
+            }
+            
+            # Add text content if provided
+            if body_text:
+                email_data['Messages'][0]["TextPart"] = body_text
+            
+            # Add CC if provided
+            if cc:
+                email_data['Messages'][0]["Cc"] = [{"Email": email} for email in cc]
+            
+            # Send email
+            result = self.mailjet.send.create(data=email_data)
+            
+            if result.status_code == 200:
+                logger.info(f"Email sent to {to_email} via Mailjet")
+                return True
+            else:
+                logger.error(f"Mailjet API error: {result.status_code} - {result.json()}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error sending email via Mailjet: {str(e)}")
             return False
 
 

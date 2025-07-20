@@ -477,3 +477,32 @@ def trigger_session_reminders():
     except Exception as e:
         logger.error(f"Error triggering session reminders: {str(e)}")
         return jsonify({'error': 'Failed to send session reminders'}), 500
+
+@email_notifications_bp.route('/api/email/debug', methods=['GET'])
+def debug_email_config():
+    """
+    Debug endpoint to check email service configuration
+    """
+    import os
+    
+    config_status = {
+        'EMAIL_SERVICE': os.environ.get('EMAIL_SERVICE', 'not_set'),
+        'EMAIL_FROM': 'set' if os.environ.get('EMAIL_FROM') else 'not_set',
+        'BREVO_API_KEY': 'set' if os.environ.get('BREVO_API_KEY') else 'not_set',
+        'EMAIL_FROM_NAME': os.environ.get('EMAIL_FROM_NAME', 'not_set'),
+        'EMAIL_HOST': 'set' if os.environ.get('EMAIL_HOST') else 'not_set',
+        'EMAIL_USERNAME': 'set' if os.environ.get('EMAIL_USERNAME') else 'not_set',
+        'EMAIL_PASSWORD': 'set' if os.environ.get('EMAIL_PASSWORD') else 'not_set',
+    }
+    
+    try:
+        email_service = get_email_service()
+        service_type = type(email_service).__name__
+        config_status['active_service'] = service_type
+    except Exception as e:
+        config_status['active_service'] = f'error: {str(e)}'
+    
+    return jsonify({
+        'status': 'Email configuration debug info',
+        'config': config_status
+    }), 200

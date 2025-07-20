@@ -14,12 +14,13 @@ def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
     
-    # Configure CORS to allow requests from development frontend
+    # Configure CORS to allow requests from frontend domains
     CORS(app, origins=[
         "http://localhost:3000",
         "https://localhost:3000", 
         "https://tutoringapp.ca",
         "https://www.tutoringapp.ca",
+        "https://app.tutoringapp.ca",
         "https://frontend.tutoringapp.ca"
     ], supports_credentials=True, methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
     

@@ -536,6 +536,8 @@ def debug_email_config():
         'EMAIL_SERVICE': os.environ.get('EMAIL_SERVICE', 'not_set'),
         'EMAIL_FROM': masked_email,
         'BREVO_API_KEY': 'set' if os.environ.get('BREVO_API_KEY') else 'not_set',
+        'MAILJET_API_KEY': 'set' if os.environ.get('MAILJET_API_KEY') else 'not_set',
+        'MAILJET_API_SECRET': 'set' if os.environ.get('MAILJET_API_SECRET') else 'not_set',
         'EMAIL_FROM_NAME': os.environ.get('EMAIL_FROM_NAME', 'not_set'),
         'EMAIL_HOST': 'set' if os.environ.get('EMAIL_HOST') else 'not_set',
         'EMAIL_USERNAME': 'set' if os.environ.get('EMAIL_USERNAME') else 'not_set',

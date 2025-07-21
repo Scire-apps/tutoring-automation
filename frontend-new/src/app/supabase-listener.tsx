@@ -46,12 +46,27 @@ export default function SupabaseListener() {
           return;
         }
         
-        // For other pages, just refresh to let the middleware handle protection
-        console.log("SupabaseListener: Not on auth page, refreshing to update auth state");
-        router.refresh();
-      } else {
-        console.log("SupabaseListener: Other event received, refreshing page");
-        router.refresh(); // keep the old behaviour for other events
+        // Use sessionStorage to track if this is a genuine sign-in or just a tab focus event
+        const lastSignInTime = sessionStorage.getItem('lastSignInTime');
+        const currentTime = Date.now();
+        
+        // If this is the first sign-in or it's been more than 5 minutes since last sign-in event
+        // (to handle actual re-authentication)
+        if (!lastSignInTime || (currentTime - parseInt(lastSignInTime)) > 300000) {
+          console.log("SupabaseListener: New sign-in detected, refreshing to update auth state");
+          sessionStorage.setItem('lastSignInTime', currentTime.toString());
+          router.refresh();
+        } else {
+          console.log("SupabaseListener: Ignoring duplicate SIGNED_IN event (likely tab focus)");
+          // Update the timestamp but don't refresh
+          sessionStorage.setItem('lastSignInTime', currentTime.toString());
+        }
+      } else if (event !== "INITIAL_SESSION") { // Don't refresh on initial session load
+        console.log("SupabaseListener: Other event received:", event);
+        // Only refresh for meaningful events, not just state checks
+        if (["PASSWORD_RECOVERY", "TOKEN_REFRESHED", "USER_UPDATED"].includes(event)) {
+          router.refresh();
+        }
       }
     });
 

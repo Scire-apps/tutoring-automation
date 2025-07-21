@@ -168,6 +168,7 @@ export default function OpportunitiesPage() {
     if (!tutorData) return;
 
     setApplyingTo(opportunityId);
+    setError(null); // Clear any previous errors
 
     try {
       // Create a tutoring job (assignment)
@@ -184,6 +185,7 @@ export default function OpportunitiesPage() {
       if (jobError) {
         console.error("Error creating tutoring job:", jobError);
         setError("Failed to apply for this opportunity. Please try again.");
+        setApplyingTo(null); // Clear loading state
         return;
       }
 
@@ -199,6 +201,7 @@ export default function OpportunitiesPage() {
         await supabase.from("tutoring_jobs").delete().eq("id", job.id);
 
         setError("Failed to update opportunity status");
+        setApplyingTo(null); // Clear loading state
         return;
       }
 

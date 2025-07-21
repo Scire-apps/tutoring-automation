@@ -4,18 +4,39 @@ import { Database } from '../types/database';
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const siteUrl = typeof window !== 'undefined' 
+  ? window.location.origin 
+  : process.env.NEXT_PUBLIC_SITE_URL || 'https://app.tutoringapp.ca';
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+    // Set the site URL for all auth redirects
+    site: siteUrl,
+    // Set redirect URLs for auth operations
+    redirectTo: `${siteUrl}/auth/callback`,
+  }
+});
 
 // Auth helper functions
 export const signUp = async (email: string, password: string) => {
+  const siteUrl = typeof window !== 'undefined' 
+    ? window.location.origin 
+    : process.env.NEXT_PUBLIC_SITE_URL || 'https://app.tutoringapp.ca';
+    
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      emailRedirectTo: `${siteUrl}/auth/callback`,
+    }
   });
   
   return { data, error };
@@ -36,8 +57,12 @@ export const signOut = async () => {
 };
 
 export const resetPassword = async (email: string, redirectTo?: string) => {
+  const siteUrl = typeof window !== 'undefined' 
+    ? window.location.origin 
+    : process.env.NEXT_PUBLIC_SITE_URL || 'https://app.tutoringapp.ca';
+    
   const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: redirectTo || `${window.location.origin}/auth/reset-password`,
+    redirectTo: redirectTo || `${siteUrl}/auth/reset-password`,
   });
   
   return { data, error };

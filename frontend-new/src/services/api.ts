@@ -4,7 +4,7 @@
 
 import { supabase } from './supabase';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://tutoring-automation-sdt9.onrender.com';
 
 /**
  * Base API request function with error handling and authentication

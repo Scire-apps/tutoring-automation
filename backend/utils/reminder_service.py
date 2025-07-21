@@ -4,7 +4,7 @@ This can be called by a scheduled job or cron task
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.db import get_db_manager
 from utils.email_service import get_email_service
 
@@ -56,9 +56,12 @@ def send_session_reminders():
                 opportunity = session.get('tutoring_opportunity', {})
                 scheduled_time = datetime.fromisoformat(session['scheduled_time'].replace('Z', '+00:00'))
                 
-                # Format date and time
-                formatted_date = scheduled_time.strftime('%B %d, %Y')
-                formatted_time = scheduled_time.strftime('%I:%M %p')
+                # Convert UTC time to local time for proper date formatting
+                local_time = scheduled_time.replace(tzinfo=timezone.utc).astimezone()
+                
+                # Format date and time using local time
+                formatted_date = local_time.strftime('%B %d, %Y')
+                formatted_time = local_time.strftime('%I:%M %p')
                 
                 # Prepare session details for email
                 session_details = {

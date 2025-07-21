@@ -32,6 +32,7 @@ export default function CompleteSessionPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -104,12 +105,7 @@ export default function CompleteSessionPage() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    setSelectedFile(file);
-    
+  const validateAndProcessFile = (file: File) => {
     // Check file type
     const fileType = file.type;
     if (!fileType.startsWith('audio/') && !fileType.startsWith('video/')) {
@@ -126,6 +122,8 @@ export default function CompleteSessionPage() {
       return;
     }
     
+    setSelectedFile(file);
+    
     // Create object URL for the file
     const objectUrl = URL.createObjectURL(file);
     
@@ -134,19 +132,64 @@ export default function CompleteSessionPage() {
       audioRef.current.src = objectUrl;
       audioRef.current.onloadedmetadata = () => {
         if (audioRef.current) {
-          setDuration(Math.round(audioRef.current.duration));
+          const fileDuration = Math.round(audioRef.current.duration);
+          // Check minimum duration (10 minutes = 600 seconds)
+          if (fileDuration < 600) {
+            setError('Audio files must be at least 10 minutes long');
+            setSelectedFile(null);
+            setDuration(null);
+            return;
+          }
+          setDuration(fileDuration);
+          setError(null);
         }
       };
     } else if (fileType.startsWith('video/') && videoRef.current) {
       videoRef.current.src = objectUrl;
       videoRef.current.onloadedmetadata = () => {
         if (videoRef.current) {
-          setDuration(Math.round(videoRef.current.duration));
+          const fileDuration = Math.round(videoRef.current.duration);
+          // Check minimum duration (10 minutes = 600 seconds)
+          if (fileDuration < 600) {
+            setError('Video files must be at least 10 minutes long');
+            setSelectedFile(null);
+            setDuration(null);
+            return;
+          }
+          setDuration(fileDuration);
+          setError(null);
         }
       };
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    validateAndProcessFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
     
-    setError(null);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      validateAndProcessFile(files[0]);
+    }
   };
 
   const handleUpload = async () => {
@@ -428,7 +471,16 @@ export default function CompleteSessionPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Recording File (Audio or Video)
                 </label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                <div 
+                  className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors duration-200 ${
+                    isDragOver 
+                      ? 'border-blue-400 bg-blue-50' 
+                      : 'border-gray-300 hover:border-blue-300 hover:bg-blue-50/30'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
                   <div className="space-y-1 text-center">
                     <svg
                       className="mx-auto h-12 w-12 text-gray-400"
@@ -463,21 +515,31 @@ export default function CompleteSessionPage() {
                       <p className="pl-1">or drag and drop</p>
                     </div>
                     <p className="text-xs text-gray-500">Audio or video file up to 500MB</p>
-                    <p className="text-xs text-gray-500 mt-1">The file will be processed locally to extract its duration</p>
+                    <p className="text-xs text-gray-500 mt-1">Minimum duration: 10 minutes</p>
+                    <p className="text-xs text-gray-500">The file will be processed locally to extract its duration</p>
                   </div>
                 </div>
               </div>
               
               {/* Selected File Info */}
               {selectedFile && (
-                <div className="mb-6 p-4 bg-blue-50 rounded-md">
-                  <h3 className="text-sm font-medium text-blue-800 mb-2">Selected File</h3>
-                  <div className="text-sm text-blue-700 space-y-1">
+                <div className={`mb-6 p-4 rounded-md ${duration && duration >= 600 ? 'bg-blue-50' : 'bg-yellow-50'}`}>
+                  <h3 className={`text-sm font-medium mb-2 ${duration && duration >= 600 ? 'text-blue-800' : 'text-yellow-800'}`}>
+                    Selected File
+                  </h3>
+                  <div className={`text-sm space-y-1 ${duration && duration >= 600 ? 'text-blue-700' : 'text-yellow-700'}`}>
                     <p><span className="font-medium">Name:</span> {selectedFile.name}</p>
                     <p><span className="font-medium">Type:</span> {selectedFile.type}</p>
                     <p><span className="font-medium">Size:</span> {Math.round(selectedFile.size / 1024 / 1024 * 10) / 10} MB</p>
                     {duration && (
-                      <p><span className="font-medium">Duration:</span> {formatDuration(duration)} ({(duration / 3600).toFixed(6)} hours)</p>
+                      <>
+                        <p><span className="font-medium">Duration:</span> {formatDuration(duration)} ({(duration / 3600).toFixed(6)} hours)</p>
+                        {duration < 600 && (
+                          <p className="text-red-600 font-medium">
+                            ⚠️ File is too short. Minimum duration required: 10 minutes
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -518,7 +580,7 @@ export default function CompleteSessionPage() {
                 <button
                   type="button"
                   onClick={handleUpload}
-                  disabled={!selectedFile || !duration || uploading}
+                  disabled={!selectedFile || !duration || uploading || (duration && duration < 600)}
                   className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploading ? 'Uploading...' : 'Complete Session'}

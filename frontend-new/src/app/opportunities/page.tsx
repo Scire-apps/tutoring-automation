@@ -207,30 +207,41 @@ export default function OpportunitiesPage() {
 
       // Send job assignment notification email
       try {
-        const opportunity = opportunities.find(opp => opp.id === opportunityId);
+        const opportunity = opportunities.find(
+          (opp) => opp.id === opportunityId
+        );
         if (opportunity) {
           // Get tutor's full name from auth user or construct from available data
-          const tutorName = user?.user_metadata?.full_name || 
-                           `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() ||
-                           user?.email?.split('@')[0] || 'Tutor';
-          
+          const tutorName =
+            user?.user_metadata?.full_name ||
+            `${user?.user_metadata?.first_name || ""} ${
+              user?.user_metadata?.last_name || ""
+            }`.trim() ||
+            user?.email?.split("@")[0] ||
+            "Tutor";
+
           await apiService.sendJobAssignmentNotification(
-            user?.email || '',
+            user?.email || "",
             tutorName,
             {
               subject: opportunity.subject,
               tutee_name: `${opportunity.tutee_first_name} ${opportunity.tutee_last_name}`,
               grade_level: opportunity.grade_level,
-              location: opportunity.session_location
+              location: opportunity.session_location,
             },
             job.id
           );
-          console.log('Job assignment notification sent successfully');
+          console.log("Job assignment notification sent successfully");
         }
       } catch (emailError) {
-        console.error('Failed to send job assignment notification:', emailError);
+        console.error(
+          "Failed to send job assignment notification:",
+          emailError
+        );
         // Don't fail the entire process if email fails - this is expected in development
-        console.log('Email sending failed (expected in development mode) - continuing with job application');
+        console.log(
+          "Email sending failed (expected in development mode) - continuing with job application"
+        );
       }
 
       // Remove the opportunity from the list
@@ -251,18 +262,38 @@ export default function OpportunitiesPage() {
     }
   };
 
-  const canApplyForSubject = (subject: string) => {
+  const canApplyForSubject = (
+    subject: string,
+    gradeLevel: string,
+    courseLevel: string
+  ) => {
+    // Create the combined string from opportunity fields (Subject Grade Course)
+    const opportunityString = [subject, gradeLevel, courseLevel]
+      .filter(Boolean) // Remove empty/null values
+      .join(" ")
+      .trim();
+
     // Debug what's being compared
-    console.log("Checking if can apply for:", subject);
+    console.log("Checking if can apply for:", {
+      subject,
+      gradeLevel,
+      courseLevel,
+      combined: opportunityString,
+    });
     console.log("Approved subjects:", approvedSubjects);
 
-    // More flexible matching - check if any approved subject contains this subject or vice versa
-    // This handles cases like "Physics" vs "Grade 11 IB Physics"
-    return approvedSubjects.some(
-      (approved) =>
-        approved.toLowerCase().includes(subject.toLowerCase()) ||
-        subject.toLowerCase().includes(approved.toLowerCase())
-    );
+    // Check if any approved subject name matches the combined opportunity string
+    return approvedSubjects.some((approvedSubjectName) => {
+      const normalizedApproved = approvedSubjectName.toLowerCase().trim();
+      const normalizedOpportunity = opportunityString.toLowerCase().trim();
+
+      console.log(
+        `Comparing: "${normalizedApproved}" vs "${normalizedOpportunity}"`
+      );
+
+      // Exact match comparison
+      return normalizedApproved === normalizedOpportunity;
+    });
   };
 
   const toggleRowExpansion = (opportunityId: string) => {
@@ -339,6 +370,18 @@ export default function OpportunitiesPage() {
     if (!dateString) return "";
 
     try {
+      // If dateString is "YYYY-MM-DD", parse it as local date to avoid timezone issues
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        const [year, month, day] = dateString.split("-").map(Number);
+        const date = new Date(year, month - 1, day); // month is 0-indexed
+        return date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      }
+
+      // Fallback for other date formats
       const date = new Date(dateString);
       return date.toLocaleDateString("en-US", {
         year: "numeric",
@@ -542,7 +585,11 @@ export default function OpportunitiesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end space-x-2">
-                            {canApplyForSubject(opportunity.subject) ? (
+                            {canApplyForSubject(
+                              opportunity.subject,
+                              opportunity.grade_level,
+                              opportunity.course_level
+                            ) ? (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -656,8 +703,11 @@ export default function OpportunitiesPage() {
                                   <div className="text-sm text-gray-600 space-y-1">
                                     <p>
                                       <span className="font-medium">Date:</span>{" "}
-                                      {opportunity.availability_date ||
-                                        "Not specified"}
+                                      {opportunity.availability_date
+                                        ? formatDate(
+                                            opportunity.availability_date
+                                          )
+                                        : "Not specified"}
                                     </p>
                                     <p>
                                       <span className="font-medium">Time:</span>
@@ -708,7 +758,11 @@ export default function OpportunitiesPage() {
                                     opportunity.created_at
                                   ).toLocaleTimeString()}
                                 </div>
-                                {canApplyForSubject(opportunity.subject) ? (
+                                {canApplyForSubject(
+                                  opportunity.subject,
+                                  opportunity.grade_level,
+                                  opportunity.course_level
+                                ) ? (
                                   <button
                                     onClick={() => handleApply(opportunity.id)}
                                     disabled={applyingTo === opportunity.id}

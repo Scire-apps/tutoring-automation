@@ -90,66 +90,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Initialize auth state
+  // Initialize auth state - only get the initial session, no listeners
   useEffect(() => {
     const initAuth = async () => {
       setIsLoading(true);
 
-      // Get current session
-      const { session: currentSession } = await getSession();
-      setSession(currentSession);
+      try {
+        // Get current session
+        const { session: currentSession } = await getSession();
+        setSession(currentSession);
 
-      // Get current user
-      if (currentSession) {
-        const { user: currentUser } = await getCurrentUser();
-        setUser(currentUser);
+        // Get current user
+        if (currentSession) {
+          const { user: currentUser } = await getCurrentUser();
+          setUser(currentUser);
 
-        // Determine user role
-        if (currentUser) {
-          const role = await determineUserRole(currentUser.id);
-          setUserRole(role);
-        }
-      }
-
-      // Subscribe to auth changes
-      const { data: authListener } = supabase.auth.onAuthStateChange(
-        async (event, newSession) => {
-          console.log("Auth state change event:", event);
-          
-          if (event === "SIGNED_OUT") {
-            console.log("Auth context: User signed out, clearing state");
-            setSession(null);
-            setUser(null);
-            setUserRole(null);
-          } else if (event === "SIGNED_IN") {
-            // Only update if we don't already have a session with the same user
-            // This prevents unnecessary updates on tab focus
-            if (!session || session.user.id !== newSession?.user.id) {
-              console.log("Auth context: New sign-in detected, updating state");
-              setSession(newSession);
-              const newUser = newSession?.user ?? null;
-              setUser(newUser);
-
-              // Determine user role
-              if (newUser) {
-                console.log("Auth context: Determining role for new sign-in");
-                const role = await determineUserRole(newUser.id);
-                setUserRole(role);
-              }
-            } else {
-              console.log("Auth context: Ignoring duplicate SIGNED_IN event");
-            }
+          // Determine user role
+          if (currentUser) {
+            const role = await determineUserRole(currentUser.id);
+            setUserRole(role);
           }
-          // Ignore all other events (tab focus, etc.)
         }
-      );
-
-      setIsLoading(false);
-
-      // Cleanup
-      return () => {
-        authListener?.subscription.unsubscribe();
-      };
+      } catch (error) {
+        console.error("Auth context: Error initializing auth state:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     initAuth();

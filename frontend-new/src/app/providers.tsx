@@ -111,24 +111,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Subscribe to auth changes
+      // Subscribe to auth changes with token comparison
+      const initialTokenRef = React.useRef<string | null>(currentSession?.access_token ?? null);
       const { data: authListener } = supabase.auth.onAuthStateChange(
         async (event, newSession) => {
           console.log("Auth state change event:", event);
-          setSession(newSession);
-          const newUser = newSession?.user ?? null;
-          setUser(newUser);
-
-          // Determine user role
-          if (newUser) {
-            console.log(
-              "Auth state change: User signed in, determining role..."
-            );
-            const role = await determineUserRole(newUser.id);
-            setUserRole(role);
-          } else {
+          
+          if (event === "SIGNED_OUT") {
+            console.log("Auth context: User signed out, clearing state");
+            setSession(null);
+            setUser(null);
             setUserRole(null);
+            initialTokenRef.current = null;
+          } else if (event === "SIGNED_IN") {
+            const newToken = newSession?.access_token ?? null;
+            
+            // Only process if token actually changed (real sign-in, not tab focus)
+            if (newToken && newToken !== initialTokenRef.current) {
+              console.log("Auth context: New token detected, updating state");
+              initialTokenRef.current = newToken;
+              setSession(newSession);
+              const newUser = newSession?.user ?? null;
+              setUser(newUser);
+
+              // Determine user role
+              if (newUser) {
+                console.log("Auth context: Determining role for new sign-in");
+                const role = await determineUserRole(newUser.id);
+                setUserRole(role);
+              }
+            } else {
+              console.log("Auth context: Ignoring duplicate SIGNED_IN event (same token)");
+            }
           }
+          // Ignore all other events (tab focus, etc.)
         }
       );
 

@@ -88,7 +88,9 @@ def create_invitation():
         print(f"Created invitation: {invitation}")
         
         # Generate invitation URL for manual sharing
-        invitation_url = f"{request.host_url}auth/admin/register?token={invitation_token}"
+        import os
+        frontend_url = os.environ.get('FRONTEND_URL', request.host_url.rstrip('/'))
+        invitation_url = f"{frontend_url}/auth/admin/register?token={invitation_token}"
         print(f"Generated invitation URL: {invitation_url}")
         
         print("=== INVITATION CREATED SUCCESSFULLY ===")

@@ -27,6 +27,7 @@ export default function CompleteSessionPage() {
   const [job, setJob] = useState<TutoringJob | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -106,10 +107,13 @@ export default function CompleteSessionPage() {
   };
 
   const validateAndProcessFile = (file: File) => {
+    // Clear previous validation errors
+    setValidationError(null);
+    
     // Check file type
     const fileType = file.type;
     if (!fileType.startsWith('audio/') && !fileType.startsWith('video/')) {
-      setError('Please upload an audio or video file');
+      setValidationError('Please upload an audio or video file');
       setSelectedFile(null);
       return;
     }
@@ -117,7 +121,7 @@ export default function CompleteSessionPage() {
     // Check file size (max 500MB)
     const maxSize = 500 * 1024 * 1024; // 500MB in bytes
     if (file.size > maxSize) {
-      setError('File size exceeds 500MB limit');
+      setValidationError('File size exceeds 500MB limit');
       setSelectedFile(null);
       return;
     }
@@ -135,13 +139,13 @@ export default function CompleteSessionPage() {
           const fileDuration = Math.round(audioRef.current.duration);
           // Check minimum duration (10 minutes = 600 seconds)
           if (fileDuration < 600) {
-            setError('Audio files must be at least 10 minutes long');
+            setValidationError('Audio files must be at least 10 minutes long');
             setSelectedFile(null);
             setDuration(null);
             return;
           }
           setDuration(fileDuration);
-          setError(null);
+          setValidationError(null);
         }
       };
     } else if (fileType.startsWith('video/') && videoRef.current) {
@@ -151,13 +155,13 @@ export default function CompleteSessionPage() {
           const fileDuration = Math.round(videoRef.current.duration);
           // Check minimum duration (10 minutes = 600 seconds)
           if (fileDuration < 600) {
-            setError('Video files must be at least 10 minutes long');
+            setValidationError('Video files must be at least 10 minutes long');
             setSelectedFile(null);
             setDuration(null);
             return;
           }
           setDuration(fileDuration);
-          setError(null);
+          setValidationError(null);
         }
       };
     }
@@ -338,12 +342,24 @@ export default function CompleteSessionPage() {
     if (!dateString) return '';
     
     try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      // If dateString is "YYYY-MM-DD", parse it as local date to avoid timezone issues
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        const [year, month, day] = dateString.split('-').map(Number);
+        const date = new Date(year, month - 1, day); // month is 0-indexed
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      } else {
+        // For other date formats, use the original approach
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
     } catch (err) {
       console.error('Error formatting date:', err);
       return dateString; // Return original if parsing fails
@@ -561,8 +577,15 @@ export default function CompleteSessionPage() {
                 </div>
               )}
               
-              {/* Error Message */}
-              {error && (
+              {/* Validation Error Message */}
+              {validationError && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md">
+                  {validationError}
+                </div>
+              )}
+              
+              {/* Upload Error Message */}
+              {error && !validationError && (
                 <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md">
                   {error}
                 </div>
@@ -575,7 +598,7 @@ export default function CompleteSessionPage() {
                   onClick={() => router.push('/dashboard')}
                   className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  Cancel
+                  Back
                 </button>
                 <button
                   type="button"

@@ -243,7 +243,10 @@ export default function OpportunitiesPage() {
     } catch (err) {
       console.error("Error applying for opportunity:", err);
       setError("An error occurred while applying");
+      // Don't redirect on error
+      return;
     } finally {
+      // Always clear the loading state
       setApplyingTo(null);
     }
   };

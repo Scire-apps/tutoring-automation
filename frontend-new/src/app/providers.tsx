@@ -111,8 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Subscribe to auth changes with token comparison
-      const initialTokenRef = React.useRef<string | null>(currentSession?.access_token ?? null);
+      // Subscribe to auth changes
       const { data: authListener } = supabase.auth.onAuthStateChange(
         async (event, newSession) => {
           console.log("Auth state change event:", event);
@@ -122,14 +121,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setSession(null);
             setUser(null);
             setUserRole(null);
-            initialTokenRef.current = null;
           } else if (event === "SIGNED_IN") {
-            const newToken = newSession?.access_token ?? null;
-            
-            // Only process if token actually changed (real sign-in, not tab focus)
-            if (newToken && newToken !== initialTokenRef.current) {
-              console.log("Auth context: New token detected, updating state");
-              initialTokenRef.current = newToken;
+            // Only update if we don't already have a session with the same user
+            // This prevents unnecessary updates on tab focus
+            if (!session || session.user.id !== newSession?.user.id) {
+              console.log("Auth context: New sign-in detected, updating state");
               setSession(newSession);
               const newUser = newSession?.user ?? null;
               setUser(newUser);
@@ -141,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setUserRole(role);
               }
             } else {
-              console.log("Auth context: Ignoring duplicate SIGNED_IN event (same token)");
+              console.log("Auth context: Ignoring duplicate SIGNED_IN event");
             }
           }
           // Ignore all other events (tab focus, etc.)

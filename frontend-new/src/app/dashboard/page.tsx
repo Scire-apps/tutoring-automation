@@ -490,7 +490,7 @@ export default function TutorDashboard() {
         {/* Quick Actions */}
         <div className="mb-8">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-1 gap-4">
             <Link
               href="/opportunities"
               className="relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-6 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -503,21 +503,6 @@ export default function TutorDashboard() {
               </span>
               <span className="mt-1 block text-xs text-gray-500">
                 Find new tutoring opportunities
-              </span>
-            </Link>
-
-            <Link
-              href="/profile"
-              className="relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-6 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span className="mt-2 block text-sm font-medium text-gray-900">
-                Update Profile
-              </span>
-              <span className="mt-1 block text-xs text-gray-500">
-                Manage your account settings
               </span>
             </Link>
           </div>

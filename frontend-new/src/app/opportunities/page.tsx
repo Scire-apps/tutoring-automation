@@ -446,11 +446,7 @@ export default function OpportunitiesPage() {
                   </span>
                 </div>
               </div>
-              {approvedSubjects.length > 0 && (
-                <p className="text-sm text-gray-500 mt-2">
-                  You're approved for: {approvedSubjects.join(", ")}
-                </p>
-              )}
+            
             </div>
             <button
               onClick={handleRefresh}

@@ -396,7 +396,7 @@ export default function OpportunitiesPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading opportunities...</p>
@@ -407,7 +407,7 @@ export default function OpportunitiesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 mb-4">⚠️ {error}</div>
           <button
@@ -431,10 +431,21 @@ export default function OpportunitiesPage() {
               <h1 className="text-3xl font-bold text-gray-900">
                 Tutoring Opportunities
               </h1>
-              <p className="text-gray-600 mt-1">
-                {tutorData?.school?.name} • {opportunities.length} opportunities
-                available
-              </p>
+              <div className="flex items-center gap-2 text-gray-600 mt-1">
+                <span>
+                  {tutorData?.school?.name} • {opportunities.length}{" "}
+                  opportunities available
+                </span>
+                <div className="flex items-center gap-1 ml-4">
+                  <div className="relative">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <div className="absolute inset-0 w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
+                  </div>
+                  <span className="text-xs text-green-600 font-medium">
+                    UPDATED
+                  </span>
+                </div>
+              </div>
               {approvedSubjects.length > 0 && (
                 <p className="text-sm text-gray-500 mt-2">
                   You're approved for: {approvedSubjects.join(", ")}

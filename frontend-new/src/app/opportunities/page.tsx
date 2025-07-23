@@ -456,7 +456,7 @@ export default function OpportunitiesPage() {
           {/* Page header with refresh button */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900 mt-10">
                 Tutoring Opportunities
               </h1>
               <div className="flex items-center gap-2 text-gray-600 mt-1">

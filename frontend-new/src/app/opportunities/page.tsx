@@ -504,11 +504,7 @@ export default function OpportunitiesPage() {
                       {/* Main row */}
                       <tr
                         key={opportunity.id}
-                        className={`my-10 cursor-pointer ${
-                          opportunity.priority === "high"
-                            ? "border-l-4 border-orange-500"
-                            : ""
-                        }`}
+                      
                         onClick={() => toggleRowExpansion(opportunity.id)}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">

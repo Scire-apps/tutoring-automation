@@ -69,15 +69,15 @@ export default function OpportunitiesPage() {
       "🥳 Type=Shape, 📏 Size=40, 🎨 Color=9, 🔳 Outline=None.png",
       "🥳 Type=Shape, 📏 Size=40, 🎨 Color=10, 🔳 Outline=None.png",
     ];
-    
+
     // Use opportunity ID to create a consistent hash for the same opportunity
     let hash = 0;
     for (let i = 0; i < opportunityId.length; i++) {
       const char = opportunityId.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
-    
+
     // Get a consistent index based on the hash
     const index = Math.abs(hash) % shapeImages.length;
     return shapeImages[index];
@@ -451,7 +451,7 @@ export default function OpportunitiesPage() {
 
   return (
     <TutorLayout>
-      <div className="p-6 bg-gray-50 min-h-full">
+      <div className="p-6 bg-white min-h-full">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Page header with refresh button */}
           <div className="flex justify-between items-center">
@@ -474,7 +474,6 @@ export default function OpportunitiesPage() {
                   </span>
                 </div>
               </div>
-            
             </div>
             <button
               onClick={handleRefresh}
@@ -532,13 +531,12 @@ export default function OpportunitiesPage() {
                       {/* Main row */}
                       <tr
                         key={opportunity.id}
-                      
                         onClick={() => toggleRowExpansion(opportunity.id)}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-5">
                             <div className="w-8 h-8 rounded-full flex items-center justify-center mr-3">
-                              <img 
+                              <img
                                 src={`/${getRandomShapeImage(opportunity.id)}`}
                                 alt="Profile"
                                 className="w-8 h-8 object-contain"
@@ -629,7 +627,7 @@ export default function OpportunitiesPage() {
                                   handleApply(opportunity.id);
                                 }}
                                 disabled={applyingTo === opportunity.id}
-                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
+                                className="inline-flex items-center px-5 font-bold cursor-pointer py-1.5 text-xs font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
                               >
                                 {applyingTo === opportunity.id
                                   ? "Applying..."
@@ -638,7 +636,7 @@ export default function OpportunitiesPage() {
                             ) : (
                               <button
                                 disabled
-                                className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-500 bg-gray-100 cursor-not-allowed"
+                                className="inline-flex items-center px-3 py-1.5 border-gray-300 text-xs font-medium rounded-full text-gray-500 bg-gray-100 cursor-not-allowed"
                               >
                                 Not Approved
                               </button>

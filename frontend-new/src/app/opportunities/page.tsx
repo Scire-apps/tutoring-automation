@@ -451,8 +451,8 @@ export default function OpportunitiesPage() {
 
   return (
     <TutorLayout>
-      <div className="p-6 bg-white min-h-full">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="p-3 sm:p-6 bg-white min-h-full">
+        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
           {/* Page header with refresh button */}
           <div className="flex justify-between items-center">
             <div>
@@ -502,326 +502,343 @@ export default function OpportunitiesPage() {
           {/* Opportunities table */}
           {opportunities.length > 0 ? (
             <div className="bg-white shadow rounded-lg overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Subject
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Student
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      School
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Available Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Available Time
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {opportunities.map((opportunity) => (
-                    <>
-                      {/* Main row */}
-                      <tr
-                        key={opportunity.id}
-                        onClick={() => toggleRowExpansion(opportunity.id)}
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-5">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center mr-3">
-                              <img
-                                src={`/${getRandomShapeImage(opportunity.id)}`}
-                                alt="Profile"
-                                className="w-8 h-8 object-contain"
-                              />
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {opportunity.subject}
-                              </div>
-                              {opportunity.grade_level && (
-                                <div className="text-sm text-gray-500">
-                                  {opportunity.grade_level}
-                                </div>
-                              )}
-                            </div>
-                            {opportunity.priority === "high" && (
-                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                High Priority
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {opportunity.tutee_first_name}{" "}
-                            {opportunity.tutee_last_name}
-                          </div>
-                          {opportunity.tutee_pronouns && (
-                            <div className="text-xs text-gray-500">
-                              ({opportunity.tutee_pronouns})
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {opportunity.school || "Not specified"}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {opportunity.availability_date
-                              ? formatDate(opportunity.availability_date)
-                              : "Not specified"}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {opportunity.availability_start_time &&
-                          opportunity.availability_end_time ? (
-                            <div className="inline-flex items-center">
-                              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                {formatTime(
-                                  opportunity.availability_start_time
-                                )}
-                              </span>
-                              <svg
-                                className="w-3 h-3 mx-1 text-gray-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">
+                        Subject
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">
+                        Student
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0 hidden sm:table-cell">
+                        School
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0 hidden md:table-cell">
+                        Date
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0 hidden lg:table-cell">
+                        Time
+                      </th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {opportunities.map((opportunity) => (
+                      <>
+                        {/* Main row */}
+                        <tr
+                          key={opportunity.id}
+                          onClick={() => toggleRowExpansion(opportunity.id)}
+                        >
+                          <td className="px-3 py-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
+                                <img
+                                  src={`/${getRandomShapeImage(
+                                    opportunity.id
+                                  )}`}
+                                  alt="Profile"
+                                  className="w-8 h-8 object-contain"
                                 />
-                              </svg>
-                              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                {formatTime(opportunity.availability_end_time)}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="text-sm text-gray-500">
-                              Not specified
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end space-x-2">
-                            {canApplyForSubject(
-                              opportunity.subject,
-                              opportunity.grade_level,
-                              opportunity.course_level
-                            ) ? (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleApply(opportunity.id);
-                                }}
-                                disabled={applyingTo === opportunity.id}
-                                className="inline-flex items-center px-5 font-bold cursor-pointer py-1.5 text-xs font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
-                              >
-                                {applyingTo === opportunity.id
-                                  ? "Applying..."
-                                  : "Apply"}
-                              </button>
-                            ) : (
-                              <button
-                                disabled
-                                className="inline-flex items-center px-3 py-1.5 border-gray-300 text-xs font-medium rounded-full text-gray-500 bg-gray-100 cursor-not-allowed"
-                              >
-                                Not Approved
-                              </button>
-                            )}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleRowExpansion(opportunity.id);
-                              }}
-                              className="text-gray-400 hover:text-gray-600"
-                            >
-                              <svg
-                                className={`w-5 h-5 transform transition-transform ${
-                                  expandedRows.has(opportunity.id)
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M19 9l-7 7-7-7"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-
-                      {/* Expanded details row */}
-                      {expandedRows.has(opportunity.id) && (
-                        <tr>
-                          <td colSpan={6} className="px-6 py-4 bg-gray-50">
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                  <h4 className="text-sm font-medium text-gray-700 mb-2">
-                                    Student Details
-                                  </h4>
-                                  <div className="text-sm text-gray-600 space-y-1">
-                                    <p>
-                                      <span className="font-medium">Name:</span>{" "}
-                                      {opportunity.tutee_first_name}{" "}
-                                      {opportunity.tutee_last_name}
-                                    </p>
-                                    {opportunity.tutee_pronouns && (
-                                      <p>
-                                        <span className="font-medium">
-                                          Pronouns:
-                                        </span>{" "}
-                                        {opportunity.tutee_pronouns}
-                                      </p>
-                                    )}
-                                    <p>
-                                      <span className="font-medium">
-                                        Grade:
-                                      </span>{" "}
-                                      Grade {opportunity.grade_level}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div>
-                                  <h4 className="text-sm font-medium text-gray-700 mb-2">
-                                    Session Details
-                                  </h4>
-                                  <div className="text-sm text-gray-600 space-y-1">
-                                    <p>
-                                      <span className="font-medium">
-                                        Subject:
-                                      </span>{" "}
-                                      {opportunity.subject}
-                                    </p>
-                                    <p>
-                                      <span className="font-medium">
-                                        Specific Topic:
-                                      </span>{" "}
-                                      {opportunity.specific_topic}
-                                    </p>
-                                    <p>
-                                      <span className="font-medium">
-                                        Course Level:
-                                      </span>{" "}
-                                      {opportunity.course_level}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div>
-                                  <h4 className="text-sm font-medium text-gray-700 mb-2">
-                                    Availability
-                                  </h4>
-                                  <div className="text-sm text-gray-600 space-y-1">
-                                    <p>
-                                      <span className="font-medium">Date:</span>{" "}
-                                      {opportunity.availability_date
-                                        ? formatDate(
-                                            opportunity.availability_date
-                                          )
-                                        : "Not specified"}
-                                    </p>
-                                    <p>
-                                      <span className="font-medium">Time:</span>
-                                    </p>
-                                    <div className="mt-2">
-                                      {opportunity.availability_formatted ? (
-                                        <span className="inline-flex items-center">
-                                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                            {formatTime(
-                                              opportunity.availability_start_time
-                                            )}
-                                          </span>
-                                          <svg
-                                            className="w-4 h-4 mx-1 text-gray-500"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth="2"
-                                              d="M14 5l7 7m0 0l-7 7m7-7H3"
-                                            />
-                                          </svg>
-                                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                            {formatTime(
-                                              opportunity.availability_end_time
-                                            )}
-                                          </span>
-                                        </span>
-                                      ) : (
-                                        "Not specified"
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
                               </div>
 
-                              <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                                <div className="text-xs text-gray-500">
-                                  Posted:{" "}
-                                  {new Date(
-                                    opportunity.created_at
-                                  ).toLocaleDateString()}{" "}
-                                  at{" "}
-                                  {new Date(
-                                    opportunity.created_at
-                                  ).toLocaleTimeString()}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="text-sm font-medium text-gray-900 truncate">
+                                    {opportunity.subject}
+                                  </div>
+                                  {opportunity.priority === "high" && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                      High Priority
+                                    </span>
+                                  )}
                                 </div>
-                                {canApplyForSubject(
-                                  opportunity.subject,
-                                  opportunity.grade_level,
-                                  opportunity.course_level
-                                ) ? (
-                                  <button
-                                    onClick={() => handleApply(opportunity.id)}
-                                    disabled={applyingTo === opportunity.id}
-                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
-                                  >
-                                    {applyingTo === opportunity.id
-                                      ? "Applying..."
-                                      : "Apply for this Opportunity"}
-                                  </button>
-                                ) : (
-                                  <div className="text-center">
-                                    <div className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-500 bg-gray-100 cursor-not-allowed">
-                                      Not Approved for {opportunity.subject}
-                                    </div>
-                                    <p className="text-xs text-gray-400 mt-1">
-                                      Contact admin for subject approval
-                                    </p>
+                                {opportunity.grade_level && (
+                                  <div className="text-xs text-gray-500">
+                                    Grade {opportunity.grade_level}
                                   </div>
                                 )}
                               </div>
                             </div>
                           </td>
+                          <td className="px-3 py-4">
+                            <div className="text-sm text-gray-900 truncate">
+                              {opportunity.tutee_first_name}{" "}
+                              {opportunity.tutee_last_name}
+                            </div>
+                            {opportunity.tutee_pronouns && (
+                              <div className="text-xs text-gray-500 truncate">
+                                ({opportunity.tutee_pronouns})
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-3 py-4 hidden sm:table-cell">
+                            <div className="text-sm text-gray-900 truncate">
+                              {opportunity.school || "Not specified"}
+                            </div>
+                          </td>
+                          <td className="px-3 py-4 hidden md:table-cell">
+                            <div className="text-sm text-gray-900">
+                              {opportunity.availability_date
+                                ? formatDate(opportunity.availability_date)
+                                : "Not specified"}
+                            </div>
+                          </td>
+                          <td className="px-3 py-4 hidden lg:table-cell">
+                            {opportunity.availability_start_time &&
+                            opportunity.availability_end_time ? (
+                              <div className="inline-flex items-center">
+                                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                  {formatTime(
+                                    opportunity.availability_start_time
+                                  )}
+                                </span>
+                                <svg
+                                  className="w-3 h-3 mx-1 text-gray-500"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M14 5l7 7m0 0l-7 7m7-7H3"
+                                  />
+                                </svg>
+                                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                  {formatTime(
+                                    opportunity.availability_end_time
+                                  )}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="text-sm text-gray-500">
+                                Not specified
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-3 py-4 text-right text-sm font-medium">
+                            <div className="flex items-center justify-end space-x-1">
+                              {canApplyForSubject(
+                                opportunity.subject,
+                                opportunity.grade_level,
+                                opportunity.course_level
+                              ) ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleApply(opportunity.id);
+                                  }}
+                                  disabled={applyingTo === opportunity.id}
+                                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
+                                >
+                                  {applyingTo === opportunity.id
+                                    ? "Applying..."
+                                    : "Apply"}
+                                </button>
+                              ) : (
+                                <button
+                                  disabled
+                                  className="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-full text-gray-500 bg-gray-100 cursor-not-allowed"
+                                >
+                                  Not Approved
+                                </button>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleRowExpansion(opportunity.id);
+                                }}
+                                className="text-gray-400 hover:text-gray-600 p-1"
+                              >
+                                <svg
+                                  className={`w-4 h-4 transform transition-transform ${
+                                    expandedRows.has(opportunity.id)
+                                      ? "rotate-180"
+                                      : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M19 9l-7 7-7-7"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
                         </tr>
-                      )}
-                    </>
-                  ))}
-                </tbody>
-              </table>
+
+                        {/* Expanded details row */}
+                        {expandedRows.has(opportunity.id) && (
+                          <tr>
+                            <td colSpan={6} className="px-3 py-4 bg-gray-50">
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <div>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                      Student Details
+                                    </h4>
+                                    <div className="text-sm text-gray-600 space-y-1">
+                                      <p>
+                                        <span className="font-medium">
+                                          Name:
+                                        </span>{" "}
+                                        {opportunity.tutee_first_name}{" "}
+                                        {opportunity.tutee_last_name}
+                                      </p>
+                                      {opportunity.tutee_pronouns && (
+                                        <p>
+                                          <span className="font-medium">
+                                            Pronouns:
+                                          </span>{" "}
+                                          {opportunity.tutee_pronouns}
+                                        </p>
+                                      )}
+                                      <p>
+                                        <span className="font-medium">
+                                          Grade:
+                                        </span>{" "}
+                                        Grade {opportunity.grade_level}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                      Session Details
+                                    </h4>
+                                    <div className="text-sm text-gray-600 space-y-1">
+                                      <p>
+                                        <span className="font-medium">
+                                          Subject:
+                                        </span>{" "}
+                                        {opportunity.subject}
+                                      </p>
+                                      <p>
+                                        <span className="font-medium">
+                                          Specific Topic:
+                                        </span>{" "}
+                                        {opportunity.specific_topic}
+                                      </p>
+                                      <p>
+                                        <span className="font-medium">
+                                          Course Level:
+                                        </span>{" "}
+                                        {opportunity.course_level}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                      Availability
+                                    </h4>
+                                    <div className="text-sm text-gray-600 space-y-1">
+                                      <p>
+                                        <span className="font-medium">
+                                          Date:
+                                        </span>{" "}
+                                        {opportunity.availability_date
+                                          ? formatDate(
+                                              opportunity.availability_date
+                                            )
+                                          : "Not specified"}
+                                      </p>
+                                      <p>
+                                        <span className="font-medium">
+                                          Time:
+                                        </span>
+                                      </p>
+                                      <div className="mt-2">
+                                        {opportunity.availability_formatted ? (
+                                          <span className="inline-flex items-center">
+                                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                              {formatTime(
+                                                opportunity.availability_start_time
+                                              )}
+                                            </span>
+                                            <svg
+                                              className="w-4 h-4 mx-1 text-gray-500"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth="2"
+                                                d="M14 5l7 7m0 0l-7 7m7-7H3"
+                                              />
+                                            </svg>
+                                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                              {formatTime(
+                                                opportunity.availability_end_time
+                                              )}
+                                            </span>
+                                          </span>
+                                        ) : (
+                                          "Not specified"
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                                  <div className="text-xs text-gray-500">
+                                    Posted:{" "}
+                                    {new Date(
+                                      opportunity.created_at
+                                    ).toLocaleDateString()}{" "}
+                                    at{" "}
+                                    {new Date(
+                                      opportunity.created_at
+                                    ).toLocaleTimeString()}
+                                  </div>
+                                  {canApplyForSubject(
+                                    opportunity.subject,
+                                    opportunity.grade_level,
+                                    opportunity.course_level
+                                  ) ? (
+                                    <button
+                                      onClick={() =>
+                                        handleApply(opportunity.id)
+                                      }
+                                      disabled={applyingTo === opportunity.id}
+                                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
+                                    >
+                                      {applyingTo === opportunity.id
+                                        ? "Applying..."
+                                        : "Apply for this Opportunity"}
+                                    </button>
+                                  ) : (
+                                    <div className="text-center">
+                                      <div className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-500 bg-gray-100 cursor-not-allowed">
+                                        Not Approved for {opportunity.subject}
+                                      </div>
+                                      <p className="text-xs text-gray-400 mt-1">
+                                        Contact admin for subject approval
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : (
             <div className="text-center py-12 bg-white rounded-lg shadow">

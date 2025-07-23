@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   title: "Tutoring Automation",
   description:
     "A platform for managing tutoring opportunities and volunteer hours",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

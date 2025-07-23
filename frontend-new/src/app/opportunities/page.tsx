@@ -792,7 +792,7 @@ export default function OpportunitiesPage() {
                                   </div>
                                 </div>
 
-                                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                                <div className="pt-2 border-t border-gray-200">
                                   <div className="text-xs text-gray-500">
                                     Posted:{" "}
                                     {new Date(
@@ -803,32 +803,6 @@ export default function OpportunitiesPage() {
                                       opportunity.created_at
                                     ).toLocaleTimeString()}
                                   </div>
-                                  {canApplyForSubject(
-                                    opportunity.subject,
-                                    opportunity.grade_level,
-                                    opportunity.course_level
-                                  ) ? (
-                                    <button
-                                      onClick={() =>
-                                        handleApply(opportunity.id)
-                                      }
-                                      disabled={applyingTo === opportunity.id}
-                                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
-                                    >
-                                      {applyingTo === opportunity.id
-                                        ? "Applying..."
-                                        : "Apply for this Opportunity"}
-                                    </button>
-                                  ) : (
-                                    <div className="text-center">
-                                      <div className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-500 bg-gray-100 cursor-not-allowed">
-                                        Not Approved for {opportunity.subject}
-                                      </div>
-                                      <p className="text-xs text-gray-400 mt-1">
-                                        Contact admin for subject approval
-                                      </p>
-                                    </div>
-                                  )}
                                 </div>
                               </div>
                             </td>

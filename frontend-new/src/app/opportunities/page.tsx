@@ -681,7 +681,7 @@ export default function OpportunitiesPage() {
                         {/* Expanded details row */}
                         {expandedRows.has(opportunity.id) && (
                           <tr>
-                            <td colSpan={6} className="px-3 py-4 bg-gray-50">
+                            <td colSpan={6} className="px-3 py-4 bg-white">
                               <div className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                   <div>

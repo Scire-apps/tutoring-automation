@@ -55,6 +55,34 @@ export default function OpportunitiesPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
 
+  // Function to get a random shape image based on opportunity ID for consistency
+  const getRandomShapeImage = (opportunityId: string) => {
+    const shapeImages = [
+      "🥳 Type=Shape, 📏 Size=40, 🎨 Color=1, 🔳 Outline=None.png",
+      "🥳 Type=Shape, 📏 Size=40, 🎨 Color=2, 🔳 Outline=None.png",
+      "🥳 Type=Shape, 📏 Size=40, 🎨 Color=3, 🔳 Outline=None.png",
+      "🥳 Type=Shape, 📏 Size=40, 🎨 Color=4, 🔳 Outline=None.png",
+      "🥳 Type=Shape, 📏 Size=40, 🎨 Color=5, 🔳 Outline=None.png",
+      "🥳 Type=Shape, 📏 Size=40, 🎨 Color=6, 🔳 Outline=None.png",
+      "🥳 Type=Shape, 📏 Size=40, 🎨 Color=7, 🔳 Outline=None.png",
+      "🥳 Type=Shape, 📏 Size=40, 🎨 Color=8, 🔳 Outline=None.png",
+      "🥳 Type=Shape, 📏 Size=40, 🎨 Color=9, 🔳 Outline=None.png",
+      "🥳 Type=Shape, 📏 Size=40, 🎨 Color=10, 🔳 Outline=None.png",
+    ];
+    
+    // Use opportunity ID to create a consistent hash for the same opportunity
+    let hash = 0;
+    for (let i = 0; i < opportunityId.length; i++) {
+      const char = opportunityId.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    // Get a consistent index based on the hash
+    const index = Math.abs(hash) % shapeImages.length;
+    return shapeImages[index];
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       if (authLoading) return;
@@ -509,10 +537,12 @@ export default function OpportunitiesPage() {
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-5">
-                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
-                              <span className="text-white font-bold text-sm">
-                                {opportunity.subject.charAt(0)}
-                              </span>
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center mr-3">
+                              <img 
+                                src={`/${getRandomShapeImage(opportunity.id)}`}
+                                alt="Profile"
+                                className="w-8 h-8 object-contain"
+                              />
                             </div>
                             <div>
                               <div className="text-sm font-medium text-gray-900">

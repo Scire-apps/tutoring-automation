@@ -37,21 +37,23 @@ export default function LoginPage() {
       }
 
       console.log("Sign in successful!");
-      
+
       // Wait a moment for the session to be processed, then redirect based on role
       console.log("Waiting for session processing...");
-      
+
       // Small delay to ensure session is properly set, then redirect
       setTimeout(async () => {
         console.log("Determining redirect destination...");
-        
+
         try {
           // Get the current session to determine user role
-          const { data: { session } } = await supabase.auth.getSession();
-          
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+
           if (session?.user) {
             const userId = session.user.id;
-            
+
             // Check if user is an admin
             const { data: adminData } = await supabase
               .from("admins")
@@ -78,7 +80,7 @@ export default function LoginPage() {
               return;
             }
           }
-          
+
           console.log("No role found, refreshing page");
           window.location.reload();
         } catch (error) {

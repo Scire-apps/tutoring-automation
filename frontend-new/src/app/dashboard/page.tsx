@@ -630,45 +630,13 @@ export default function TutorDashboard() {
           </div>
 
           {/* Quick Actions */}
+        
+
+          {/* Active Jobs */}
           <div className="mb-8">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Quick Actions
+              Active Tutoring Jobs
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-1 gap-4">
-              <Link
-                href="/opportunities"
-                className="relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-6 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                <svg
-                  className="mx-auto h-8 w-8 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <span className="mt-2 block text-sm font-medium text-gray-900">
-                  Browse Opportunities
-                </span>
-                <span className="mt-1 block text-xs text-gray-500">
-                  Find new tutoring opportunities
-                </span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Active Jobs and Subject Approvals - 2 Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Active Jobs */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Active Tutoring Jobs
-              </h3>
               {activeJobs.length > 0 ? (
                 <div className="bg-white shadow overflow-hidden sm:rounded-md">
                   <ul className="divide-y divide-gray-200">
@@ -970,13 +938,13 @@ export default function TutorDashboard() {
                   </div>
                 </div>
               )}
-            </div>
+          </div>
 
-            {/* Subject Approvals */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Subject Approvals
-              </h3>
+        {/* Subject Approvals */}
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+            Subject Approvals
+          </h3>
               {subjectApprovals.length > 0 ? (
                 <div className="bg-white shadow overflow-hidden sm:rounded-md">
                   <ul className="divide-y divide-gray-200">
@@ -1048,7 +1016,6 @@ export default function TutorDashboard() {
                 </div>
               )}
             </div>
-          </div>
         </div>
       </div>
     </TutorLayout>

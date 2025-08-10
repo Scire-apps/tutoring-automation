@@ -80,7 +80,7 @@ export default function TuteeRequestPage() {
           <textarea className="mt-1 border rounded px-3 py-2 w-full" rows={4} value={JSON.stringify(availability)} onChange={e=>{
             try { setAvailability(JSON.parse(e.target.value || '{}')); } catch {}
           }} />
-          <p className="text-xs text-gray-500 mt-1">Example: {{"Mon":["16:00-17:00"],"Wed":["18:00-19:00"]}}</p>
+          <p className="text-xs text-gray-500 mt-1">Example: {`{"Mon":["16:00-17:00"],"Wed":["18:00-19:00"]}`}</p>
         </div>
         <div>
           <label className="block text-sm font-medium">Location Preference</label>

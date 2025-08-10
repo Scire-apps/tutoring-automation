@@ -26,32 +26,34 @@ export default function Home() {
   }, [router]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-6 py-16">
-      <div className="max-w-3xl text-center">
-        <h1 className="text-4xl font-bold tracking-tight">Welcome to the Tutoring Platform</h1>
-        <p className="mt-4 text-muted-foreground">
-          Join as a tutor or request help as a tutee. Get matched, schedule sessions, and track progress.
-        </p>
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Link
-            href="/auth/register?t=mentor"
-            className="rounded-lg border bg-white px-6 py-5 text-left shadow-sm transition hover:shadow"
-          >
-            <h2 className="text-2xl font-semibold">Sign up as Tutor →</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Browse opportunities and start tutoring.</p>
-          </Link>
-          <Link
-            href="/auth/register?t=mentee"
-            className="rounded-lg border bg-white px-6 py-5 text-left shadow-sm transition hover:shadow"
-          >
-            <h2 className="text-2xl font-semibold">Sign up as Tutee →</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Request help for subjects and schedule sessions.</p>
-          </Link>
-        </div>
-        <div className="mt-6">
-          <Link href="/auth/login" className="text-primary underline">Already have an account? Log in</Link>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl w-full">
+        <div className="bg-white shadow rounded-lg p-8">
+          <h1 className="text-3xl font-bold text-gray-900 text-center">Welcome to the Tutoring Platform</h1>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Join as a tutor or request help as a tutee. Get matched, schedule sessions, and track progress.
+          </p>
+          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Link
+              href="/auth/register?t=mentor"
+              className="group rounded-lg border border-gray-200 px-6 py-5 hover:bg-gray-50 transition"
+            >
+              <h2 className="text-xl font-semibold text-gray-900">Sign up as Tutor</h2>
+              <p className="mt-1 text-sm text-gray-600">Browse opportunities and start tutoring.</p>
+            </Link>
+            <Link
+              href="/auth/register?t=mentee"
+              className="group rounded-lg border border-gray-200 px-6 py-5 hover:bg-gray-50 transition"
+            >
+              <h2 className="text-xl font-semibold text-gray-900">Sign up as Tutee</h2>
+              <p className="mt-1 text-sm text-gray-600">Request help for subjects and schedule sessions.</p>
+            </Link>
+          </div>
+          <div className="mt-6 text-center">
+            <Link href="/auth/login" className="text-blue-600 hover:text-blue-500">Already have an account? Log in</Link>
+          </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -128,20 +128,19 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
-    // Check if user has admin role from database (not session metadata)
-    let userRole = null;
+    // Determine role via backend
+    let userRole: string | null = null;
     try {
-      const { data: adminData } = await supabase
-        .from("admins")
-        .select("role")
-        .eq("auth_id", session.user.id)
-        .single();
-
-      if (adminData) {
-        userRole = adminData.role;
+      const apiBase = process.env.NEXT_PUBLIC_API_URL as string;
+      const resp = await fetch(`${apiBase}/api/auth/role`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        userRole = json.role ?? null;
       }
     } catch (error) {
-      console.log("Middleware: Error checking admin role:", error);
+      console.log("Middleware: Error checking admin role via backend:", error);
     }
 
     console.log("Middleware: User role from database:", userRole);
@@ -193,39 +192,19 @@ export async function middleware(request: NextRequest) {
       "Middleware: Redirecting authenticated user away from auth pages"
     );
 
-    // Determine redirect target based on user role from database
-    let userRole = null;
+    // Determine redirect target based on user role via backend
+    let userRole: string | null = null;
     try {
-      // Check if user is an admin
-      const { data: adminData } = await supabase
-        .from("admins")
-        .select("role")
-        .eq("auth_id", session.user.id)
-        .single();
-
-      if (adminData) {
-        userRole = adminData.role;
-      } else {
-        // Check if user is a tutor or tutee
-        const { data: tutorData } = await supabase
-          .from("tutors")
-          .select("id")
-          .eq("auth_id", session.user.id)
-          .single();
-
-        if (tutorData) {
-          userRole = "tutor";
-        } else {
-          const { data: tuteeData } = await supabase
-            .from("tutees")
-            .select("id")
-            .eq("auth_id", session.user.id)
-            .single();
-          if (tuteeData) userRole = "tutee";
-        }
+      const apiBase = process.env.NEXT_PUBLIC_API_URL as string;
+      const resp = await fetch(`${apiBase}/api/auth/role`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        userRole = json.role ?? null;
       }
     } catch (error) {
-      console.log("Middleware: Error determining user role:", error);
+      console.log("Middleware: Error determining user role via backend:", error);
     }
 
     // Determine redirect target based on role

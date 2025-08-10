@@ -14,8 +14,10 @@ export default function Home() {
       if (!session) return;
       // Determine role and redirect from homepage
       try {
-        // Reuse backend API wrapper via fetch with token - using apiRequest here requires auth header; we call through api module indirectly by hardcoding endpoint
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/role`, { headers: {} as any } as RequestInit);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/role`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          credentials: 'include',
+        } as RequestInit);
         const roleResp = await res.json();
         if (roleResp.role === 'superadmin') return router.replace('/admin/dashboard');
         if (roleResp.role === 'admin') return router.replace('/admin/school/dashboard');

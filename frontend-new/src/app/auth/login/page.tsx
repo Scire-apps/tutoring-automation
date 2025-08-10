@@ -43,45 +43,29 @@ export default function LoginPage() {
 
       // Small delay to ensure session is properly set, then redirect
       setTimeout(async () => {
-        console.log("Determining redirect destination...");
+        console.log("Determining redirect destination via backend role endpoint...");
 
         try {
-          // Get the current session to determine user role
-          const {
-            data: { session },
-          } = await supabase.auth.getSession();
-
-          if (session?.user) {
-            const userId = session.user.id;
-
-            // Check if user is an admin
-            const { data: adminData } = await supabase
-              .from("admins")
-              .select("role")
-              .eq("auth_id", userId)
-              .single();
-
-            if (adminData) {
-              console.log("Redirecting admin to /admin/dashboard");
-              router.push("/admin/dashboard");
-              return;
-            }
-
-            // Check if user is a tutor
-            const { data: tutorData } = await supabase
-              .from("tutors")
-              .select("id")
-              .eq("auth_id", userId)
-              .single();
-
-            if (tutorData) {
-              console.log("Redirecting tutor to /dashboard");
-              router.push("/dashboard");
-              return;
-            }
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            window.location.reload();
+            return;
           }
-
-          console.log("No role found, refreshing page");
+          const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/role`, {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            credentials: 'include',
+          });
+          if (!resp.ok) {
+            console.log('Role endpoint returned non-ok, reloading');
+            window.location.reload();
+            return;
+          }
+          const json = await resp.json();
+          const role = json.role;
+          if (role === 'superadmin') return router.push('/admin/dashboard');
+          if (role === 'admin') return router.push('/admin/school/dashboard');
+          if (role === 'tutor') return router.push('/dashboard');
+          if (role === 'tutee') return router.push('/tutee/dashboard');
           window.location.reload();
         } catch (error) {
           console.error("Error determining redirect:", error);

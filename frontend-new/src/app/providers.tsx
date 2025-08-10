@@ -5,7 +5,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase, getCurrentUser, getSession } from "@/services/supabase";
 
 // Define user role type
-type UserRole = "tutor" | "admin" | "superadmin" | null;
+type UserRole = "tutor" | "tutee" | "admin" | "superadmin" | null;
 
 // Define the auth context type
 type AuthContextType = {
@@ -37,57 +37,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<UserRole>(null);
 
-  // Function to determine user role
-  const determineUserRole = async (userId: string): Promise<UserRole> => {
-    console.log("Auth context: Determining role for user ID:", userId);
-
+  // Function to determine user role via backend (avoids direct DB queries from frontend)
+  const determineUserRole = async (accessToken: string | null): Promise<UserRole> => {
     try {
-      // Check if user is an admin
-      console.log("Auth context: Checking admin table...");
-      const { data: adminData, error: adminError } = await supabase
-        .from("admins")
-        .select("role")
-        .eq("auth_id", userId)
-        .single();
-
-      console.log("Auth context: Admin query result:", {
-        adminData,
-        adminError: adminError?.message || "none",
+      if (!accessToken) return null;
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://tutoring-automation-sdt9.onrender.com";
+      const resp = await fetch(`${apiBase}/api/auth/role`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        credentials: "include",
       });
-
-      if (adminError && adminError.code !== "PGRST116") {
-        // PGRST116 is "not found" error, which is expected for tutors
-        console.error("Auth context: Error querying admin table:", adminError);
-      }
-
-      if (adminData) {
-        console.log("Auth context: User is admin with role:", adminData.role);
-        return adminData.role as UserRole;
-      }
-
-      // Check if user is a tutor
-      console.log("Auth context: Checking tutor table...");
-      const { data: tutorData, error: tutorError } = await supabase
-        .from("tutors")
-        .select("id")
-        .eq("auth_id", userId)
-        .single();
-
-      console.log("Auth context: Tutor query result:", {
-        tutorData,
-        tutorError,
-      });
-
-      if (tutorData) {
-        console.log("Auth context: User is tutor");
-        return "tutor";
-      }
-
-      console.log("Auth context: No role found for user");
-      return null;
+      if (!resp.ok) return null;
+      const json = await resp.json();
+      return (json.role as UserRole) ?? null;
     } catch (error) {
-      console.error("Auth context: Error determining user role:", error);
+      console.error("Auth context: Error determining user role via backend:", error);
       return null;
+    }
+  };
+
+  // Ensure a tutor/tutee row exists after verification/login
+  const ensureBackendAccount = async (
+    accessToken: string,
+    accountType: 'tutor' | 'tutee',
+    firstName?: string,
+    lastName?: string,
+    schoolId?: string
+  ) => {
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://tutoring-automation-sdt9.onrender.com";
+      await fetch(`${apiBase}/api/account/ensure`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          account_type: accountType,
+          first_name: firstName,
+          last_name: lastName,
+          school_id: schoolId,
+        }),
+        credentials: 'include',
+      });
+    } catch (e) {
+      console.error('Error ensuring account via backend:', e);
     }
   };
 
@@ -106,11 +99,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const { user: currentUser } = await getCurrentUser();
           setUser(currentUser);
 
-          // Determine user role
-          if (currentUser) {
-            const role = await determineUserRole(currentUser.id);
-            setUserRole(role);
+          // Determine role via backend, and ensure account if pending
+          const token = currentSession?.access_token || null;
+          let role = await determineUserRole(token);
+          if (!role && token) {
+            let pendingType: 'tutor' | 'tutee' | null = null;
+            let firstName: string | undefined;
+            let lastName: string | undefined;
+            let schoolId: string | undefined;
+            if (typeof window !== 'undefined') {
+              pendingType = localStorage.getItem('signup_account_type') as 'tutor' | 'tutee' | null;
+              firstName = localStorage.getItem('signup_first_name') || undefined;
+              lastName = localStorage.getItem('signup_last_name') || undefined;
+              schoolId = localStorage.getItem('signup_school_id') || undefined;
+            }
+            // Fall back to metadata if local storage not present
+            if (!pendingType && currentUser?.user_metadata?.account_type) {
+              const metaType = String(currentUser.user_metadata.account_type);
+              if (metaType === 'tutor' || metaType === 'tutee') pendingType = metaType;
+              firstName = firstName || currentUser.user_metadata.first_name;
+              lastName = lastName || currentUser.user_metadata.last_name;
+              schoolId = schoolId || currentUser.user_metadata.school_id;
+            }
+            if (pendingType) {
+              await ensureBackendAccount(token, pendingType, firstName, lastName, schoolId);
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('signup_account_type');
+                localStorage.removeItem('signup_first_name');
+                localStorage.removeItem('signup_last_name');
+                localStorage.removeItem('signup_school_id');
+              }
+              role = await determineUserRole(token);
+            }
           }
+          setUserRole(role);
         }
       } catch (error) {
         console.error("Auth context: Error initializing auth state:", error);
@@ -146,23 +168,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(data.user);
         setSession(data.session);
 
-        // Determine user role synchronously to ensure proper redirect
+        // Determine role via backend and ensure account if pending
         console.log("Auth context: Determining user role...");
         try {
-          // ask backend for role
-          const token = data.session?.access_token;
-          let role: any = null;
-          if (token) {
-            const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/role`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const json = await resp.json();
-            role = json.role ?? null;
+          const token = data.session?.access_token || null;
+          if (token && typeof window !== 'undefined') {
+            const pendingType = localStorage.getItem('signup_account_type') as 'tutor' | 'tutee' | null;
+            const firstName = localStorage.getItem('signup_first_name') || undefined;
+            const lastName = localStorage.getItem('signup_last_name') || undefined;
+            const schoolId = localStorage.getItem('signup_school_id') || undefined;
+            if (pendingType) {
+              await ensureBackendAccount(token, pendingType, firstName, lastName, schoolId);
+              localStorage.removeItem('signup_account_type');
+              localStorage.removeItem('signup_first_name');
+              localStorage.removeItem('signup_last_name');
+              localStorage.removeItem('signup_school_id');
+            }
+            const role = await determineUserRole(token);
+            console.log("Auth context: User role determined:", role);
+            setUserRole(role);
           } else {
-            role = await determineUserRole(data.user.id);
+            setUserRole(null);
           }
-          console.log("Auth context: User role determined:", role);
-          setUserRole(role);
         } catch (err) {
           console.error("Auth context: Error determining role:", err);
           setUserRole(null);
@@ -185,6 +212,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     schoolId?: string,
     accountType: 'tutor' | 'tutee' = 'tutor'
   ) => {
+    // Persist intent for post-verification login flow
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('signup_account_type', accountType);
+        if (firstName) localStorage.setItem('signup_first_name', firstName);
+        if (lastName) localStorage.setItem('signup_last_name', lastName);
+        if (schoolId) localStorage.setItem('signup_school_id', String(schoolId));
+      }
+    } catch {}
+
     // Sign up with Supabase Auth
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -194,26 +231,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           first_name: firstName,
           last_name: lastName,
           school_id: schoolId,
+          account_type: accountType,
         },
       },
     });
 
     if (!error && data.user) {
-      // Ask backend to ensure profile row (uses service role)
+      // Some projects have email confirmation; session may be null here.
+      // If we do have a token, we can proactively ensure now; otherwise it will happen on first login
       try {
         const token = data.session?.access_token;
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/ensure`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            account_type: accountType,
-            first_name: firstName,
-            last_name: lastName,
-            school_id: schoolId,
-          })
-        });
+        if (token) {
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/ensure`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              account_type: accountType,
+              first_name: firstName,
+              last_name: lastName,
+              school_id: schoolId,
+            })
+          });
+        }
       } catch (e) {
-        console.error('Error ensuring account via backend:', e);
+        console.error('Error ensuring account via backend (signup path):', e);
       }
 
       setUser(data.user);

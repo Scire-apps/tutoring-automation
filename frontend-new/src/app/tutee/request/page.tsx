@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/providers';
 import api from '@/services/api';
-import api from '@/services/api';
 
 export default function TuteeRequestPage() {
   const { user, isLoading } = useAuth();

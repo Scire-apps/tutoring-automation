@@ -9,6 +9,7 @@ from routes.tutee import tutee_bp
 from routes.tutor import tutor_bp
 from routes.auth import auth_bp
 from routes.jobs import jobs_bp
+import re
 
 # Load environment variables
 load_dotenv()
@@ -18,14 +19,32 @@ def create_app():
     app = Flask(__name__)
     
     # Configure CORS to allow requests from frontend domains
-    CORS(app, origins=[
+    # Include specific domains and regex for Vercel previews
+    allowed_origins = [
         "http://localhost:3000",
-        "https://localhost:3000", 
+        "https://localhost:3000",
         "https://tutoringapp.ca",
         "https://www.tutoringapp.ca",
         "https://app.tutoringapp.ca",
-        "https://frontend.tutoringapp.ca"
-    ], supports_credentials=True, methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+        "https://frontend.tutoringapp.ca",
+        "https://tutorappdev.vercel.app",
+        re.compile(r"^https://.*\.vercel\.app$"),
+    ]
+
+    CORS(
+        app,
+        origins=allowed_origins,
+        supports_credentials=True,
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=[
+            "Content-Type",
+            "Authorization",
+            "X-Requested-With",
+            "Accept",
+            "Origin",
+        ],
+        expose_headers=["Content-Disposition"],
+    )
     
     # Register blueprints
     app.register_blueprint(api_bp)

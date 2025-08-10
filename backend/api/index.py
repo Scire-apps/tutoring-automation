@@ -4,9 +4,36 @@ import os
 import json
 from datetime import datetime, timedelta, timezone
 import secrets
+import re
 
 app = Flask(__name__)
-CORS(app)
+
+# Consistent CORS configuration for deployments using this entrypoint
+allowed_origins = [
+    "http://localhost:3000",
+    "https://localhost:3000",
+    "https://tutoringapp.ca",
+    "https://www.tutoringapp.ca",
+    "https://app.tutoringapp.ca",
+    "https://frontend.tutoringapp.ca",
+    "https://tutorappdev.vercel.app",
+    re.compile(r"^https://.*\.vercel\.app$"),
+]
+
+CORS(
+    app,
+    origins=allowed_origins,
+    supports_credentials=True,
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+    ],
+    expose_headers=["Content-Disposition"],
+)
 
 @app.route('/')
 def hello():

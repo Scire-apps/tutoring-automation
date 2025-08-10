@@ -20,12 +20,19 @@ class DatabaseManager:
         return cls._instance
     
     def _initialize_client(self) -> None:
-        """Initialize the Supabase client"""
+        """Initialize the Supabase client
+        Prefer the service role key when available to avoid RLS permission errors on the backend.
+        """
         url = os.environ.get("SUPABASE_URL")
-        key = os.environ.get("SUPABASE_KEY")
+        # Prefer service role key; fall back to generic key only if explicitly needed
+        key = (
+            os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+            or os.environ.get("SUPABASE_KEY")
+            or os.environ.get("SUPABASE_ANON_KEY")
+        )
         
         if not url or not key:
-            raise ValueError("SUPABASE_URL and SUPABASE_KEY environment variables must be set")
+            raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_KEY) must be set")
         
         try:
             self._client = create_client(url, key)

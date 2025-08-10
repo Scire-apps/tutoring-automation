@@ -1,6 +1,8 @@
 from flask import Blueprint, jsonify, request, current_app
 import logging
 from utils.db import get_db_manager
+from utils.db import get_supabase_client
+from utils.auth import require_auth
 from utils.forms import GoogleFormsHandler
 from utils.email_service import get_email_service
 from utils.storage import get_storage_service
@@ -73,6 +75,7 @@ def google_forms_webhook():
         return jsonify({"error": "Failed to create tutoring opportunity"}), 500
 
 @api_bp.route('/storage/upload-url', methods=['POST'])
+@require_auth
 def get_upload_url():
     """Get a pre-signed URL for file upload"""
     # This endpoint would typically require authentication
@@ -84,6 +87,7 @@ def get_upload_url():
     })
 
 @api_bp.route('/services/status', methods=['GET'])
+@require_auth
 def services_status():
     """Check status of external services"""
     services = {
@@ -121,3 +125,19 @@ def services_status():
     
     return jsonify(services)
 
+
+@api_bp.route('/subjects', methods=['GET'])
+@require_auth
+def list_subjects():
+    """List all subjects (authenticated)"""
+    supabase = get_supabase_client()
+    result = supabase.table('subjects').select('*').order('category, name').execute()
+    return jsonify({'subjects': result.data or []})
+
+
+@api_bp.route('/public/schools', methods=['GET'])
+def list_schools_public():
+    """Public list of schools for registration forms"""
+    supabase = get_supabase_client()
+    result = supabase.table('schools').select('id, name, domain').order('name').execute()
+    return jsonify({'schools': result.data or []})

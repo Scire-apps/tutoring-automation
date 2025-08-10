@@ -58,6 +58,58 @@ export async function checkServicesStatus() {
   }>('/api/services/status');
 }
 
+// Tutee endpoints
+export async function getTuteeDashboard() {
+  return apiRequest<{ tutee: any; opportunities: any[]; jobs: any[] }>(
+    '/api/tutee/dashboard',
+    { method: 'GET' }
+  );
+}
+
+export async function createTuteeOpportunity(payload: {
+  subject_id: string;
+  grade_level?: string;
+  sessions_per_week: number;
+  availability: any;
+  location_preference?: string;
+  additional_notes?: string;
+  priority?: 'low' | 'normal' | 'high';
+}) {
+  return apiRequest<{ message: string; opportunity: any }>(
+    '/api/tutee/opportunities',
+    { method: 'POST', body: JSON.stringify(payload) }
+  );
+}
+
+// Tutor endpoints
+export async function getTutorDashboard() {
+  return apiRequest<{ tutor: any; approved_subject_ids: string[]; opportunities: any[]; jobs: any[] }>(
+    '/api/tutor/dashboard',
+    { method: 'GET' }
+  );
+}
+
+export async function acceptOpportunity(opportunityId: string, finalizedSchedule: Array<{ date: string; time: string }>) {
+  return apiRequest<{ message: string; job: any }>(
+    `/api/tutor/opportunities/${opportunityId}/accept`,
+    { method: 'POST', body: JSON.stringify({ finalized_schedule: finalizedSchedule }) }
+  );
+}
+
+export async function listSubjects() {
+  return apiRequest<{ subjects: any[] }>(
+    '/api/subjects',
+    { method: 'GET' }
+  );
+}
+
+export async function listSchoolsPublic() {
+  const url = `${API_URL}/api/public/schools`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch schools');
+  return res.json();
+}
+
 /**
  * Get a pre-signed URL for file upload
  */
@@ -246,6 +298,12 @@ const apiService = {
   sendCancellationNotification,
   sendSessionReminder,
   sendApprovalStatusNotification,
+  getTuteeDashboard,
+  createTuteeOpportunity,
+  getTutorDashboard,
+  acceptOpportunity,
+  listSubjects,
+  listSchoolsPublic,
 };
 
 export default apiService;

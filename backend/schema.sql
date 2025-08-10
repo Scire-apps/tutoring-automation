@@ -21,6 +21,19 @@ CREATE TABLE tutors (
     school_id UUID REFERENCES schools(id),
     status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'suspended')),
     volunteer_hours NUMERIC(10, 2) DEFAULT 0,
+    approved_subject_ids UUID[] DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tutees Table
+CREATE TABLE tutees (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    auth_id UUID NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    school_id UUID REFERENCES schools(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -52,12 +65,11 @@ CREATE TABLE subject_approvals (
 -- Tutoring Opportunities Table
 CREATE TABLE tutoring_opportunities (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tutee_name TEXT NOT NULL,
-    tutee_email TEXT NOT NULL,
-    subject TEXT NOT NULL,
+    tutee_id UUID REFERENCES tutees(id),
+    subject_id UUID NOT NULL REFERENCES subjects(id),
     grade_level TEXT,
-    school TEXT,
-    availability TEXT,
+    sessions_per_week INT NOT NULL DEFAULT 1 CHECK (sessions_per_week > 0),
+    availability JSONB NOT NULL DEFAULT '{}',
     location_preference TEXT,
     additional_notes TEXT,
     status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'assigned', 'completed', 'cancelled')),
@@ -71,8 +83,9 @@ CREATE TABLE tutoring_jobs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     opportunity_id UUID NOT NULL REFERENCES tutoring_opportunities(id),
     tutor_id UUID NOT NULL REFERENCES tutors(id),
-    scheduled_date DATE,
-    scheduled_time TEXT,
+    tutee_id UUID NOT NULL REFERENCES tutees(id),
+    subject_id UUID NOT NULL REFERENCES subjects(id),
+    finalized_schedule JSONB NOT NULL DEFAULT '[]',
     location TEXT,
     status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'completed', 'cancelled')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -156,6 +169,13 @@ CREATE POLICY tutors_view_policy ON tutors
         EXISTS (SELECT 1 FROM admins WHERE auth_id = auth.uid())
     );
 
+-- Tutees: Viewable by admins and the tutee themselves
+CREATE POLICY tutees_view_policy ON tutees
+    FOR SELECT USING (
+        auth.uid() = auth_id OR
+        EXISTS (SELECT 1 FROM admins WHERE auth_id = auth.uid())
+    );
+
 -- Subjects: Viewable by all authenticated users
 CREATE POLICY subjects_view_policy ON subjects
     FOR SELECT USING (auth.role() = 'authenticated');
@@ -167,17 +187,22 @@ CREATE POLICY subject_approvals_view_policy ON subject_approvals
         EXISTS (SELECT 1 FROM admins WHERE auth_id = auth.uid())
     );
 
--- Tutoring Opportunities: Viewable by all tutors
+-- Tutoring Opportunities:
+--  - Tutors may view all open opportunities
+--  - Tutees may view only their own opportunities
+--  - Admins may view all
 CREATE POLICY tutoring_opportunities_view_policy ON tutoring_opportunities
     FOR SELECT USING (
-        EXISTS (SELECT 1 FROM tutors WHERE auth_id = auth.uid()) OR
-        EXISTS (SELECT 1 FROM admins WHERE auth_id = auth.uid())
+        (status = 'open' AND EXISTS (SELECT 1 FROM tutors WHERE auth_id = auth.uid())) OR
+        EXISTS (SELECT 1 FROM admins WHERE auth_id = auth.uid()) OR
+        EXISTS (SELECT 1 FROM tutees WHERE auth_id = auth.uid() AND id = tutoring_opportunities.tutee_id)
     );
 
--- Tutoring Jobs: Viewable by the assigned tutor and admins
+-- Tutoring Jobs: Viewable by assigned tutor, related tutee, and admins
 CREATE POLICY tutoring_jobs_view_policy ON tutoring_jobs
     FOR SELECT USING (
         EXISTS (SELECT 1 FROM tutors WHERE auth_id = auth.uid() AND id = tutoring_jobs.tutor_id) OR
+        EXISTS (SELECT 1 FROM tutees WHERE auth_id = auth.uid() AND id = tutoring_jobs.tutee_id) OR
         EXISTS (SELECT 1 FROM admins WHERE auth_id = auth.uid())
     );
 

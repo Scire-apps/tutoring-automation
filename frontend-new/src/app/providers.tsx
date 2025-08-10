@@ -19,7 +19,8 @@ type AuthContextType = {
     password: string,
     firstName: string,
     lastName: string,
-    schoolId?: string
+    schoolId?: string,
+    accountType?: 'tutor' | 'tutee'
   ) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   isAdmin: () => boolean;
@@ -148,7 +149,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Determine user role synchronously to ensure proper redirect
         console.log("Auth context: Determining user role...");
         try {
-          const role = await determineUserRole(data.user.id);
+          // ask backend for role
+          const token = data.session?.access_token;
+          let role: any = null;
+          if (token) {
+            const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/role`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const json = await resp.json();
+            role = json.role ?? null;
+          } else {
+            role = await determineUserRole(data.user.id);
+          }
           console.log("Auth context: User role determined:", role);
           setUserRole(role);
         } catch (err) {
@@ -170,7 +182,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     firstName: string,
     lastName: string,
-    schoolId?: string
+    schoolId?: string,
+    accountType: 'tutor' | 'tutee' = 'tutor'
   ) => {
     // Sign up with Supabase Auth
     const { data, error } = await supabase.auth.signUp({
@@ -186,20 +199,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (!error && data.user) {
-      // Create tutor record in database
-      const { error: tutorError } = await supabase.from("tutors").insert({
-        auth_id: data.user.id,
-        email: email,
-        first_name: firstName,
-        last_name: lastName,
-        school_id: schoolId,
-        status: "pending",
-        volunteer_hours: 0,
-      });
-
-      if (tutorError) {
-        console.error("Error creating tutor record:", tutorError);
-        return { error: tutorError };
+      // Ask backend to ensure profile row (uses service role)
+      try {
+        const token = data.session?.access_token;
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/ensure`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            account_type: accountType,
+            first_name: firstName,
+            last_name: lastName,
+            school_id: schoolId,
+          })
+        });
+      } catch (e) {
+        console.error('Error ensuring account via backend:', e);
       }
 
       setUser(data.user);

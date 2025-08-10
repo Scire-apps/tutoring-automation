@@ -105,11 +105,14 @@ export default function OpportunitiesPage() {
 
       try {
         // Fetch tutor data
-        const { data: tutor, error: tutorError } = await supabase
-          .from("tutors")
-          .select("*, school:schools(*)")
-          .eq("auth_id", user.id)
-          .single();
+        // Fetch tutor via backend profile endpoint
+        const { data: { session } } = await supabase.auth.getSession();
+        const profResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/profile`, {
+          headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}` }
+        });
+        if (!profResp.ok) { setError('Failed to load tutor data'); return; }
+        const profJson = await profResp.json();
+        const tutor = profJson.tutor;
 
         if (tutorError) {
           console.error("Error fetching tutor data:", tutorError);
@@ -122,11 +125,11 @@ export default function OpportunitiesPage() {
         // Fetch approved subjects for this tutor
         try {
           // First get the approvals
-          const { data: approvals, error: approvalsError } = await supabase
-            .from("subject_approvals")
-            .select("*")
-            .eq("tutor_id", tutor.id)
-            .eq("status", "approved");
+          const apprResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/approvals`, {
+            headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}` }
+          });
+          if (!apprResp.ok) throw new Error('approvals failed');
+          const apprJson = await apprResp.json();
 
           if (approvalsError) {
             console.error(
@@ -136,28 +139,8 @@ export default function OpportunitiesPage() {
           } else {
             // If we have approvals, fetch the related subjects separately
             if (approvals && approvals.length > 0) {
-              const subjectIds = approvals
-                .map((approval) => approval.subject_id)
-                .filter(Boolean);
-
-              if (subjectIds.length > 0) {
-                const { data: subjects, error: subjectsError } = await supabase
-                  .from("subjects")
-                  .select("*")
-                  .in("id", subjectIds);
-
-                if (subjectsError) {
-                  console.error(
-                    "Error fetching subjects:",
-                    subjectsError.message
-                  );
-                } else {
-                  // Extract subject names for approval checking
-                  const subjectNames = subjects?.map((s) => s.name) || [];
-                  console.log("Approved subjects:", subjectNames);
-                  setApprovedSubjects(subjectNames);
-                }
-              }
+              const subjectNames = apprJson.approved_subjects || [];
+              setApprovedSubjects(subjectNames);
             } else {
               setApprovedSubjects([]);
             }
@@ -168,19 +151,12 @@ export default function OpportunitiesPage() {
         }
 
         // Fetch ALL open tutoring opportunities (not filtered by school)
-        const { data: opps, error: oppsError } = await supabase
-          .from("tutoring_opportunities")
-          .select("*")
-          .eq("status", "open")
-          .order("priority", { ascending: false }) // High priority first
-          .order("created_at", { ascending: true }); // Oldest first within same priority
-
-        if (oppsError) {
-          console.error("Error fetching opportunities:", oppsError);
-          setError("Failed to load opportunities");
-        } else {
-          setOpportunities(opps || []);
-        }
+        const oppResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/opportunities`, {
+          headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}` }
+        });
+        if (!oppResp.ok) { setError('Failed to load opportunities'); }
+        const oppJson = await oppResp.json();
+        setOpportunities(oppJson.opportunities || []);
       } catch (err: any) {
         console.error("Error in fetchData:", err);
         setError("An unexpected error occurred");
@@ -200,38 +176,14 @@ export default function OpportunitiesPage() {
 
     try {
       // Create a tutoring job (assignment)
-      const { data: job, error: jobError } = await supabase
-        .from("tutoring_jobs")
-        .insert({
-          opportunity_id: opportunityId,
-          tutor_id: tutorData.id,
-          status: "scheduled", // Changed from 'pending' to match the database constraint
-        })
-        .select()
-        .single();
-
-      if (jobError) {
-        console.error("Error creating tutoring job:", jobError);
-        setError("Failed to apply for this opportunity. Please try again.");
-        setApplyingTo(null); // Clear loading state
-        return;
-      }
-
-      // Update the opportunity status to assigned
-      const { error: updateError } = await supabase
-        .from("tutoring_opportunities")
-        .update({ status: "assigned" })
-        .eq("id", opportunityId);
-
-      if (updateError) {
-        console.error("Error updating opportunity status:", updateError);
-        // Try to delete the job if opportunity update fails
-        await supabase.from("tutoring_jobs").delete().eq("id", job.id);
-
-        setError("Failed to update opportunity status");
-        setApplyingTo(null); // Clear loading state
-        return;
-      }
+      // Create job and assign via backend
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/opportunities/${opportunityId}/apply`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}` }
+      });
+      if (!resp.ok) { setError('Failed to apply'); setApplyingTo(null); return; }
+      const job = (await resp.json()).job;
 
       // Send job assignment notification email
       try {

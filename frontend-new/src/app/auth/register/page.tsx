@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/providers';
 import { supabase } from '@/services/supabase';
@@ -21,25 +21,18 @@ export default function RegisterPage() {
   
   const router = useRouter();
   const { signUp } = useAuth();
+  const searchParams = useSearchParams();
+  const accountTypeParam = (searchParams.get('t') || 'mentor').toLowerCase();
+  const accountType: 'tutor' | 'tutee' = accountTypeParam === 'mentee' ? 'tutee' : 'tutor';
   
-  // Fetch schools on component mount
+  // Fetch schools on component mount (via backend)
   useEffect(() => {
     const fetchSchools = async () => {
       try {
-        console.log('Fetching schools...');
-        const { data, error } = await supabase
-          .from('schools')
-          .select('*')
-          .order('name');
-        
-        if (error) {
-          console.error('Error fetching schools:', error);
-          return;
-        }
-        
-        console.log('Schools fetched:', data);
-        
-        if (!data || data.length === 0) {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/public/schools`);
+        const json = res.ok ? await res.json() : { schools: [] };
+        const data = json.schools || [];
+        if (data.length === 0) {
           // If no schools found, add a default one for testing
           setSchools([{
             id: '1',
@@ -78,7 +71,7 @@ export default function RegisterPage() {
     // This allows for schoolboard emails like @hdsb.ca
     
     try {
-      const { error } = await signUp(email, password, firstName, lastName, schoolId, 'tutor');
+      const { error } = await signUp(email, password, firstName, lastName, schoolId, accountType);
       
       if (error) {
         setError(error.message);
@@ -134,7 +127,7 @@ export default function RegisterPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Register as a tutor
+            {accountType === 'tutee' ? 'Register as a tutee' : 'Register as a tutor'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}

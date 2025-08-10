@@ -22,19 +22,12 @@ def get_tutor_details(tutor_id):
         
         tutor = tutor_result.data
         
-        # Get subject approvals for this tutor
-        approvals_result = supabase.table('subject_approvals').select('''
-            *,
-            subject:subjects(id, name, category, grade_level),
-            approved_by_admin:approved_by(first_name, last_name, email)
-        ''').eq('tutor_id', tutor_id).execute()
-        
         # Get all available subjects
         subjects_result = supabase.table('subjects').select('*').order('category, name').execute()
         
         return jsonify({
             'tutor': tutor,
-            'subject_approvals': approvals_result.data or [],
+            'approved_subject_ids': tutor.get('approved_subject_ids', []) if isinstance(tutor, dict) else [],
             'available_subjects': subjects_result.data or []
         }), 200
         
@@ -66,44 +59,62 @@ def update_subject_approvals(tutor_id):
         
         admin_id = admin_result.data['id']
         
-        if action == 'remove':
-            # Remove the subject approval
-            result = supabase.table('subject_approvals').delete().eq('tutor_id', tutor_id).eq('subject_id', subject_id).execute()
-        else:
-            # Check if approval already exists
-            existing_result = supabase.table('subject_approvals').select('*').eq('tutor_id', tutor_id).eq('subject_id', subject_id).single().execute()
-            
-            if existing_result.data:
-                # Update existing approval
-                result = supabase.table('subject_approvals').update({
-                    'status': 'approved' if action == 'approve' else 'rejected',
-                    'approved_by': admin_id,
-                    'approved_at': 'now()' if action == 'approve' else None
-                }).eq('tutor_id', tutor_id).eq('subject_id', subject_id).execute()
-            else:
-                # Create new approval
-                result = supabase.table('subject_approvals').insert({
+        # Fetch the tutor's current approved_subject_ids
+        tutor_row = supabase.table('tutors').select('approved_subject_ids, first_name, last_name, email').eq('id', tutor_id).single().execute()
+        if not tutor_row.data:
+            return jsonify({'error': 'Tutor not found'}), 404
+        current_ids = tutor_row.data.get('approved_subject_ids') or []
+        
+        updated_ids = list(current_ids)
+        if action == 'approve':
+            if subject_id not in updated_ids:
+                updated_ids.append(subject_id)
+        else:  # 'reject' and 'remove' both result in removal
+            updated_ids = [sid for sid in updated_ids if sid != subject_id]
+        
+        # Update the tutor record (array of approved subject IDs)
+        supabase.table('tutors').update({
+            'approved_subject_ids': updated_ids
+        }).eq('id', tutor_id).execute()
+
+        # Also mirror into subject_approvals as a history/log (if table exists)
+        try:
+            if action == 'approve':
+                supabase.table('subject_approvals').upsert({
                     'tutor_id': tutor_id,
                     'subject_id': subject_id,
-                    'status': 'approved' if action == 'approve' else 'rejected',
+                    'status': 'approved',
                     'approved_by': admin_id,
-                    'approved_at': 'now()' if action == 'approve' else None
-                }).execute()
+                    'approved_at': 'now()'
+                }, on_conflict='tutor_id,subject_id').execute()
+            else:
+                # remove or mark as rejected
+                existing = supabase.table('subject_approvals').select('id').eq('tutor_id', tutor_id).eq('subject_id', subject_id).single().execute()
+                if existing.data:
+                    if action == 'reject':
+                        supabase.table('subject_approvals').update({
+                            'status': 'rejected',
+                            'approved_by': admin_id,
+                            'approved_at': None
+                        }).eq('tutor_id', tutor_id).eq('subject_id', subject_id).execute()
+                    else:
+                        supabase.table('subject_approvals').delete().eq('tutor_id', tutor_id).eq('subject_id', subject_id).execute()
+        except Exception:
+            # table may not exist; ignore
+            pass
         
         # Send email notification for approval/rejection (not for removal)
         if action in ['approve', 'reject']:
             try:
-                # Get tutor details
-                tutor_result = supabase.table('tutors').select('first_name, last_name, email').eq('id', tutor_id).single().execute()
                 # Get subject details
                 subject_result = supabase.table('subjects').select('name').eq('id', subject_id).single().execute()
                 # Get admin details
                 admin_details = supabase.table('admins').select('first_name, last_name').eq('id', admin_id).single().execute()
                 
-                if tutor_result.data and subject_result.data and admin_details.data:
+                if tutor_row.data and subject_result.data and admin_details.data:
                     from utils.email_service import get_email_service
                     
-                    tutor_name = f"{tutor_result.data['first_name']} {tutor_result.data['last_name']}"
+                    tutor_name = f"{tutor_row.data['first_name']} {tutor_row.data['last_name']}"
                     admin_name = f"{admin_details.data['first_name']} {admin_details.data['last_name']}"
                     subject_name = subject_result.data['name']
                     
@@ -148,11 +159,11 @@ def update_subject_approvals(tutor_id):
                         """
                     
                     email_service.send_email(
-                        tutor_result.data['email'],
+                        tutor_row.data['email'],
                         subject_line,
                         html_body
                     )
-                    print(f"Approval notification sent to {tutor_result.data['email']} for {subject_name}: {action}")
+                    print(f"Approval notification sent to {tutor_row.data['email']} for {subject_name}: {action}")
                     
             except Exception as e:
                 print(f"Failed to send approval notification email: {e}")

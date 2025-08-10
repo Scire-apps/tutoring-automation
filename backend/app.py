@@ -3,9 +3,12 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 from routes.api import api_bp
-from routes.admin_invitations import admin_invitations_bp
 from routes.tutor_management import tutor_management_bp
 from routes.email_notifications import email_notifications_bp
+from routes.tutee import tutee_bp
+from routes.tutor import tutor_bp
+from routes.auth import auth_bp
+from routes.jobs import jobs_bp
 
 # Load environment variables
 load_dotenv()
@@ -26,9 +29,12 @@ def create_app():
     
     # Register blueprints
     app.register_blueprint(api_bp)
-    app.register_blueprint(admin_invitations_bp)
     app.register_blueprint(tutor_management_bp)
     app.register_blueprint(email_notifications_bp)
+    app.register_blueprint(tutee_bp)
+    app.register_blueprint(tutor_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(jobs_bp)
     
     @app.route('/')
     def hello():

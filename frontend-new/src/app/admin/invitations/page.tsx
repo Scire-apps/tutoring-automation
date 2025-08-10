@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/providers';
 import { supabase } from '@/services/supabase';
+import api from '@/services/api';
 
 interface Invitation {
   id: string;
@@ -63,16 +64,12 @@ export default function AdminInvitationsPage() {
       }
       
       try {
-        // Fetch schools
-        const { data: schoolsData, error: schoolsError } = await supabase
-          .from('schools')
-          .select('*')
-          .order('name');
-        
-        if (schoolsError) {
-          console.error('Error fetching schools:', schoolsError);
-        } else {
-          setSchools(schoolsData || []);
+        // Fetch schools via backend
+        try {
+          const resp = await api.listSchoolsPublic();
+          setSchools(resp.schools || []);
+        } catch (e) {
+          console.error('Error fetching schools');
         }
         
         // Fetch invitations

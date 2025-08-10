@@ -98,11 +98,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // Define protected routes
-  const protectedRoutes = ["/opportunities", "/jobs", "/profile", "/dashboard"];
+  const protectedRoutes = ["/opportunities", "/jobs", "/profile", "/dashboard", "/tutee"];
   const adminRoutes = ["/admin"];
   const authRoutes = [
     "/auth/login",
     "/auth/register",
+    "/auth/register/tutee",
     "/auth/forgot-password",
     "/auth/reset-password",
   ];
@@ -205,7 +206,7 @@ export async function middleware(request: NextRequest) {
       if (adminData) {
         userRole = adminData.role;
       } else {
-        // Check if user is a tutor
+        // Check if user is a tutor or tutee
         const { data: tutorData } = await supabase
           .from("tutors")
           .select("id")
@@ -214,6 +215,13 @@ export async function middleware(request: NextRequest) {
 
         if (tutorData) {
           userRole = "tutor";
+        } else {
+          const { data: tuteeData } = await supabase
+            .from("tutees")
+            .select("id")
+            .eq("auth_id", session.user.id)
+            .single();
+          if (tuteeData) userRole = "tutee";
         }
       }
     } catch (error) {
@@ -226,6 +234,8 @@ export async function middleware(request: NextRequest) {
       target = "/admin/dashboard";
     } else if (userRole === "admin") {
       target = "/admin/school/dashboard";
+    } else if (userRole === "tutee") {
+      target = "/tutee/dashboard";
     }
 
     console.log("Middleware: Redirecting to:", target, "for role:", userRole);

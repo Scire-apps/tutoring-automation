@@ -37,14 +37,10 @@ function AdminRegisterForm() {
       }
 
       try {
-        // Verify invitation token directly with Supabase
-        const { data: invitationData, error: invitationError } = await supabase
-          .from("admin_invitations")
-          .select("*")
-          .eq("invitation_token", token)
-          .single();
-
-        if (invitationError || !invitationData) {
+        // Verify invitation token via backend
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/invitations/verify/${token}`);
+        const invitationData = res.ok ? await res.json() : null;
+        if (!invitationData) {
           setError("Invalid or expired invitation token");
           setIsValidatingToken(false);
           return;
@@ -71,17 +67,10 @@ function AdminRegisterForm() {
         setRole(invitationData.role);
         setSchoolId(invitationData.school_id || "");
 
-        // Fetch schools
-        const { data: schoolsData, error: schoolsError } = await supabase
-          .from("schools")
-          .select("*")
-          .order("name");
-
-        if (schoolsError) {
-          console.error("Error fetching schools:", schoolsError);
-        } else {
-          setSchools(schoolsData || []);
-        }
+        // Fetch schools via backend (public)
+        const schRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/public/schools`);
+        const schJson = schRes.ok ? await schRes.json() : { schools: [] };
+        setSchools(schJson.schools || []);
       } catch (err) {
         console.error("Error verifying invitation:", err);
         setError("Failed to verify invitation");
@@ -131,39 +120,19 @@ function AdminRegisterForm() {
         return;
       }
 
-      // Create admin record in database
-      const { error: adminError } = await supabase.from("admins").insert({
-        auth_id: data.user.id,
-        email: email,
-        first_name: firstName,
-        last_name: lastName,
-        school_id: role === "admin" ? schoolId : null,
-        role: role,
+      // Complete admin registration via backend (creates admin row and marks invitation used)
+      const tokenRes = await supabase.auth.getSession();
+      const bearer = tokenRes.data.session?.access_token;
+      const comp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/invitations/complete`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${bearer}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, first_name: firstName, last_name: lastName, school_id: role === 'admin' ? schoolId : null })
       });
-
-      if (adminError) {
-        console.error("Error creating admin record:", adminError);
-        setError("Failed to create admin record");
+      if (!comp.ok) {
+        const j = await comp.json().catch(()=>({}));
+        setError(j.error || 'Failed to complete admin registration');
         setIsLoading(false);
         return;
-      }
-
-      // Mark invitation as used
-      try {
-        const { error: updateError } = await supabase
-          .from("admin_invitations")
-          .update({
-            status: "used",
-            used_at: new Date().toISOString(),
-          })
-          .eq("invitation_token", token);
-
-        if (updateError) {
-          console.error("Error marking invitation as used:", updateError);
-        }
-      } catch (err) {
-        console.error("Error marking invitation as used:", err);
-        // Don't fail the registration for this
       }
 
       // Show success message

@@ -47,58 +47,17 @@ export default function SchedulingPage() {
   const loadJobData = async () => {
     try {
       setLoading(true);
-      
-      // Get tutor info
-      const { data: tutorData, error: tutorError } = await supabase
-        .from('tutors')
-        .select('id')
-        .eq('auth_id', user?.id)
-        .single();
-
-      if (tutorError || !tutorData) {
-        setError('You must be logged in as a tutor to schedule sessions');
-        return;
-      }
-
-      // Get job data
-      const { data: jobData, error: jobError } = await supabase
-        .from('tutoring_jobs')
-        .select('*')
-        .eq('id', jobId)
-        .eq('tutor_id', tutorData.id)
-        .single();
-
-      if (jobError || !jobData) {
-        setError('Job not found or you do not have permission to schedule it');
-        return;
-      }
-
-      // Get opportunity data
-      const { data: opportunityData, error: opportunityError } = await supabase
-        .from('tutoring_opportunities')
-        .select('*')
-        .eq('id', jobData.opportunity_id)
-        .single();
-
-      if (opportunityError || !opportunityData) {
-        setError('Could not load tutoring opportunity details');
-        return;
-      }
-
-      // Combine the data
-      const fullJobData = {
-        ...jobData,
-        tutoring_opportunity: opportunityData
-      };
-
-      setJob(fullJobData);
-      
-      // Parse availability options
-      if (opportunityData.availability_formatted) {
-        const options = opportunityData.availability_formatted
-          .split(',')
-          .map(option => option.trim())
-          .filter(Boolean);
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/jobs/${jobId}`, {
+        headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}` }
+      });
+      if (!resp.ok) { setError('Job not found or not permitted'); return; }
+      const json = await resp.json();
+      const jobData = json.job;
+      setJob(jobData);
+      const opportunityData = jobData?.tutoring_opportunity;
+      if (opportunityData?.availability_formatted) {
+        const options = opportunityData.availability_formatted.split(',').map((o: string)=>o.trim()).filter(Boolean);
         setAvailabilityOptions(options);
       }
       
@@ -122,18 +81,13 @@ export default function SchedulingPage() {
       // Format the scheduled time
       const scheduledDateTime = `${selectedDate}T${selectedTime}:00`;
       
-      // Update the job with the scheduled time
-      const { error: updateError } = await supabase
-        .from('tutoring_jobs')
-        .update({
-          status: 'scheduled',
-          scheduled_time: scheduledDateTime
-        })
-        .eq('id', jobId);
-
-      if (updateError) {
-        throw new Error(`Failed to schedule session: ${updateError.message}`);
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/jobs/${jobId}/schedule`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scheduled_time: scheduledDateTime })
+      });
+      if (!r.ok) throw new Error('Failed to schedule');
       
       // Get tutor data for email notification
       const { data: tutorData, error: tutorError } = await supabase

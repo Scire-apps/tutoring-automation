@@ -114,12 +114,6 @@ export default function OpportunitiesPage() {
         const profJson = await profResp.json();
         const tutor = profJson.tutor;
 
-        if (tutorError) {
-          console.error("Error fetching tutor data:", tutorError);
-          setError("Failed to load tutor data");
-          return;
-        }
-
         setTutorData(tutor);
 
         // Fetch approved subjects for this tutor
@@ -130,21 +124,8 @@ export default function OpportunitiesPage() {
           });
           if (!apprResp.ok) throw new Error('approvals failed');
           const apprJson = await apprResp.json();
-
-          if (approvalsError) {
-            console.error(
-              "Error fetching subject approvals:",
-              approvalsError.message
-            );
-          } else {
-            // If we have approvals, fetch the related subjects separately
-            if (approvals && approvals.length > 0) {
-              const subjectNames = apprJson.approved_subjects || [];
-              setApprovedSubjects(subjectNames);
-            } else {
-              setApprovedSubjects([]);
-            }
-          }
+          const subjectNames = apprJson.approved_subjects || [];
+          setApprovedSubjects(subjectNames);
         } catch (approvalErr) {
           console.error("Exception fetching subject approvals:", approvalErr);
           setApprovedSubjects([]);

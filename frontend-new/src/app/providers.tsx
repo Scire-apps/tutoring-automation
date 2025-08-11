@@ -90,6 +90,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
 
       try {
+        // Clean up any stale Supabase auth storage entries that can cause JSON parse errors
+        if (typeof window !== 'undefined') {
+          try {
+            const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+            const refMatch = url.match(/https?:\/\/([^.]+)\.supabase\.co/i);
+            const projectRef = refMatch ? refMatch[1] : undefined;
+            const candidateKeys = [
+              'supabase.auth.token',
+              projectRef ? `sb-${projectRef}-auth-token` : undefined,
+            ].filter(Boolean) as string[];
+            for (const key of candidateKeys) {
+              const raw = window.localStorage.getItem(key);
+              if (!raw) continue;
+              const looksJson = raw.trim().startsWith('{');
+              const looksBase64 = raw.startsWith('base64-');
+              if (!looksJson || looksBase64) {
+                window.localStorage.removeItem(key);
+              } else {
+                try { JSON.parse(raw); } catch { window.localStorage.removeItem(key); }
+              }
+            }
+          } catch {}
+        }
+
         // Get current session
         const { session: currentSession } = await getSession();
         setSession(currentSession);

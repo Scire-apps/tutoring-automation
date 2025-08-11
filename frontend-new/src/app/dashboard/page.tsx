@@ -180,20 +180,9 @@ export default function TutorDashboard() {
         return;
       }
 
-      // Add timeout for role determination to prevent infinite loading
+      // Wait for role determination without forcing redirect
       if (userRole === null) {
-        console.log(
-          "Dashboard: User role is null, waiting for role determination..."
-        );
-        // If role is still null after auth loading is complete, give it a moment
-        setTimeout(() => {
-          if (userRole === null) {
-            console.log(
-              "Dashboard: Role determination timeout, redirecting to login"
-            );
-            router.push("/auth/login");
-          }
-        }, 2000);
+        console.log("Dashboard: User role is null, waiting for role determination...");
         return;
       }
 
@@ -204,6 +193,12 @@ export default function TutorDashboard() {
             "Dashboard: User is admin, redirecting to admin dashboard"
           );
           router.push("/admin/dashboard");
+          return;
+        }
+        // Redirect tutees to their dashboard
+        if (userRole === "tutee") {
+          console.log("Dashboard: User is tutee, redirecting to tutee dashboard");
+          router.push("/tutee/dashboard");
           return;
         }
         // For users without a role, redirect to login

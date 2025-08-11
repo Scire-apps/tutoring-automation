@@ -36,15 +36,33 @@ export default function SupabaseListener() {
           return;
         }
 
-        // Handle sign-in (only once per page load)
-        if (event === "SIGNED_IN" && !hasHandledSignIn) {
+        // Handle sign-in or session ready: redirect based on backend role
+        if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && !hasHandledSignIn) {
           hasHandledSignIn = true;
           console.log("SupabaseListener: New sign-in detected");
-          
-          // Only redirect if on auth pages, otherwise do nothing
+
           const currentPath = window.location.pathname;
-          if (currentPath.startsWith('/auth/')) {
-            router.push("/dashboard");
+          // Only redirect from root or auth pages; avoid interrupting other pages
+          if (currentPath === '/' || currentPath.startsWith('/auth/')) {
+            try {
+              const { data: { session: cur } } = await supabase.auth.getSession();
+              const token = cur?.access_token;
+              if (!token) return;
+              const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://tutoring-automation-sdt9.onrender.com";
+              const resp = await fetch(`${apiBase}/api/auth/role`, {
+                headers: { Authorization: `Bearer ${token}` },
+                credentials: 'include',
+              });
+              if (!resp.ok) return;
+              const json = await resp.json();
+              const role = json.role;
+              if (role === 'superadmin') return router.replace('/admin/dashboard');
+              if (role === 'admin') return router.replace('/admin/school/dashboard');
+              if (role === 'tutor') return router.replace('/dashboard');
+              if (role === 'tutee') return router.replace('/tutee/dashboard');
+            } catch (e) {
+              console.error('SupabaseListener: role redirect error', e);
+            }
           }
         }
       }

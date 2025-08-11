@@ -207,164 +207,22 @@ export default function TutorDashboard() {
         return;
       }
 
-      console.log("Dashboard: User is tutor, loading dashboard data...");
+      console.log("Dashboard: User is tutor, loading dashboard data via backend...");
 
       try {
-        // Fetch tutor data
-        const { data: tutor, error: tutorError } = await supabase
-          .from("tutors")
-          .select("*, school:schools(*)")
-          .eq("auth_id", user.id)
-          .single();
-
-        if (tutorError) {
-          console.error("Error fetching tutor data:", tutorError);
-          setError("Failed to load tutor data");
-          return;
-        }
-
-        setTutorData(tutor);
-
-        // Fetch active tutoring jobs
-        try {
-          // First, get the jobs
-          const { data: jobs, error: jobsError } = await supabase
-            .from("tutoring_jobs")
-            .select("*")
-            .eq("tutor_id", tutor.id)
-            .in("status", ["scheduled", "pending", "active"])
-            .order("created_at", { ascending: false });
-
-          if (jobsError) {
-            console.error("Error fetching jobs:", jobsError.message);
-            setActiveJobs([]);
-          } else {
-            // If we have jobs, fetch the related opportunities separately
-            if (jobs && jobs.length > 0) {
-              const opportunityIds = jobs
-                .map((job) => job.opportunity_id)
-                .filter(Boolean);
-
-              if (opportunityIds.length > 0) {
-                const { data: opportunities, error: oppError } = await supabase
-                  .from("tutoring_opportunities")
-                  .select("*")
-                  .in("id", opportunityIds);
-
-                if (oppError) {
-                  console.error(
-                    "Error fetching opportunities:",
-                    oppError.message
-                  );
-                } else {
-                  // Create a map of opportunities by ID for easy lookup
-                  const opportunityMap = (opportunities || []).reduce(
-                    (map, opp) => {
-                      map[opp.id] = opp;
-                      return map;
-                    },
-                    {}
-                  );
-
-                  // Join the data manually
-                  const transformedJobs = jobs.map((job) => {
-                    const opportunity =
-                      opportunityMap[job.opportunity_id] || {};
-                    return {
-                      ...job,
-                      tutoring_opportunity: {
-                        ...opportunity,
-                        tutee_name: `${opportunity.tutee_first_name || ""} ${
-                          opportunity.tutee_last_name || ""
-                        }`.trim(),
-                        location_preference: opportunity.session_location || "",
-                        availability: opportunity.availability_formatted || "",
-                      },
-                    };
-                  });
-
-                  setActiveJobs(transformedJobs);
-                }
-              } else {
-                setActiveJobs([]);
-              }
-            } else {
-              setActiveJobs([]);
-            }
-          }
-        } catch (jobErr) {
-          console.error("Exception fetching jobs:", jobErr);
-          setActiveJobs([]);
-        }
-
-        // Fetch subject approvals
-        try {
-          // First get the approvals
-          const { data: approvals, error: approvalsError } = await supabase
-            .from("subject_approvals")
-            .select("*")
-            .eq("tutor_id", tutor.id)
-            .order("created_at", { ascending: false });
-
-          if (approvalsError) {
-            console.error(
-              "Error fetching subject approvals:",
-              approvalsError.message
-            );
-            setSubjectApprovals([]);
-          } else {
-            // If we have approvals, fetch the related subjects separately
-            if (approvals && approvals.length > 0) {
-              const subjectIds = approvals
-                .map((approval) => approval.subject_id)
-                .filter(Boolean);
-
-              if (subjectIds.length > 0) {
-                const { data: subjects, error: subjectsError } = await supabase
-                  .from("subjects")
-                  .select("*")
-                  .in("id", subjectIds);
-
-                if (subjectsError) {
-                  console.error(
-                    "Error fetching subjects:",
-                    subjectsError.message
-                  );
-                  // Still use the approvals without subject details
-                  setSubjectApprovals(approvals);
-                } else {
-                  // Create a map of subjects by ID for easy lookup
-                  const subjectMap = (subjects || []).reduce((map, subject) => {
-                    map[subject.id] = subject;
-                    return map;
-                  }, {});
-
-                  // Join the data manually
-                  const transformedApprovals = approvals.map((approval) => {
-                    const subject = subjectMap[approval.subject_id] || {};
-                    return {
-                      ...approval,
-                      subject: subject.name || "Unknown Subject",
-                    };
-                  });
-
-                  setSubjectApprovals(transformedApprovals);
-                }
-              } else {
-                setSubjectApprovals([]);
-              }
-            } else {
-              setSubjectApprovals([]);
-            }
-          }
-        } catch (approvalErr) {
-          console.error("Exception fetching subject approvals:", approvalErr);
-          setSubjectApprovals([]);
-        }
+        const resp = await apiService.getTutorDashboard();
+        // resp: { tutor, approved_subject_ids, opportunities, jobs }
+        setTutorData(resp.tutor || null);
+        setActiveJobs(resp.jobs || []);
+        // Map approvals to { id, subject, status, approved_at }
+        const approvals = (resp.approvals || resp.approved_subject_ids || []).map((a: any) => (
+          typeof a === 'string' ? { id: a, subject: a, status: 'approved' } : a
+        ));
+        setSubjectApprovals(approvals);
+        setIsLoading(false);
       } catch (err: any) {
-        console.error("Error in fetchTutorData:", err);
-        setError("An unexpected error occurred");
-      } finally {
+        console.error("Error loading tutor dashboard:", err);
+        setError("Failed to load tutor data");
         setIsLoading(false);
       }
     };
@@ -382,75 +240,17 @@ export default function TutorDashboard() {
     setCancellingJobId(jobId);
 
     try {
-      // 1. Update job status to cancelled
-      const { error: jobError } = await supabase
-        .from("tutoring_jobs")
-        .update({ status: "cancelled" })
-        .eq("id", jobId);
+      // Use backend endpoint to cancel job and reopen opportunity
+      const { data: { session } } = await supabase.auth.getSession();
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/jobs/${jobId}/cancel`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
 
-      if (jobError) {
-        console.error("Error cancelling job:", jobError);
-        setError("Failed to cancel job. Please try again.");
-        return;
-      }
-
-      // 2. Update opportunity status back to open with high priority
-      const { error: oppError } = await supabase
-        .from("tutoring_opportunities")
-        .update({
-          status: "open",
-          priority: "high",
-        })
-        .eq("id", opportunityId);
-
-      if (oppError) {
-        console.error("Error updating opportunity:", oppError);
-        setError(
-          "Failed to update opportunity status. Please contact support."
-        );
-        return;
-      }
-
-      // 3. Send cancellation notification emails
-      try {
-        const cancelledJob = activeJobs.find((job) => job.id === jobId);
-        if (cancelledJob && user) {
-          // Get tutor's full name from auth user or construct from available data
-          const tutorName =
-            user?.user_metadata?.full_name ||
-            `${user?.user_metadata?.first_name || ""} ${
-              user?.user_metadata?.last_name || ""
-            }`.trim() ||
-            user?.email?.split("@")[0] ||
-            "Tutor";
-
-          const tuteeName = `${cancelledJob.tutoring_opportunity.tutee_first_name} ${cancelledJob.tutoring_opportunity.tutee_last_name}`;
-
-          await apiService.sendCancellationNotification(
-            user.email || "",
-            cancelledJob.tutoring_opportunity.tutee_email,
-            {
-              subject: cancelledJob.tutoring_opportunity.subject,
-              tutor_name: tutorName,
-              tutee_name: tuteeName,
-              reason: "Tutor cancelled the session",
-            },
-            jobId
-          );
-          console.log("Cancellation notification emails sent successfully");
-        }
-      } catch (emailError) {
-        console.error("Failed to send cancellation notifications:", emailError);
-        // Don't fail the entire process if email fails - this is expected in development
-        console.log(
-          "Email sending failed (expected in development mode) - continuing with cancellation"
-        );
-      }
-
-      // 4. Remove the job from the active jobs list
+      // Remove the job from the active jobs list
       setActiveJobs((prev) => prev.filter((job) => job.id !== jobId));
 
-      // 5. Show success message
+      // Show success message
       setSuccessMessage(
         "Tutoring job cancelled successfully. The opportunity has been returned to the board."
       );

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/providers';
 import { supabase } from '@/services/supabase';
+import apiService from '@/services/api';
 import { Admin, School, Tutor } from '@/types/models';
 
 export default function AdminDashboardPage() {
@@ -45,57 +46,38 @@ export default function AdminDashboardPage() {
       console.log('Admin dashboard: Admin user authenticated, proceeding...');
       
       try {
-        // Fetch admin data
-        const { data: adminData, error: adminError } = await supabase
-          .from('admins')
-          .select('*, school:schools(*)')
-          .eq('auth_id', user.id)
-          .single();
-        
-        if (adminError) {
-          console.error('Error fetching admin data:', adminError);
+        // Fetch via backend using service role (avoids RLS recursion)
+        const token = (await supabase.auth.getSession()).data.session?.access_token;
+        if (!token) {
+          console.error('Admin dashboard: no access token found');
+          router.push('/auth/login');
           return;
         }
-        
-        setAdmin(adminData as Admin);
-        
-        // Fetch schools (for superadmin)
-        if (isSuperAdmin()) {
-          const { data: schoolsData, error: schoolsError } = await supabase
-            .from('schools')
-            .select('*')
-            .order('name');
-          
-          if (schoolsError) {
-            console.error('Error fetching schools:', schoolsError);
-          } else {
-            setSchools(schoolsData as School[]);
-          }
-          
-          // Fetch all tutors for superadmin
-          const { data: tutorsData, error: tutorsError } = await supabase
-            .from('tutors')
-            .select('*, school:schools(*)')
-            .order('created_at', { ascending: false });
-          
-          if (tutorsError) {
-            console.error('Error fetching tutors:', tutorsError);
-          } else {
-            setTutors(tutorsData as Tutor[]);
-          }
-        } else {
-          // Fetch tutors for specific school admin
-          const { data: tutorsData, error: tutorsError } = await supabase
-            .from('tutors')
-            .select('*, school:schools(*)')
-            .eq('school_id', adminData.school_id)
-            .order('created_at', { ascending: false });
-          
-          if (tutorsError) {
-            console.error('Error fetching tutors:', tutorsError);
-          } else {
-            setTutors(tutorsData as Tutor[]);
-          }
+
+        // Admin profile
+        const adminResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!adminResp.ok) throw new Error('Failed to load admin profile');
+        const adminJson = await adminResp.json();
+        setAdmin(adminJson.admin as Admin);
+
+        // Schools (for admin view; backend returns all)
+        const schoolsResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/schools`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (schoolsResp.ok) {
+          const schoolsJson = await schoolsResp.json();
+          setSchools((schoolsJson.schools || []) as School[]);
+        }
+
+        // Tutors list (scoped by school if admin has one)
+        const tutorsResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (tutorsResp.ok) {
+          const tutorsJson = await tutorsResp.json();
+          setTutors((tutorsJson.tutors || []) as Tutor[]);
         }
       } catch (err) {
         console.error('Error fetching admin data:', err);

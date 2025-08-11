@@ -4,6 +4,73 @@ from utils.auth import require_admin
 
 tutor_management_bp = Blueprint('tutor_management', __name__)
 
+@tutor_management_bp.route('/api/admin/me', methods=['GET'])
+@require_admin
+def get_admin_me():
+    """Return current admin profile with school info"""
+    try:
+        supabase = get_supabase_client()
+        admin_res = supabase.table('admins').select('*, school:schools(name,domain)').eq('auth_id', request.user_id).single().execute()
+        if not admin_res.data:
+            return jsonify({'error': 'Admin not found'}), 404
+        return jsonify({'admin': admin_res.data}), 200
+    except Exception as e:
+        print(f"Error fetching admin me: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@tutor_management_bp.route('/api/admin/tutors', methods=['GET'])
+@require_admin
+def list_tutors_for_admin():
+    """List tutors; if admin has a school_id, filter to that school, else return all"""
+    try:
+        supabase = get_supabase_client()
+        admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
+        school_id = admin_res.data.get('school_id') if admin_res.data else None
+        query = supabase.table('tutors').select('*, school:schools(name,domain)').order('created_at', ascending=False)
+        if school_id:
+            query = query.eq('school_id', school_id)
+        tutors_res = query.execute()
+        return jsonify({'tutors': tutors_res.data or []}), 200
+    except Exception as e:
+        print(f"Error listing tutors for admin: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@tutor_management_bp.route('/api/admin/schools', methods=['GET'])
+@require_admin
+def list_schools_for_admin():
+    """List schools (all)."""
+    try:
+        supabase = get_supabase_client()
+        schools_res = supabase.table('schools').select('*').order('name').execute()
+        return jsonify({'schools': schools_res.data or []}), 200
+    except Exception as e:
+        print(f"Error listing schools: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@tutor_management_bp.route('/api/admin/opportunities', methods=['GET'])
+@require_admin
+def list_opportunities_for_admin():
+    """List tutoring opportunities; if admin has school, filter by that school's name in opportunities.school"""
+    try:
+        supabase = get_supabase_client()
+        # Determine admin's school_id and name
+        admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
+        school_id = admin_res.data.get('school_id') if admin_res.data else None
+        school_name = None
+        if school_id:
+            school_res = supabase.table('schools').select('name').eq('id', school_id).single().execute()
+            if school_res.data:
+                school_name = school_res.data.get('name')
+
+        query = supabase.table('tutoring_opportunities').select('id, tutee_first_name, tutee_last_name, subject, grade_level, status, created_at, school')
+        if school_name:
+            query = query.eq('school', school_name)
+        opps_res = query.order('created_at', ascending=False).limit(50).execute()
+        return jsonify({'opportunities': opps_res.data or []}), 200
+    except Exception as e:
+        print(f"Error listing opportunities for admin: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @tutor_management_bp.route('/api/admin/tutors/<tutor_id>', methods=['GET'])
 @require_admin
 def get_tutor_details(tutor_id):

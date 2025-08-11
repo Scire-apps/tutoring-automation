@@ -76,47 +76,33 @@ export default function SchoolAdminDashboard() {
         return;
       }
 
-      // Get admin data with school information
-      const { data: adminData, error: adminError } = await supabase
-        .from('admins')
-        .select(`
-          id,
-          first_name,
-          last_name,
-          email,
-          role,
-          school_id,
-          school:schools(name, domain)
-        `)
-        .eq('auth_id', user.id)
-        .single();
-
-      console.log('🔍 SCHOOL ADMIN DEBUG: Admin data:', adminData);
-      console.log('🔍 SCHOOL ADMIN DEBUG: Admin error:', adminError);
-
-      if (adminError || !adminData) {
-        console.log('🔍 SCHOOL ADMIN DEBUG: Failed to load admin data');
-        setError('Failed to load admin data');
+      // Use backend endpoints to avoid RLS recursion
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) {
+        setError('Not authenticated');
+        router.push('/auth/login');
         return;
       }
 
-      // Unified role: any admin can access this dashboard
-
+      const adminResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!adminResp.ok) {
+        console.log('🔍 SCHOOL ADMIN DEBUG: Failed to load admin data via backend');
+        setError('Failed to load admin data');
+        return;
+      }
+      const adminJson = await adminResp.json();
+      const adminData = adminJson.admin as SchoolAdmin;
       setAdmin(adminData);
 
       // Load tutoring opportunities for this school
-      const { data: opportunitiesData, error: opportunitiesError } = await supabase
-        .from('tutoring_opportunities')
-        .select('id, tutee_first_name, tutee_last_name, subject, grade_level, status, created_at')
-        .eq('school', adminData.school.name)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (opportunitiesError) {
-        console.error('🔍 SCHOOL ADMIN DEBUG: Error loading opportunities:', opportunitiesError);
-      } else {
-        console.log('🔍 SCHOOL ADMIN DEBUG: Opportunities found:', opportunitiesData?.length || 0);
-        setOpportunities(opportunitiesData || []);
+      const oppResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/opportunities`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (oppResp.ok) {
+        const oppJson = await oppResp.json();
+        setOpportunities((oppJson.opportunities || []).slice(0, 10));
       }
 
       // Debug: Log admin school info
@@ -124,29 +110,15 @@ export default function SchoolAdminDashboard() {
       console.log('🔍 SCHOOL ADMIN DEBUG: Admin school name:', adminData.school?.name);
 
       // Load tutors for this school
-      const { data: tutorsData, error: tutorsError } = await supabase
-        .from('tutors')
-        .select('id, first_name, last_name, email, school_id, status')
-        .eq('school_id', adminData.school_id)
-        .order('created_at', { ascending: false });
-
-      console.log('🔍 SCHOOL ADMIN DEBUG: Tutors query error:', tutorsError);
-      console.log('🔍 SCHOOL ADMIN DEBUG: Tutors found for school:', tutorsData?.length || 0);
-      console.log('🔍 SCHOOL ADMIN DEBUG: Tutors data:', tutorsData);
-
-      if (tutorsError) {
-        console.error('🔍 SCHOOL ADMIN DEBUG: Error loading tutors:', tutorsError);
-      } else {
-        setTutors(tutorsData || []);
+      const tutorsResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (tutorsResp.ok) {
+        const tutorsJson = await tutorsResp.json();
+        setTutors(tutorsJson.tutors || []);
       }
 
-      // Debug: Also check all tutors to see what school_ids exist
-      const { data: allTutorsData } = await supabase
-        .from('tutors')
-        .select('id, first_name, last_name, email, school_id, status');
-      
-      console.log('🔍 SCHOOL ADMIN DEBUG: All tutors in database:', allTutorsData?.length || 0);
-      console.log('🔍 SCHOOL ADMIN DEBUG: All tutors school_ids:', allTutorsData?.map(t => ({ name: `${t.first_name} ${t.last_name}`, school_id: t.school_id })));
+      // Avoid broad debug queries that can trigger RLS recursion
 
     } catch (err) {
       console.error('🔍 SCHOOL ADMIN DEBUG: Error loading dashboard data:', err);

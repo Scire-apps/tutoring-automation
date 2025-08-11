@@ -95,7 +95,7 @@ export default function OpportunitiesPage() {
 
       if (userRole !== "tutor") {
         console.log("Opportunities: User is not tutor, redirecting");
-        if (userRole === "admin" || userRole === "superadmin") {
+  if (userRole === "admin") {
           router.push("/admin/dashboard");
         } else {
           router.push("/auth/login");

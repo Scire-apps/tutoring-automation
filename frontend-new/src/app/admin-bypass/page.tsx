@@ -51,7 +51,7 @@ export default function AdminBypassPage() {
           email: session.user.email,
           first_name: 'Test',
           last_name: 'Admin',
-          role: 'superadmin',
+          role: 'admin',
           school: null
         });
         
@@ -144,9 +144,7 @@ export default function AdminBypassPage() {
       {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {admin.role === 'superadmin' ? 'Super Admin Dashboard (Bypass)' : 'School Admin Dashboard (Bypass)'}
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard (Bypass)</h1>
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-600">
               {admin.first_name} {admin.last_name}
@@ -189,9 +187,7 @@ export default function AdminBypassPage() {
               </div>
               <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Role</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {admin.role === 'superadmin' ? 'Super Admin' : 'School Admin'}
-                </dd>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">Admin</dd>
               </div>
               {admin.role === 'admin' && admin.school && (
                 <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -205,8 +201,8 @@ export default function AdminBypassPage() {
           </div>
         </div>
         
-        {/* Admin Actions Section (Super Admin Only) */}
-        {admin.role === 'superadmin' && (
+        {/* Admin Actions Section */}
+        {admin.role === 'admin' && (
           <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
             <div className="px-4 py-5 sm:px-6">
               <h2 className="text-lg leading-6 font-medium text-gray-900">
@@ -229,8 +225,8 @@ export default function AdminBypassPage() {
           </div>
         )}
 
-        {/* Schools Section (Super Admin Only) */}
-        {admin.role === 'superadmin' && (
+        {/* Schools Section */}
+        {admin.role === 'admin' && (
           <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
             <div className="px-4 py-5 sm:px-6">
               <h2 className="text-lg leading-6 font-medium text-gray-900">
@@ -289,9 +285,7 @@ export default function AdminBypassPage() {
               Tutors
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">
-              {admin.role === 'superadmin' 
-                ? 'All tutors in the system.' 
-                : `Tutors at ${admin.school?.name || 'your school'}.`}
+              Tutors at {admin.school?.name || 'your school'}.
             </p>
           </div>
           <div className="border-t border-gray-200">
@@ -304,11 +298,9 @@ export default function AdminBypassPage() {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Email
                   </th>
-                  {admin.role === 'superadmin' && (
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       School
                     </th>
-                  )}
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
@@ -326,11 +318,9 @@ export default function AdminBypassPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {tutor.email}
                     </td>
-                    {admin.role === 'superadmin' && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {tutor.school?.name || 'Not assigned'}
-                      </td>
-                    )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {tutor.school?.name || 'Not assigned'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         tutor.status === 'active' ? 'bg-green-100 text-green-800' :
@@ -349,7 +339,7 @@ export default function AdminBypassPage() {
                 ))}
                 {tutors.length === 0 && (
                   <tr>
-                    <td colSpan={admin.role === 'superadmin' ? 5 : 4} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                    <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                       No tutors found.
                     </td>
                   </tr>

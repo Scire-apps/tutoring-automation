@@ -23,7 +23,7 @@ export default function AdminLoginPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const json = await res.json();
-      if (json.role === 'superadmin') router.replace('/admin/dashboard');
+      if (json.role === 'admin') router.replace('/admin/dashboard');
       else if (json.role === 'admin') router.replace('/admin/school/dashboard');
       else setError('This account is not an administrator');
     } catch (e: any) {

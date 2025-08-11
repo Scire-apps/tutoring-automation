@@ -67,5 +67,5 @@ class Admin(BaseModel):
         return self._school
     
     def is_superadmin(self) -> bool:
-        """Check if admin is a superadmin"""
-        return self.role == 'superadmin'
+        """Deprecated: All admins have full privileges now"""
+        return True

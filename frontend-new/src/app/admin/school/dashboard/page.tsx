@@ -100,12 +100,7 @@ export default function SchoolAdminDashboard() {
         return;
       }
 
-      // Verify this is a school admin (not superadmin)
-      if (adminData.role !== 'admin') {
-        console.log('🔍 SCHOOL ADMIN DEBUG: Not a school admin, redirecting');
-        router.push('/admin/dashboard'); // Redirect superadmins to their dashboard
-        return;
-      }
+      // Unified role: any admin can access this dashboard
 
       setAdmin(adminData);
 

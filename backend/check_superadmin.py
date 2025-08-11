@@ -6,8 +6,8 @@ import supabase
 load_dotenv()
 
 def check_superadmin():
-    """Check if the superadmin account exists and is properly configured"""
-    print("Checking superadmin account...")
+    """Check if the admin account exists and is properly configured (legacy name)"""
+    print("Checking admin account...")
     
     # Get Supabase credentials
     supabase_url = os.environ.get("SUPABASE_URL")
@@ -21,9 +21,9 @@ def check_superadmin():
         # Create Supabase client
         client = supabase.create_client(supabase_url, supabase_key)
         
-        email = "1hashmimoi+superadmin@hdsb.ca"
+        email = "1hashmimoi+admin@hdsb.ca"
         
-        print(f"Checking for superadmin: {email}")
+        print(f"Checking for admin: {email}")
         
         # Check if admin record exists
         admin_response = client.table("admins").select("*").eq("email", email).execute()

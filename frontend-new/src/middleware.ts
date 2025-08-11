@@ -146,7 +146,7 @@ export async function middleware(request: NextRequest) {
     console.log("Middleware: User role from database:", userRole);
 
     // Allow both superadmin and admin roles to access admin routes
-    if (userRole !== "superadmin" && userRole !== "admin") {
+    if (userRole !== "admin") {
       console.log(
         "Middleware: User is not an admin, access denied. Role:",
         userRole
@@ -209,10 +209,8 @@ export async function middleware(request: NextRequest) {
 
     // Determine redirect target based on role
     let target = "/dashboard"; // default for tutors
-    if (userRole === "superadmin") {
+    if (userRole === "admin") {
       target = "/admin/dashboard";
-    } else if (userRole === "admin") {
-      target = "/admin/school/dashboard";
     } else if (userRole === "tutee") {
       target = "/tutee/dashboard";
     }

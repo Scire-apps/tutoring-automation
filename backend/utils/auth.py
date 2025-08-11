@@ -78,13 +78,10 @@ def require_admin(f):
     return decorated_function
 
 def require_superadmin(f):
-    """Decorator to require superadmin role for API endpoints"""
+    """Deprecated: Superadmin merged into admin. Use require_admin semantics."""
     @wraps(f)
     @require_admin
     def decorated_function(*args, **kwargs):
-        # Check if user is a superadmin
-        if request.user_role != 'superadmin':
-            return jsonify({'error': 'Access denied: Super admin role required'}), 403
-        
+        # Single admin role now has full privileges
         return f(*args, **kwargs)
     return decorated_function

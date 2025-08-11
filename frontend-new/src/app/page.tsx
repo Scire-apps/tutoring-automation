@@ -19,8 +19,7 @@ export default function Home() {
           credentials: 'include',
         } as RequestInit);
         const roleResp = await res.json();
-        if (roleResp.role === 'superadmin') return router.replace('/admin/dashboard');
-        if (roleResp.role === 'admin') return router.replace('/admin/school/dashboard');
+        if (roleResp.role === 'admin') return router.replace('/admin/dashboard');
         if (roleResp.role === 'tutor') return router.replace('/dashboard');
         if (roleResp.role === 'tutee') return router.replace('/tutee/dashboard');
       } catch {}

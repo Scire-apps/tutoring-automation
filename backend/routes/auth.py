@@ -64,12 +64,16 @@ def ensure_account():
 
     table = 'tutors' if account_type == 'tutor' else 'tutees'
 
-    # Check exists
-    exists = supabase.table(table).select('id').eq('auth_id', auth_id).single().execute()
-    if exists.data:
-        return jsonify({ 'status': 'exists' }), 200
+    # Check exists first
+    try:
+        exists = supabase.table(table).select('id').eq('auth_id', auth_id).single().execute()
+        if exists.data:
+            return jsonify({ 'status': 'exists', 'id': exists.data['id'] }), 200
+    except Exception:
+        # continue to create/update
+        pass
 
-    # Insert
+    # Build data for insert/update
     data = {
         'auth_id': auth_id,
         'email': email,
@@ -80,10 +84,24 @@ def ensure_account():
     if account_type == 'tutor':
         data.update({ 'status': 'pending', 'volunteer_hours': 0 })
 
-    res = supabase.table(table).insert(data).execute()
-    if not res.data:
-        return jsonify({ 'error': 'failed to create account' }), 500
+    # Try insert, on conflict perform update
+    try:
+        res = supabase.table(table).insert(data).execute()
+        if res.data:
+            return jsonify({ 'status': 'created', 'id': res.data[0]['id'] }), 201
+    except Exception:
+        # Likely unique violation (auth_id/email). Try update by auth_id
+        try:
+            upd = supabase.table(table).update(data).eq('auth_id', auth_id).execute()
+            if upd.data:
+                return jsonify({ 'status': 'updated', 'id': upd.data[0]['id'] }), 200
+        except Exception as e2:
+            return jsonify({ 'error': 'failed to ensure account', 'details': str(e2) }), 500
 
-    return jsonify({ 'status': 'created', 'id': res.data[0]['id'] }), 201
+    # If we reached here, select again to confirm
+    final = supabase.table(table).select('id').eq('auth_id', auth_id).single().execute()
+    if final.data:
+        return jsonify({ 'status': 'exists', 'id': final.data['id'] }), 200
+    return jsonify({ 'error': 'failed to create account' }), 500
 
 

@@ -9,7 +9,7 @@ import apiService from '@/services/api';
 import { Admin, School, Tutor } from '@/types/models';
 
 export default function AdminDashboardPage() {
-  const { user, isAdmin, isSuperAdmin, signOut, userRole, isLoading: authLoading } = useAuth();
+  const { user, session, isAdmin, isSuperAdmin, signOut, userRole, isLoading: authLoading } = useAuth();
   const [admin, setAdmin] = useState<Admin | null>(null);
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
@@ -47,7 +47,7 @@ export default function AdminDashboardPage() {
       
       try {
         // Fetch via backend using service role (avoids RLS recursion)
-        const token = (await supabase.auth.getSession()).data.session?.access_token;
+        const token = session?.access_token;
         if (!token) {
           console.error('Admin dashboard: no access token found');
           router.push('/auth/login');

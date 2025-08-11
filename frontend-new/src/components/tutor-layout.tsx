@@ -179,7 +179,7 @@ export function TutorLayout({ children }: TutorLayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
         {/* Mobile header */}
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
+        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
             className="text-gray-500 hover:text-gray-900"
@@ -197,6 +197,22 @@ export function TutorLayout({ children }: TutorLayoutProps) {
                 d="M4 6h16M4 12h16M4 18h16"
               />
             </svg>
+          </button>
+          <button
+            onClick={handleSignOut}
+            className="px-3 py-1.5 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Sign Out
+          </button>
+        </div>
+
+        {/* Top actions bar (desktop) */}
+        <div className="hidden lg:flex items-center justify-end bg-white border-b border-gray-200 px-4 py-3">
+          <button
+            onClick={handleSignOut}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Sign Out
           </button>
         </div>
 

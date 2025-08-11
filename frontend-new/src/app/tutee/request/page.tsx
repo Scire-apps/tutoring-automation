@@ -13,10 +13,10 @@ export default function TuteeRequestPage() {
   const [gradeLevel, setGradeLevel] = useState('');
   const [sessionsPerWeek, setSessionsPerWeek] = useState(1);
   const [availability, setAvailability] = useState<any>({});
-  const [dayEnabled, setDayEnabled] = useState<Record<string, boolean>>({
+  const [dayEnabled, setDayEnabled] = useState<{ [key: string]: boolean }>({
     Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false, Sun: false
   });
-  const [dayRanges, setDayRanges] = useState<Record<string, Array<{ start: string; end: string }>>({
+  const [dayRanges, setDayRanges] = useState<{ [key: string]: Array<{ start: string; end: string }> }>({
     Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: []
   });
   const [locationPreference, setLocationPreference] = useState('');
@@ -46,7 +46,7 @@ export default function TuteeRequestPage() {
     setError(null);
     try {
       // Build availability JSON from UI ranges
-      const built: Record<string, string[]> = {};
+      const built: { [key: string]: string[] } = {};
       Object.entries(dayRanges).forEach(([day, ranges]) => {
         if (dayEnabled[day] && ranges.length > 0) {
           const items = ranges

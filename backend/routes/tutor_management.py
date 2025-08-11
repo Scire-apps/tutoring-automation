@@ -26,7 +26,8 @@ def list_tutors_for_admin():
         supabase = get_supabase_client()
         admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
         school_id = admin_res.data.get('school_id') if admin_res.data else None
-        query = supabase.table('tutors').select('*, school:schools(name,domain)').order('created_at', ascending=False)
+        # Note: supabase-py uses 'desc=True' rather than 'ascending=False'
+        query = supabase.table('tutors').select('*, school:schools(name,domain)').order('created_at', desc=True)
         if school_id:
             query = query.eq('school_id', school_id)
         tutors_res = query.execute()
@@ -50,25 +51,134 @@ def list_schools_for_admin():
 @tutor_management_bp.route('/api/admin/opportunities', methods=['GET'])
 @require_admin
 def list_opportunities_for_admin():
-    """List tutoring opportunities; if admin has school, filter by that school's name in opportunities.school"""
+    """List tutoring opportunities with related tutee and subject.
+    If admin has a school, scope results to that school (by tutee.school_id).
+    Supports both legacy and new schemas via a safe fallback.
+    """
     try:
         supabase = get_supabase_client()
-        # Determine admin's school_id and name
+        # Determine admin school
         admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
         school_id = admin_res.data.get('school_id') if admin_res.data else None
-        school_name = None
-        if school_id:
-            school_res = supabase.table('schools').select('name').eq('id', school_id).single().execute()
-            if school_res.data:
-                school_name = school_res.data.get('name')
 
-        query = supabase.table('tutoring_opportunities').select('id, tutee_first_name, tutee_last_name, subject, grade_level, status, created_at, school')
-        if school_name:
-            query = query.eq('school', school_name)
-        opps_res = query.order('created_at', ascending=False).limit(50).execute()
-        return jsonify({'opportunities': opps_res.data or []}), 200
+        # Preferred (new schema with relations)
+        try:
+            if school_id:
+                # Collect tutee ids for this school and filter by tutee_id
+                tutees_res = supabase.table('tutees').select('id').eq('school_id', school_id).execute()
+                tutee_ids = [t['id'] for t in (tutees_res.data or [])]
+            else:
+                tutee_ids = None
+
+            query = (
+                supabase
+                .table('tutoring_opportunities')
+                .select('''
+                    id, tutee_id, subject_id, grade_level, status, created_at,
+                    tutee:tutees(id, first_name, last_name, email, school_id),
+                    subject:subjects(id, name, category, grade_level)
+                ''')
+                .order('created_at', desc=True)
+            )
+            if tutee_ids and len(tutee_ids) > 0:
+                query = query.in_('tutee_id', tutee_ids)
+            res = query.limit(50).execute()
+            return jsonify({'opportunities': res.data or []}), 200
+        except Exception:
+            # Fallback for legacy schema columns
+            query = supabase.table('tutoring_opportunities').select(
+                'id, tutee_first_name, tutee_last_name, subject, grade_level, status, created_at, school'
+            ).order('created_at', desc=True)
+            if school_id:
+                # legacy: filter by school name value in row
+                school_res = supabase.table('schools').select('name').eq('id', school_id).single().execute()
+                if school_res.data:
+                    query = query.eq('school', school_res.data.get('name'))
+            res = query.limit(50).execute()
+            return jsonify({'opportunities': res.data or []}), 200
     except Exception as e:
         print(f"Error listing opportunities for admin: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@tutor_management_bp.route('/api/admin/jobs', methods=['GET'])
+@require_admin
+def list_jobs_for_admin():
+    """List tutoring jobs with related tutor, tutee and subject; filter by admin's school if assigned"""
+    try:
+        supabase = get_supabase_client()
+
+        # Determine admin school for scoping
+        admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
+        school_id = admin_res.data.get('school_id') if admin_res.data else None
+
+        # Build base query with related entities
+        query = (
+            supabase
+            .table('tutoring_jobs')
+            .select('''
+                *,
+                tutor:tutors(id, first_name, last_name, email, school_id, school:schools(name,domain)),
+                tutee:tutees(id, first_name, last_name, email, school_id),
+                subject:subjects(id, name, category, grade_level)
+            ''')
+            .order('created_at', desc=True)
+        )
+
+        # If admin has school, limit using IDs for reliability
+        if school_id:
+            tutor_ids = []
+            tutee_ids = []
+            try:
+                tutors_res = supabase.table('tutors').select('id').eq('school_id', school_id).execute()
+                tutor_ids = [t['id'] for t in (tutors_res.data or [])]
+            except Exception:
+                tutor_ids = []
+            try:
+                tutees_res = supabase.table('tutees').select('id').eq('school_id', school_id).execute()
+                tutee_ids = [t['id'] for t in (tutees_res.data or [])]
+            except Exception:
+                tutee_ids = []
+
+            jobs_by_tutors = (
+                supabase
+                .table('tutoring_jobs')
+                .select('''
+                    *,
+                    tutor:tutors(id, first_name, last_name, email, school_id, school:schools(name,domain)),
+                    tutee:tutees(id, first_name, last_name, email, school_id),
+                    subject:subjects(id, name, category, grade_level)
+                ''')
+                .in_('tutor_id', tutor_ids or ['00000000-0000-0000-0000-000000000000'])
+                .order('created_at', desc=True)
+                .execute()
+            )
+            jobs_by_tutees = (
+                supabase
+                .table('tutoring_jobs')
+                .select('''
+                    *,
+                    tutor:tutors(id, first_name, last_name, email, school_id, school:schools(name,domain)),
+                    tutee:tutees(id, first_name, last_name, email, school_id),
+                    subject:subjects(id, name, category, grade_level)
+                ''')
+                .in_('tutee_id', tutee_ids or ['00000000-0000-0000-0000-000000000000'])
+                .order('created_at', desc=True)
+                .execute()
+            )
+            seen = set()
+            merged = []
+            for res in [jobs_by_tutors, jobs_by_tutees]:
+                for row in (res.data or []):
+                    if row['id'] not in seen:
+                        seen.add(row['id'])
+                        merged.append(row)
+            return jsonify({'jobs': merged}), 200
+
+        res = query.execute()
+        return jsonify({'jobs': res.data or []}), 200
+    except Exception as e:
+        print(f"Error listing jobs for admin: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @tutor_management_bp.route('/api/admin/tutors/<tutor_id>', methods=['GET'])

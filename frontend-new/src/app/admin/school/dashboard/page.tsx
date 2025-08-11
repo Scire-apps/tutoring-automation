@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase as sharedSupabase } from '@/services/supabase';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/providers';
 
@@ -45,7 +46,7 @@ export default function SchoolAdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   
   const { user, isLoading: authLoading } = useAuth();
-  const supabase = createClientComponentClient();
+  const supabase = sharedSupabase; // reuse configured client that now sanitizes storage
   const router = useRouter();
 
   useEffect(() => {

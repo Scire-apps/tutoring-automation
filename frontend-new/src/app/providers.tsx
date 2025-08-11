@@ -5,7 +5,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase, getCurrentUser, getSession } from "@/services/supabase";
 
 // Define user role type
-type UserRole = "tutor" | "tutee" | "admin" | "superadmin" | null;
+type UserRole = "tutor" | "tutee" | "admin" | null;
 
 // Define the auth context type
 type AuthContextType = {
@@ -284,11 +284,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Helper functions for role checking
   const isAdmin = () => {
-    return userRole === "admin" || userRole === "superadmin";
+    return userRole === "admin";
   };
 
   const isSuperAdmin = () => {
-    return userRole === "superadmin";
+    return userRole === "admin"; // unified
   };
 
   // Auth context value

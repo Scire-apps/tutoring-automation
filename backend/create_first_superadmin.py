@@ -6,8 +6,8 @@ import supabase
 load_dotenv()
 
 def create_first_superadmin():
-    """Create the first superadmin account using regular signup"""
-    print("Creating first superadmin account...")
+    """Create the first admin account using regular signup"""
+    print("Creating first admin account...")
     
     # Get Supabase credentials
     supabase_url = os.environ.get("SUPABASE_URL")
@@ -22,12 +22,12 @@ def create_first_superadmin():
         client = supabase.create_client(supabase_url, supabase_key)
         
         # Superadmin details (you can modify these)
-        email = "1hashmimoi+superadmin@hdsb.ca"
+        email = "1hashmimoi+admin@hdsb.ca"
         password = "SuperAdmin123!"
         first_name = "Moiz"
         last_name = "Hashmi"
         
-        print(f"Creating superadmin account for {email}...")
+        print(f"Creating admin account for {email}...")
         
         # Create user using regular signup
         auth_response = client.auth.sign_up({
@@ -37,7 +37,7 @@ def create_first_superadmin():
                 "data": {
                     "first_name": first_name,
                     "last_name": last_name,
-                    "role": "superadmin"
+                    "role": "admin"
                 }
             }
         })
@@ -52,7 +52,7 @@ def create_first_superadmin():
                 "first_name": first_name,
                 "last_name": last_name,
                 "school_id": None,  # Superadmins don't belong to a specific school
-                "role": "superadmin"
+                "role": "admin"
             }
             
             admin_response = client.table("admins").insert(admin_data).execute()
@@ -62,7 +62,7 @@ def create_first_superadmin():
                 print(f"\n🎉 Superadmin account created successfully!")
                 print(f"Email: {email}")
                 print(f"Password: {password}")
-                print(f"Role: superadmin")
+                print(f"Role: admin")
                 print(f"\n⚠️  IMPORTANT: You may need to verify the email address in Supabase Auth")
                 print(f"Go to Supabase Dashboard > Authentication > Users and confirm the email")
                 print(f"\nYou can now log in at: http://localhost:3000/auth/login")

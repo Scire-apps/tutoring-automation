@@ -31,7 +31,7 @@ interface School {
 }
 
 export default function AdminInvitationsPage() {
-  const { user, isSuperAdmin, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,7 +58,7 @@ export default function AdminInvitationsPage() {
         return;
       }
       
-      if (!isSuperAdmin()) {
+      if (!isAdmin()) {
         router.push('/dashboard');
         return;
       }
@@ -308,12 +308,11 @@ export default function AdminInvitationsPage() {
                       value={formData.role}
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     >
-                      <option value="admin">School Admin</option>
-                      <option value="superadmin">Super Admin</option>
+                      <option value="admin">Admin</option>
                     </select>
                   </div>
                   
-                  {formData.role === 'admin' && (
+                   {formData.role === 'admin' && (
                     <div>
                       <label htmlFor="school" className="block text-sm font-medium text-gray-700">
                         School
@@ -460,7 +459,7 @@ export default function AdminInvitationsPage() {
                       {invitation.email}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {invitation.role === 'superadmin' ? 'Super Admin' : 'School Admin'}
+                    Admin
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {invitation.school?.name || 'N/A'}

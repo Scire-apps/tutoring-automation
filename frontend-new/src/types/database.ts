@@ -291,7 +291,7 @@ export interface Database {
           first_name: string
           last_name: string
           school_id?: string
-          role: 'admin' | 'superadmin'
+          role: 'admin'
           created_at: string
           updated_at: string
         }
@@ -302,7 +302,7 @@ export interface Database {
           first_name: string
           last_name: string
           school_id?: string
-          role?: 'admin' | 'superadmin'
+          role?: 'admin'
           created_at?: string
           updated_at?: string
         }
@@ -313,7 +313,7 @@ export interface Database {
           first_name?: string
           last_name?: string
           school_id?: string
-          role?: 'admin' | 'superadmin'
+          role?: 'admin'
           created_at?: string
           updated_at?: string
         }

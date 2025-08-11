@@ -102,7 +102,7 @@ export interface Admin extends BaseModel {
   first_name: string;
   last_name: string;
   school_id?: string;
-  role: 'admin' | 'superadmin';
+  role: 'admin';
   school?: School;
 }
 

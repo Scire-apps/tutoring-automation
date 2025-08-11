@@ -56,8 +56,7 @@ export default function SupabaseListener() {
               if (!resp.ok) return;
               const json = await resp.json();
               const role = json.role;
-              if (role === 'superadmin') return router.replace('/admin/dashboard');
-              if (role === 'admin') return router.replace('/admin/school/dashboard');
+              if (role === 'admin') return router.replace('/admin/dashboard');
               if (role === 'tutor') return router.replace('/dashboard');
               if (role === 'tutee') return router.replace('/tutee/dashboard');
             } catch (e) {

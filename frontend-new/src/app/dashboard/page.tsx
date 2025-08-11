@@ -188,7 +188,7 @@ export default function TutorDashboard() {
 
       if (userRole !== "tutor") {
         // Redirect admins to admin dashboard
-        if (userRole === "admin" || userRole === "superadmin") {
+        if (userRole === "admin") {
           console.log(
             "Dashboard: User is admin, redirecting to admin dashboard"
           );

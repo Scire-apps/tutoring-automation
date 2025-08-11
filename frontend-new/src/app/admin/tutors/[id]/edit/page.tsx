@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase as sharedSupabase } from '@/services/supabase';
 import { useAuth } from '@/app/providers';
 
 interface Subject {
@@ -56,7 +57,7 @@ export default function EditTutorPage() {
   const router = useRouter();
   const params = useParams();
   const tutorId = params.id as string;
-  const supabase = createClientComponentClient();
+  const supabase = sharedSupabase;
 
   // Course list provided by the user
   const courseList = [

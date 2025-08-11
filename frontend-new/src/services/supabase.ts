@@ -25,6 +25,29 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   }
 });
 
+// Defensive: sanitize broken auth storage on first import (handles base64-* tokens)
+try {
+  if (typeof window !== 'undefined') {
+    const refMatch = supabaseUrl.match(/https?:\/\/([^.]+)\.supabase\.co/i);
+    const projectRef = refMatch ? refMatch[1] : undefined;
+    const keys = [
+      'supabase.auth.token',
+      projectRef ? `sb-${projectRef}-auth-token` : undefined,
+    ].filter(Boolean) as string[];
+    for (const key of keys) {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+      const looksJson = raw.trim().startsWith('{');
+      const looksBase64 = raw.startsWith('base64-');
+      if (!looksJson || looksBase64) {
+        window.localStorage.removeItem(key);
+      } else {
+        try { JSON.parse(raw); } catch { window.localStorage.removeItem(key); }
+      }
+    }
+  }
+} catch {}
+
 // Auth helper functions
 export const signUp = async (email: string, password: string) => {
   const siteUrl = typeof window !== 'undefined' 

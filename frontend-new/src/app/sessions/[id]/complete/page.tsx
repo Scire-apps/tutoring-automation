@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase as sharedSupabase } from '@/services/supabase';
 import { useAuth } from '@/app/providers';
 
 interface TutoringJob {
@@ -42,7 +43,7 @@ export default function CompleteSessionPage() {
   const router = useRouter();
   const params = useParams();
   const jobId = params.id as string;
-  const supabase = createClientComponentClient();
+  const supabase = sharedSupabase;
 
   useEffect(() => {
     if (!user) return;

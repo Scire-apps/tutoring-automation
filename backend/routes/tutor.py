@@ -122,8 +122,19 @@ def tutor_approvals():
 @require_auth
 def list_open_opportunities():
     supabase = get_supabase_client()
-    res = supabase.table('tutoring_opportunities').select('*').eq('status', 'open').order('priority', desc=True).order('created_at', ascending=True).execute()
-    return jsonify({'opportunities': res.data or []}), 200
+    try:
+        # Some client versions can be finicky about order kwargs; keep it simple
+        res = (
+            supabase
+            .table('tutoring_opportunities')
+            .select('*')
+            .eq('status', 'open')
+            .order('created_at')  # default ascending
+            .execute()
+        )
+        return jsonify({'opportunities': res.data or []}), 200
+    except Exception as e:
+        return jsonify({'error': 'failed_to_list_opportunities', 'details': str(e)}), 500
 
 
 @tutor_bp.route('/api/tutor/opportunities/<opportunity_id>/apply', methods=['POST'])

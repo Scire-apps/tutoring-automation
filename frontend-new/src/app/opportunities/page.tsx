@@ -10,23 +10,15 @@ import apiService from "@/services/api";
 
 interface TutoringOpportunity {
   id: string;
-  school: string;
-  tutee_first_name: string;
-  tutee_last_name: string;
-  tutee_pronouns: string;
-  tutee_email: string;
-  grade_level: string;
-  subject: string;
-  specific_topic: string;
-  course_level: string;
-  urgency_level: number;
-  session_location: string;
-  availability_date: string;
-  availability_start_time: string;
-  availability_end_time: string;
-  availability_formatted: string;
+  tutee?: { id: string; first_name: string; last_name: string; email: string; school_id?: string };
+  subject?: { id: string; name: string; category?: string; grade_level?: string };
+  grade_level?: string;
+  sessions_per_week?: number;
+  availability?: any;
+  location_preference?: string;
+  additional_notes?: string;
   status: "open" | "assigned" | "completed" | "cancelled";
-  priority: "normal" | "high";
+  priority: "normal" | "high" | "low";
   created_at: string;
 }
 
@@ -131,7 +123,7 @@ export default function OpportunitiesPage() {
           setApprovedSubjects([]);
         }
 
-        // Fetch ALL open tutoring opportunities (not filtered by school)
+        // Fetch ALL open tutoring opportunities (relational shape)
         const oppResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/opportunities`, {
           headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}` }
         });
@@ -185,10 +177,10 @@ export default function OpportunitiesPage() {
             user?.email || "",
             tutorName,
             {
-              subject: opportunity.subject,
-              tutee_name: `${opportunity.tutee_first_name} ${opportunity.tutee_last_name}`,
+              subject: opportunity.subject?.name ?? '',
+              tutee_name: `${opportunity.tutee?.first_name ?? ''} ${opportunity.tutee?.last_name ?? ''}`.trim(),
               grade_level: opportunity.grade_level,
-              location: opportunity.session_location,
+              location: opportunity.location_preference ?? '',
             },
             job.id
           );
@@ -482,7 +474,7 @@ export default function OpportunitiesPage() {
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <div className="text-sm font-medium text-gray-900 truncate">
-                                    {opportunity.subject}
+                                   {opportunity.subject?.name ?? ''}
                                   </div>
                                   {opportunity.priority === "high" && (
                                     <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
@@ -500,8 +492,8 @@ export default function OpportunitiesPage() {
                           </td>
                           <td className="px-3 py-4">
                             <div className="text-sm text-gray-900 truncate">
-                              {opportunity.tutee_first_name}{" "}
-                              {opportunity.tutee_last_name}
+                              {opportunity.tutee?.first_name ?? ''}{" "}
+                              {opportunity.tutee?.last_name ?? ''}
                             </div>
                             {opportunity.tutee_pronouns && (
                               <div className="text-xs text-gray-500 truncate">
@@ -510,9 +502,7 @@ export default function OpportunitiesPage() {
                             )}
                           </td>
                           <td className="px-3 py-4 hidden sm:table-cell">
-                            <div className="text-sm text-gray-900 truncate">
-                              {opportunity.school || "Not specified"}
-                            </div>
+                             <div className="text-sm text-gray-900 truncate">{tutorData?.school?.name || ""}</div>
                           </td>
                           <td className="px-3 py-4 hidden md:table-cell">
                             <div className="text-sm text-gray-900">

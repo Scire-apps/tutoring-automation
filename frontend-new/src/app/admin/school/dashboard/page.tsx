@@ -274,23 +274,29 @@ export default function SchoolAdminDashboard() {
                   No tutoring opportunities found
                 </li>
               ) : (
-                opportunities.map((opportunity) => (
+                opportunities.map((opportunity) => {
+                  const tFirst = (opportunity as any)?.tutee?.first_name ?? (opportunity as any)?.tutee_first_name ?? '';
+                  const tLast = (opportunity as any)?.tutee?.last_name ?? (opportunity as any)?.tutee_last_name ?? '';
+                  const subj = (opportunity as any)?.subject?.name ?? (opportunity as any)?.subject ?? '';
+                  const firstInitial = tFirst && typeof tFirst === 'string' ? tFirst.charAt(0) : '?';
+                  const lastInitial = tLast && typeof tLast === 'string' ? tLast.charAt(0) : '';
+                  return (
                   <li key={opportunity.id} className="px-4 py-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
                           <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
                             <span className="text-sm font-medium text-gray-700">
-                              {opportunity.tutee_first_name[0]}{opportunity.tutee_last_name[0]}
+                              {firstInitial}{lastInitial}
                             </span>
                           </div>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {opportunity.tutee_first_name} {opportunity.tutee_last_name}
+                            {tFirst} {tLast}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {opportunity.subject} - Grade {opportunity.grade_level}
+                            {subj}{opportunity.grade_level ? ` - Grade ${opportunity.grade_level}` : ''}
                           </div>
                         </div>
                       </div>
@@ -310,7 +316,8 @@ export default function SchoolAdminDashboard() {
                       </div>
                     </div>
                   </li>
-                ))
+                  );
+                })
               )}
             </ul>
           </div>

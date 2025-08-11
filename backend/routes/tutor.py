@@ -123,13 +123,17 @@ def tutor_approvals():
 def list_open_opportunities():
     supabase = get_supabase_client()
     try:
-        # Some client versions can be finicky about order kwargs; keep it simple
+        # Return relational shape: include subject and tutee
         res = (
             supabase
             .table('tutoring_opportunities')
-            .select('*')
+            .select('''
+                *,
+                subject:subjects(id, name, category, grade_level),
+                tutee:tutees(id, first_name, last_name, email, school_id)
+            ''')
             .eq('status', 'open')
-            .order('created_at')  # default ascending
+            .order('created_at')
             .execute()
         )
         return jsonify({'opportunities': res.data or []}), 200
@@ -185,7 +189,19 @@ def get_job(job_id: str):
         return jsonify({'error': 'Job not found'}), 404
     job = job_res.data
 
-    opp_res = supabase.table('tutoring_opportunities').select('*').eq('id', job['opportunity_id']).single().execute()
+    # Expand opportunity relationally
+    opp_res = (
+        supabase
+        .table('tutoring_opportunities')
+        .select('''
+            *,
+            subject:subjects(id, name, category, grade_level),
+            tutee:tutees(id, first_name, last_name, email, school_id)
+        ''')
+        .eq('id', job['opportunity_id'])
+        .single()
+        .execute()
+    )
     opportunity = opp_res.data if opp_res.data else None
     job['tutoring_opportunity'] = opportunity
     return jsonify({'job': job}), 200

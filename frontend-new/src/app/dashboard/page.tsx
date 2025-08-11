@@ -14,12 +14,11 @@ interface TutoringJob {
   opportunity_id: string;
   scheduled_time?: string;
   status: string;
-  tutoring_opportunity: {
-    tutee_name: string;
-    tutee_email: string;
-    subject: string;
-    location_preference: string;
-    availability: string;
+  tutoring_opportunity?: {
+    tutee?: { first_name: string; last_name: string; email: string };
+    subject?: { name: string };
+    location_preference?: string;
+    availability?: string;
   };
 }
 
@@ -454,17 +453,19 @@ export default function TutorDashboard() {
                               <div className="flex-shrink-0">
                                 <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                                   <span className="text-white font-medium">
-                                    {job.tutoring_opportunity.subject.charAt(0)}
+                                    {(job.tutoring_opportunity?.subject?.name || '?').charAt(0)}
                                   </span>
                                 </div>
                               </div>
                               <div className="ml-4">
                                 <div className="text-sm font-medium text-gray-900">
-                                  {job.tutoring_opportunity.subject} -{" "}
-                                  {job.tutoring_opportunity.tutee_name}
+                                  {job.tutoring_opportunity?.subject?.name}
+                                  {job.tutoring_opportunity?.tutee ? (
+                                    ` - ${job.tutoring_opportunity.tutee.first_name} ${job.tutoring_opportunity.tutee.last_name}`
+                                  ) : ''}
                                 </div>
                                 <div className="text-sm text-gray-500">
-                                  {job.tutoring_opportunity.location_preference}{" "}
+                                  {job.tutoring_opportunity?.location_preference || ''}{" "}
                                   • {job.status}
                                 </div>
                                 {job.scheduled_time ? (
@@ -474,11 +475,11 @@ export default function TutorDashboard() {
                                 ) : (
                                   <div className="text-xs text-gray-400 mt-1">
                                     Available:{" "}
-                                    {job.tutoring_opportunity.availability && (
+                                     {job.tutoring_opportunity?.availability && (
                                       <span className="inline-flex items-center">
                                         <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
                                           {formatTime(
-                                            job.tutoring_opportunity.availability.split(
+                                             job.tutoring_opportunity?.availability.split(
                                               " - "
                                             )[0]
                                           )}
@@ -498,7 +499,7 @@ export default function TutorDashboard() {
                                         </svg>
                                         <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
                                           {formatTime(
-                                            job.tutoring_opportunity.availability.split(
+                                             job.tutoring_opportunity?.availability.split(
                                               " - "
                                             )[1]
                                           )}
@@ -676,7 +677,9 @@ export default function TutorDashboard() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    window.location.href = `mailto:${job.tutoring_opportunity.tutee_email}`;
+                                    if (job.tutoring_opportunity?.tutee?.email) {
+                                      window.location.href = `mailto:${job.tutoring_opportunity.tutee.email}`;
+                                    }
                                   }}
                                   className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
                                 >

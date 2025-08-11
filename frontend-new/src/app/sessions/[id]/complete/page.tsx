@@ -14,13 +14,11 @@ interface TutoringJob {
   scheduled_time?: string;
   created_at: string;
   tutoring_opportunity?: {
-    tutee_first_name: string;
-    tutee_last_name: string;
-    tutee_email: string;
-    subject: string;
-    grade_level: string;
-    availability_formatted: string;
-    session_location: string;
+    tutee?: { first_name: string; last_name: string; email: string };
+    subject?: { name: string };
+    grade_level?: string;
+    availability?: any;
+    location_preference?: string;
   };
 }
 
@@ -459,16 +457,16 @@ export default function CompleteSessionPage() {
                   <div>
                     <p className="text-sm font-medium text-gray-500">Tutee</p>
                     <p className="mt-1">
-                      {job.tutoring_opportunity?.tutee_first_name} {job.tutoring_opportunity?.tutee_last_name}
+                      {job.tutoring_opportunity?.tutee?.first_name} {job.tutoring_opportunity?.tutee?.last_name}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Subject</p>
-                    <p className="mt-1">{job.tutoring_opportunity?.subject}</p>
+                    <p className="mt-1">{job.tutoring_opportunity?.subject?.name}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Location</p>
-                    <p className="mt-1">{job.tutoring_opportunity?.session_location}</p>
+                    <p className="mt-1">{job.tutoring_opportunity?.location_preference}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Scheduled Time</p>

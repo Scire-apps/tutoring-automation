@@ -15,13 +15,11 @@ interface TutoringJob {
   scheduled_time?: string;
   created_at: string;
   tutoring_opportunity?: {
-    tutee_first_name: string;
-    tutee_last_name: string;
-    tutee_email: string;
-    subject: string;
-    grade_level: string;
-    availability_formatted: string;
-    session_location: string;
+    tutee?: { first_name: string; last_name: string; email: string };
+    subject?: { name: string };
+    grade_level?: string;
+    availability?: any;
+    location_preference?: string;
   };
 }
 
@@ -112,14 +110,14 @@ export default function SchedulingPage() {
           time: formattedTime,
           location: job.tutoring_opportunity?.session_location || '',
           tutor_name: `${tutorData.first_name} ${tutorData.last_name}`,
-          tutee_name: `${job.tutoring_opportunity?.tutee_first_name} ${job.tutoring_opportunity?.tutee_last_name}`
+          tutee_name: `${job.tutoring_opportunity?.tutee?.first_name ?? ''} ${job.tutoring_opportunity?.tutee?.last_name ?? ''}`
         };
         
         // Send confirmation emails
         try {
           await apiService.sendSessionConfirmation(
             tutorData.email,
-            job.tutoring_opportunity?.tutee_email || '',
+            job.tutoring_opportunity?.tutee?.email || '',
             sessionDetails,
             jobId
           );
@@ -183,11 +181,11 @@ export default function SchedulingPage() {
                            `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() ||
                            user?.email?.split('@')[0] || 'Tutor';
           
-          const tuteeName = `${job.tutoring_opportunity?.tutee_first_name} ${job.tutoring_opportunity?.tutee_last_name}`;
+          const tuteeName = `${job.tutoring_opportunity?.tutee?.first_name ?? ''} ${job.tutoring_opportunity?.tutee?.last_name ?? ''}`.trim();
           
           await apiService.sendCancellationNotification(
             user.email || '',
-            job.tutoring_opportunity?.tutee_email || '',
+            job.tutoring_opportunity?.tutee?.email || '',
             {
               subject: job.tutoring_opportunity?.subject || '',
               tutor_name: tutorName,

@@ -8,26 +8,42 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/api/auth/role', methods=['GET'])
 @require_auth
 def get_role():
-    """Return role of current user: superadmin|admin|tutor|tutee|null"""
-    supabase = get_supabase_client()
-    user_id = request.user_id
+    """Return role of current user: superadmin|admin|tutor|tutee|null
+    Never raise uncaught errors; fallback to role None to avoid frontend hard failure.
+    """
+    try:
+        supabase = get_supabase_client()
+        user_id = request.user_id
 
-    # Check admin first
-    admin_res = supabase.table('admins').select('role').eq('auth_id', user_id).single().execute()
-    if admin_res.data:
-        return jsonify({ 'role': admin_res.data.get('role') }), 200
+        # Check admin first
+        try:
+            admin_res = supabase.table('admins').select('role').eq('auth_id', user_id).single().execute()
+            if admin_res.data:
+                return jsonify({ 'role': admin_res.data.get('role') }), 200
+        except Exception:
+            # Ignore and continue
+            pass
 
-    # Tutor
-    tutor_res = supabase.table('tutors').select('id').eq('auth_id', user_id).single().execute()
-    if tutor_res.data:
-        return jsonify({ 'role': 'tutor' }), 200
+        # Tutor
+        try:
+            tutor_res = supabase.table('tutors').select('id').eq('auth_id', user_id).single().execute()
+            if tutor_res.data:
+                return jsonify({ 'role': 'tutor' }), 200
+        except Exception:
+            pass
 
-    # Tutee
-    tutee_res = supabase.table('tutees').select('id').eq('auth_id', user_id).single().execute()
-    if tutee_res.data:
-        return jsonify({ 'role': 'tutee' }), 200
+        # Tutee
+        try:
+            tutee_res = supabase.table('tutees').select('id').eq('auth_id', user_id).single().execute()
+            if tutee_res.data:
+                return jsonify({ 'role': 'tutee' }), 200
+        except Exception:
+            pass
 
-    return jsonify({ 'role': None }), 200
+        return jsonify({ 'role': None }), 200
+    except Exception as e:
+        # Final safety net: do not 500 on role checks
+        return jsonify({ 'role': None, 'error': 'role_check_failed' }), 200
 
 
 @auth_bp.route('/api/account/ensure', methods=['POST'])

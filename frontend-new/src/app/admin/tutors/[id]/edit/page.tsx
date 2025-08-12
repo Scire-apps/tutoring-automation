@@ -432,7 +432,7 @@ export default function EditTutorPage() {
                 Edit Tutor: {tutor.first_name} {tutor.last_name}
               </h1>
               <p className="text-gray-600">
-                {tutor.school.name} - {tutor.email}
+                {tutor.school?.name || 'Not assigned'} - {tutor.email}
               </p>
             </div>
           </div>

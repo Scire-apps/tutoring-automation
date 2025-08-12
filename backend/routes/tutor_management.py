@@ -269,15 +269,15 @@ def update_subject_approvals(tutor_id):
         
         # If we need a subject_id and it's missing, find or create the subject
         if action != 'remove' and not subject_id:
-            # Try to find by (name, category, grade_level)
+            # Try to find by (name, category, grade_level) using limit(1) to avoid errors
             find_q = supabase.table('subjects').select('id').eq('name', subject_name)
             if subject_category:
                 find_q = find_q.eq('category', subject_category)
             if subject_grade_level:
                 find_q = find_q.eq('grade_level', subject_grade_level)
-            found = find_q.single().execute()
-            if found.data and found.data.get('id'):
-                subject_id = found.data['id']
+            found = find_q.limit(1).execute()
+            if found.data and len(found.data) > 0 and found.data[0].get('id'):
+                subject_id = found.data[0]['id']
             else:
                 # Create subject
                 insert_payload = {
@@ -285,10 +285,10 @@ def update_subject_approvals(tutor_id):
                     'category': subject_category,
                     'grade_level': subject_grade_level
                 }
-                created = supabase.table('subjects').insert(insert_payload).select('id').single().execute()
-                if not created.data:
-                    return jsonify({'error': 'Failed to create subject'}), 500
-                subject_id = created.data['id']
+                created = supabase.table('subjects').insert(insert_payload).select('id').execute()
+                if not created.data or len(created.data) == 0:
+                    return jsonify({'error': 'Failed to create subject', 'details': created}), 500
+                subject_id = created.data[0]['id']
 
         # Fetch tutor basic info (array column may not exist in some deployments)
         tutor_row = supabase.table('tutors').select('first_name, last_name, email, approved_subject_ids').eq('id', tutor_id).single().execute()
@@ -408,8 +408,9 @@ def update_subject_approvals(tutor_id):
         return jsonify({'message': f'Subject approval {action}d successfully', 'subject_id': subject_id}), 200
         
     except Exception as e:
-        print(f"Error updating subject approvals: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        import traceback
+        print(f"Error updating subject approvals: {e}\n{traceback.format_exc()}")
+        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
 @tutor_management_bp.route('/api/admin/subjects', methods=['GET'])
 @require_admin

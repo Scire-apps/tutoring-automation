@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from datetime import datetime, timezone
 from utils.db import get_supabase_client
 from utils.auth import require_admin
 
@@ -310,12 +311,13 @@ def update_subject_approvals(tutor_id):
         # Also mirror into subject_approvals as a history/log
         try:
             if action == 'approve':
+                now_iso = datetime.now(timezone.utc).isoformat()
                 supabase.table('subject_approvals').upsert({
                     'tutor_id': tutor_id,
                     'subject_id': subject_id,
                     'status': 'approved',
                     'approved_by': admin_id,
-                    'approved_at': 'now()'
+                    'approved_at': now_iso
                 }, on_conflict='tutor_id,subject_id').execute()
             else:
                 # remove or mark as rejected

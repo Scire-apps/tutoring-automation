@@ -262,24 +262,11 @@ export default function OpportunitiesPage() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      // Fetch fresh opportunities data
-      const { data: opps, error: oppsError } = await supabase
-        .from("tutoring_opportunities")
-        .select("*")
-        .eq("status", "open")
-        .order("priority", { ascending: false }) // High priority first
-        .order("created_at", { ascending: true }); // Oldest first within same priority
-
-      if (oppsError) {
-        console.error("Error refreshing opportunities:", oppsError);
-        alert("Failed to refresh opportunities. Please try again.");
-      } else {
-        setOpportunities(opps || []);
-        console.log("Opportunities refreshed successfully");
-      }
+      const refreshed = await apiService.listOpenOpportunities();
+      setOpportunities(refreshed.opportunities || []);
     } catch (err) {
       console.error("Error refreshing opportunities:", err);
-      alert("An error occurred while refreshing. Please try again.");
+      alert("Failed to refresh opportunities. Please try again.");
     } finally {
       setIsRefreshing(false);
     }

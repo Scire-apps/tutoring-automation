@@ -119,8 +119,8 @@ export default function EditTutorPage() {
 
   const updateSubjectApproval = async (subject: {name:string,type:string,grade:string}, action: 'approve' | 'reject' | 'remove') => {
     try {
-      console.log('🔍 TUTOR EDIT DEBUG: Updating subject approval:', { subjectId, action });
-      setUpdating(subjectId);
+      console.log('🔍 TUTOR EDIT DEBUG: Updating subject approval:', { subject, action });
+      setUpdating(`${subject.name}-${subject.type}-${subject.grade}`);
       
       if (!user) {
         router.push('/auth/login');

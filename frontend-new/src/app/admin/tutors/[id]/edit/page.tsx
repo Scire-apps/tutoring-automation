@@ -7,19 +7,18 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase as sharedSupabase } from '@/services/supabase';
 import { useAuth } from '@/app/providers';
 
-interface Subject {
-  id: string;
-  name: string;
-  category: string;
-  grade_level: string;
-}
+// Embedded subject options per spec
+const SUBJECT_NAMES = ['Math','English','Science'];
+const SUBJECT_TYPES = ['Academic','ALP','IB'];
+const SUBJECT_GRADES = ['9','10','11','12'];
 
 interface SubjectApproval {
   id: string;
-  subject_id: string;
+  subject_name: string;
+  subject_type: string;
+  subject_grade: string;
   status: 'pending' | 'approved' | 'rejected';
   approved_at: string | null;
-  subject: Subject;
   approved_by_admin?: {
     first_name: string;
     last_name: string;
@@ -42,7 +41,7 @@ interface Tutor {
 interface TutorData {
   tutor: Tutor;
   subject_approvals: SubjectApproval[];
-  available_subjects: Subject[];
+  available_subjects: any[];
 }
 
 export default function EditTutorPage() {
@@ -50,7 +49,9 @@ export default function EditTutorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
-  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedSubjectName, setSelectedSubjectName] = useState('');
+  const [selectedSubjectType, setSelectedSubjectType] = useState('');
+  const [selectedSubjectGrade, setSelectedSubjectGrade] = useState('');
   
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -104,7 +105,7 @@ export default function EditTutorPage() {
       const structuredData = {
         tutor: tutorJson.tutor,
         subject_approvals: approvalsJson.subject_approvals || [],
-        available_subjects: subjectsJson.subjects || [],
+        available_subjects: [],
       };
       setTutorData(structuredData);
       
@@ -116,7 +117,7 @@ export default function EditTutorPage() {
     }
   };
 
-  const updateSubjectApproval = async (subjectId: string, action: 'approve' | 'reject' | 'remove') => {
+  const updateSubjectApproval = async (subject: {name:string,type:string,grade:string}, action: 'approve' | 'reject' | 'remove') => {
     try {
       console.log('🔍 TUTOR EDIT DEBUG: Updating subject approval:', { subjectId, action });
       setUpdating(subjectId);
@@ -128,13 +129,18 @@ export default function EditTutorPage() {
 
       if (action === 'remove') {
         // Remove the subject approval
-        console.log('🔍 TUTOR EDIT DEBUG: Attempting to remove approval for:', { tutorId, subjectId });
+        console.log('🔍 TUTOR EDIT DEBUG: Attempting to remove approval for:', { tutorId, subject });
         
         const { data: { session } } = await supabase.auth.getSession();
         const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/subjects`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ subject_id: subjectId, action: 'remove' })
+          body: JSON.stringify({
+            action: 'remove',
+            subject_name: subject.name,
+            subject_type: subject.type,
+            subject_grade: subject.grade,
+          })
         });
         if (!resp.ok) throw new Error('Failed to remove subject approval');
 
@@ -150,7 +156,12 @@ export default function EditTutorPage() {
         const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/subjects`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ subject_id: subjectId, action })
+          body: JSON.stringify({
+            action,
+            subject_name: subject.name,
+            subject_type: subject.type,
+            subject_grade: subject.grade,
+          })
         });
         if (!resp.ok) throw new Error('Failed to update subject approval');
       }
@@ -203,7 +214,7 @@ export default function EditTutorPage() {
 
   const addCertification = async () => {
     try {
-      console.log('🔍 TUTOR EDIT DEBUG: Adding certification:', { selectedSubject });
+      console.log('🔍 TUTOR EDIT DEBUG: Adding certification:', { selectedSubjectName, selectedSubjectType, selectedSubjectGrade });
       setUpdating('add-cert');
       
       if (!user) {
@@ -211,18 +222,20 @@ export default function EditTutorPage() {
         return;
       }
 
-      if (!selectedSubject) {
-        throw new Error('Please select a subject');
+      if (!selectedSubjectName || !selectedSubjectType || !selectedSubjectGrade) {
+        throw new Error('Please select subject, type, and grade');
       }
 
-      console.log('🔍 TUTOR EDIT DEBUG: Approving subject via backend by subject_id');
+      console.log('🔍 TUTOR EDIT DEBUG: Approving subject via backend by embedded fields');
       const { data: { session } } = await supabase.auth.getSession();
       const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/subjects`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'approve',
-          subject_id: selectedSubject
+          subject_name: selectedSubjectName,
+          subject_type: selectedSubjectType,
+          subject_grade: selectedSubjectGrade,
         })
       });
       if (!resp.ok) {
@@ -233,7 +246,9 @@ export default function EditTutorPage() {
       console.log('🔍 TUTOR EDIT DEBUG: Certification added successfully');
 
       // Clear the form
-      setSelectedSubject('');
+      setSelectedSubjectName('');
+      setSelectedSubjectType('');
+      setSelectedSubjectGrade('');
 
       // Reload tutor data to reflect changes
       await loadTutorData();
@@ -280,20 +295,11 @@ export default function EditTutorPage() {
     }
   };
 
-  const getApprovalForSubject = (subjectId: string): SubjectApproval | null => {
-    return tutorData?.subject_approvals.find(approval => approval.subject_id === subjectId) || null;
+  const getApprovalForSubject = (subject: {name:string,type:string,grade:string}): SubjectApproval | null => {
+    return tutorData?.subject_approvals.find(approval => approval.subject_name === subject.name && approval.subject_type === subject.type && approval.subject_grade === subject.grade) || null;
   };
 
-  const groupSubjectsByCategory = (subjects: Subject[]) => {
-    return subjects.reduce((groups, subject) => {
-      const category = subject.category || 'Other';
-      if (!groups[category]) {
-        groups[category] = [];
-      }
-      groups[category].push(subject);
-      return groups;
-    }, {} as Record<string, Subject[]>);
-  };
+  const groupSubjectsByCategory = () => ({ });
 
   if (loading) {
     return (
@@ -322,8 +328,8 @@ export default function EditTutorPage() {
     );
   }
 
-  const { tutor, available_subjects } = tutorData;
-  const groupedSubjects = groupSubjectsByCategory(available_subjects);
+  const { tutor } = tutorData;
+  const groupedSubjects = groupSubjectsByCategory();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -397,7 +403,7 @@ export default function EditTutorPage() {
             </div>
           </div>
 
-          {/* Add New Certification (select from unified subjects list) */}
+          {/* Add New Certification (select embedded fields) */}
           <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
             <div className="px-4 py-5 sm:px-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -408,33 +414,30 @@ export default function EditTutorPage() {
               </p>
             </div>
             <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div>
-                  <label htmlFor="subject-select" className="block text-sm font-medium text-gray-700 mb-2">
-                    Subject
-                  </label>
-                  <select
-                    id="subject-select"
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select a subject...</option>
-                    {tutorData?.available_subjects?.map((s: Subject) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}{s.grade_level ? ` • Grade ${s.grade_level}` : ''}
-                      </option>
-                    ))}
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                  <select value={selectedSubjectName} onChange={(e)=>setSelectedSubjectName(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <option value="">Select...</option>
+                    {SUBJECT_NAMES.map(s=> <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
-                  <button
-                    onClick={addCertification}
-                    disabled={!selectedSubject || updating === 'add-cert'}
-                    className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {updating === 'add-cert' ? 'Adding...' : 'Add Certification'}
-                  </button>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                  <select value={selectedSubjectType} onChange={(e)=>setSelectedSubjectType(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <option value="">Select...</option>
+                    {SUBJECT_TYPES.map(s=> <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Grade</label>
+                  <select value={selectedSubjectGrade} onChange={(e)=>setSelectedSubjectGrade(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <option value="">Select...</option>
+                    {SUBJECT_GRADES.map(s=> <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <button onClick={addCertification} disabled={!selectedSubjectName || !selectedSubjectType || !selectedSubjectGrade || updating==='add-cert'} className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">{updating==='add-cert'?'Adding...':'Add Certification'}</button>
                 </div>
               </div>
             </div>
@@ -451,7 +454,7 @@ export default function EditTutorPage() {
               </p>
             </div>
             <div className="border-t border-gray-200">
-              {tutorData.subject_approvals.length === 0 ? (
+                        {tutorData.subject_approvals.length === 0 ? (
                 <div className="px-4 py-8 text-center text-gray-500">
                   No certifications yet. Add certifications using the form above.
                 </div>
@@ -462,8 +465,8 @@ export default function EditTutorPage() {
                       <div key={approval.id} className="border rounded-lg p-4 bg-green-50">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <h5 className="font-medium text-gray-900">{approval.subject?.name || 'Unknown Subject'}</h5>
-                            <p className="text-sm text-gray-600">Grade: {approval.subject?.grade_level || 'N/A'}</p>
+                                      <h5 className="font-medium text-gray-900">{approval.subject_name} • {approval.subject_type}</h5>
+                            <p className="text-sm text-gray-600">Grade: {approval.subject_grade}</p>
                           </div>
                           <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                             {approval.status}
@@ -477,7 +480,7 @@ export default function EditTutorPage() {
                         )}
                         
                         <button
-                          onClick={() => removeCertification(approval.subject_id)}
+                                    onClick={() => updateSubjectApproval({ name: approval.subject_name, type: approval.subject_type, grade: approval.subject_grade }, 'remove')}
                           disabled={updating === approval.id}
                           className="px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50"
                         >

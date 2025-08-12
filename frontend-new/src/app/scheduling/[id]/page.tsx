@@ -14,9 +14,8 @@ interface TutoringJob {
   scheduled_time?: string;
   created_at: string;
   tutoring_opportunity?: {
-    tutee?: { first_name: string; last_name: string; email: string };
-    subject?: { name: string };
-    grade_level?: string;
+    tutee_first_name?: string; tutee_last_name?: string; email?: string;
+    subject_name?: string; subject_type?: string; subject_grade?: string;
     availability?: any;
     location_preference?: string;
   };
@@ -342,11 +341,10 @@ export default function SchedulingPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Subject</p>
-                    <p className="mt-1">{job.tutoring_opportunity?.subject}</p>
+                    <p className="mt-1">{job.tutoring_opportunity?.subject_name} • {job.tutoring_opportunity?.subject_type} • Grade {job.tutoring_opportunity?.subject_grade}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Grade Level</p>
-                    <p className="mt-1">{job.tutoring_opportunity?.grade_level}</p>
+                    
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Location</p>

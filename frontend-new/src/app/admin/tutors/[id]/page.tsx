@@ -80,11 +80,11 @@ export default function ViewTutorPage() {
               <p className="text-sm text-gray-500">No subject approvals.</p>
             ) : (
               <ul className="divide-y">
-                {subject_approvals.map((a: any) => (
+                        {subject_approvals.map((a: any) => (
                   <li key={a.id} className="py-3 flex items-center justify-between">
                     <div>
-                      <div className="font-medium">{a.subject?.name || 'Unknown'}</div>
-                      <div className="text-xs text-gray-500">{a.subject?.category} {a.subject?.grade_level}</div>
+                              <div className="font-medium">{a.subject_name || 'Unknown'} • {a.subject_type}</div>
+                              <div className="text-xs text-gray-500">Grade {a.subject_grade}</div>
                     </div>
                     <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">{a.status}</span>
                   </li>

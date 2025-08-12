@@ -18,18 +18,11 @@ def get_tutee_dashboard():
 
     tutee = tutee_result.data
 
-    # Load own opportunities
-    opps = supabase.table('tutoring_opportunities').select('''
-        *,
-        subject:subjects(id, name, category, grade_level)
-    ''').eq('tutee_id', tutee['id']).order('created_at', desc=True).execute()
+    # Load own opportunities (embedded subject fields)
+    opps = supabase.table('tutoring_opportunities').select('*').eq('tutee_id', tutee['id']).order('created_at', desc=True).execute()
 
-    # Load own jobs
-    jobs = supabase.table('tutoring_jobs').select('''
-        *,
-        subject:subjects(id, name, category, grade_level),
-        tutor:tutors(id, first_name, last_name, email)
-    ''').eq('tutee_id', tutee['id']).order('created_at', desc=True).execute()
+    # Load own jobs (embedded subject fields)
+    jobs = supabase.table('tutoring_jobs').select('*').eq('tutee_id', tutee['id']).order('created_at', desc=True).execute()
 
     return jsonify({
         'tutee': tutee,
@@ -43,7 +36,7 @@ def get_tutee_dashboard():
 def create_tutoring_opportunity():
     """Create a new tutoring opportunity request for the authenticated tutee"""
     data = request.get_json() or {}
-    required = ['subject_id', 'grade_level', 'sessions_per_week', 'availability']
+    required = ['subject_name', 'subject_type', 'subject_grade', 'sessions_per_week', 'availability']
     missing = [f for f in required if f not in data]
     if missing:
         return jsonify({'error': f'Missing required fields: {", ".join(missing)}'}), 400
@@ -59,8 +52,9 @@ def create_tutoring_opportunity():
 
     opp_insert = {
         'tutee_id': tutee_id,
-        'subject_id': data['subject_id'],
-        'grade_level': data.get('grade_level'),
+        'subject_name': data['subject_name'],
+        'subject_type': data['subject_type'],
+        'subject_grade': str(data['subject_grade']),
         'sessions_per_week': data['sessions_per_week'],
         'availability': data['availability'],  # Expect JSON structure
         'location_preference': data.get('location_preference'),

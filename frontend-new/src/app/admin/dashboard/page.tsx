@@ -196,7 +196,7 @@ export default function AdminDashboardPage() {
               opportunities.map((opportunity: any) => {
                 const tFirst = opportunity?.tutee?.first_name ?? opportunity?.tutee_first_name ?? '';
                 const tLast = opportunity?.tutee?.last_name ?? opportunity?.tutee_last_name ?? '';
-                const subj = opportunity?.subject?.name ?? opportunity?.subject ?? '';
+                const subj = opportunity?.subject_name ? `${opportunity.subject_name} • ${opportunity.subject_type} • Grade ${opportunity.subject_grade}` : (opportunity?.subject ?? '');
                 const firstInitial = tFirst && typeof tFirst === 'string' ? tFirst.charAt(0) : '?';
                 const lastInitial = tLast && typeof tLast === 'string' ? tLast.charAt(0) : '';
                 return (

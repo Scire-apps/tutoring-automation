@@ -43,16 +43,7 @@ create table public.tutees (
   updated_at timestamptz default now()
 );
 
--- Subjects
-create table public.subjects (
-  id uuid primary key default uuid_generate_v4(),
-  name text not null,
-  category text,
-  grade_level text,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  unique(name, category, grade_level)
-);
+-- Subjects table removed. Subject data is now embedded per row (name, type, grade)
 
 -- Admins (initially allows 'admin' and 'superadmin'; merged below)
 create table public.admins (
@@ -67,25 +58,26 @@ create table public.admins (
   updated_at timestamptz default now()
 );
 
--- Subject approvals (source of truth for tutor qualification)
 create table public.subject_approvals (
   id uuid primary key default uuid_generate_v4(),
   tutor_id uuid not null references public.tutors(id),
-  subject_id uuid not null references public.subjects(id),
+  subject_name text not null check (subject_name in ('Math','English','Science')),
+  subject_type text not null check (subject_type in ('Academic','ALP','IB')),
+  subject_grade text not null check (subject_grade in ('9','10','11','12')),
   status text not null default 'pending' check (status in ('pending','approved','rejected')),
-  approved_by uuid references public.admins(id), -- admin who approved/rejected
+  approved_by uuid references public.admins(id),
   approved_at timestamptz,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
-  unique(tutor_id, subject_id)
+  unique(tutor_id, subject_name, subject_type, subject_grade)
 );
 
--- Tutoring opportunities (created by tutees)
 create table public.tutoring_opportunities (
   id uuid primary key default uuid_generate_v4(),
   tutee_id uuid references public.tutees(id),
-  subject_id uuid not null references public.subjects(id),
-  grade_level text,
+  subject_name text not null check (subject_name in ('Math','English','Science')),
+  subject_type text not null check (subject_type in ('Academic','ALP','IB')),
+  subject_grade text not null check (subject_grade in ('9','10','11','12')),
   sessions_per_week int not null default 1 check (sessions_per_week > 0),
   availability jsonb not null default '{}'::jsonb, -- e.g. {"Mon":["16:00-17:00"], ...}
   location_preference text,
@@ -96,13 +88,14 @@ create table public.tutoring_opportunities (
   updated_at timestamptz default now()
 );
 
--- Tutoring jobs (created when tutor accepts an opportunity)
 create table public.tutoring_jobs (
   id uuid primary key default uuid_generate_v4(),
   opportunity_id uuid not null references public.tutoring_opportunities(id),
   tutor_id uuid not null references public.tutors(id),
   tutee_id uuid not null references public.tutees(id),
-  subject_id uuid not null references public.subjects(id),
+  subject_name text not null check (subject_name in ('Math','English','Science')),
+  subject_type text not null check (subject_type in ('Academic','ALP','IB')),
+  subject_grade text not null check (subject_grade in ('9','10','11','12')),
   finalized_schedule jsonb not null default '[]'::jsonb, -- array of {date, time} (optional)
   scheduled_time timestamptz, -- single scheduled datetime used by scheduling flow
   location text,
@@ -143,11 +136,12 @@ create index idx_tutors_school_id on public.tutors(school_id);
 create index idx_tutoring_opportunities_status on public.tutoring_opportunities(status);
 create index idx_tutoring_opportunities_priority on public.tutoring_opportunities(priority);
 create index idx_tutoring_opportunities_tutee_id on public.tutoring_opportunities(tutee_id);
-create index idx_tutoring_opportunities_subject_id on public.tutoring_opportunities(subject_id);
+-- Subject composite indexes for faster matching
+create index idx_tutoring_opportunities_subject on public.tutoring_opportunities(subject_name, subject_type, subject_grade);
 create index idx_tutoring_jobs_tutor_id on public.tutoring_jobs(tutor_id);
 create index idx_tutoring_jobs_tutee_id on public.tutoring_jobs(tutee_id);
 create index idx_tutoring_jobs_opportunity_id on public.tutoring_jobs(opportunity_id);
-create index idx_tutoring_jobs_subject_id on public.tutoring_jobs(subject_id);
+create index idx_tutoring_jobs_subject on public.tutoring_jobs(subject_name, subject_type, subject_grade);
 create index idx_session_recordings_job_id on public.session_recordings(job_id);
 create index idx_communications_job_id on public.communications(job_id);
 create index idx_communications_opportunity_id on public.communications(opportunity_id);
@@ -158,7 +152,6 @@ create index idx_subject_approvals_subject_id on public.subject_approvals(subjec
 alter table public.schools enable row level security;
 alter table public.tutors enable row level security;
 alter table public.tutees enable row level security;
-alter table public.subjects enable row level security;
 alter table public.subject_approvals enable row level security;
 alter table public.tutoring_opportunities enable row level security;
 alter table public.tutoring_jobs enable row level security;
@@ -192,9 +185,6 @@ create policy tutees_insert_self on public.tutees
 create policy tutees_update_self on public.tutees
   for update using (auth.uid() = auth_id) with check (auth.uid() = auth_id);
 
--- Subjects: readable by any authenticated user
-create policy subjects_select on public.subjects
-  for select using (auth.role() = 'authenticated');
 
 -- Subject approvals: tutor themselves or admins
 create policy subject_approvals_select on public.subject_approvals
@@ -277,17 +267,7 @@ insert into public.schools (name, domain) values
 ('Example High School', 'examplehs.edu'),
 ('Demo Academy', 'demoacademy.org');
 
-insert into public.subjects (name, category, grade_level) values
-('Algebra', 'Mathematics', 'High School'),
-('Geometry', 'Mathematics', 'High School'),
-('Biology', 'Science', 'High School'),
-('Chemistry', 'Science', 'High School'),
-('Physics', 'Science', 'High School'),
-('English Literature', 'Language Arts', 'High School'),
-('World History', 'Social Studies', 'High School'),
-('Computer Science', 'Technology', 'High School'),
-('Spanish', 'Foreign Language', 'High School'),
-('French', 'Foreign Language', 'High School');
+-- Subject seeds removed (no subjects table)
 
 -- 7) Merge superadmin into admin (idempotent)
 -- 1) Normalize existing data: make every admin row use 'admin'

@@ -8,9 +8,13 @@ import { TuteeLayout } from '@/components/tutee-layout';
 export default function TuteeRequestPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const [subjects, setSubjects] = useState<any[]>([]);
-  const [subjectId, setSubjectId] = useState('');
-  const [gradeLevel, setGradeLevel] = useState('');
+  // Embedded subject fields
+  const SUBJECT_NAMES = ['Math', 'English', 'Science'];
+  const SUBJECT_TYPES = ['Academic', 'ALP', 'IB'];
+  const SUBJECT_GRADES = ['9', '10', '11', '12'];
+  const [subjectName, setSubjectName] = useState('');
+  const [subjectType, setSubjectType] = useState('');
+  const [subjectGrade, setSubjectGrade] = useState('');
   const [sessionsPerWeek, setSessionsPerWeek] = useState(1);
   const [availability, setAvailability] = useState<any>({});
   const [dayEnabled, setDayEnabled] = useState<{ [key: string]: boolean }>({
@@ -30,14 +34,7 @@ export default function TuteeRequestPage() {
       router.push('/auth/login');
       return;
     }
-    (async () => {
-      try {
-        const resp = await api.listSubjects();
-        setSubjects(resp.subjects || []);
-      } catch {
-        setSubjects([]);
-      }
-    })();
+    // No subjects API; choices are hardcoded as per new spec
   }, [isLoading, user, router]);
 
   const submit = async (e: React.FormEvent) => {
@@ -57,8 +54,9 @@ export default function TuteeRequestPage() {
       });
       const finalAvailability = Object.keys(built).length ? built : availability;
       await api.createTuteeOpportunity({
-        subject_id: subjectId,
-        grade_level: gradeLevel,
+        subject_name: subjectName,
+        subject_type: subjectType,
+        subject_grade: subjectGrade,
         sessions_per_week: sessionsPerWeek,
         availability: finalAvailability,
         location_preference: locationPreference,
@@ -77,18 +75,28 @@ export default function TuteeRequestPage() {
       <div className="p-6 bg-white max-w-3xl mx-auto">
         <h1 className="text-2xl font-bold">Request Tutoring</h1>
         <form onSubmit={submit} className="mt-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium">Subject</label>
-          <select className="mt-1 border rounded px-3 py-2 w-full" value={subjectId} onChange={e=>setSubjectId(e.target.value)} required>
-            <option value="">Select subject...</option>
-            {subjects.map(s => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Grade Level</label>
-          <input className="mt-1 border rounded px-3 py-2 w-full" value={gradeLevel} onChange={e=>setGradeLevel(e.target.value)} placeholder="e.g. Grade 11" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium">Subject</label>
+            <select className="mt-1 border rounded px-3 py-2 w-full" value={subjectName} onChange={e=>setSubjectName(e.target.value)} required>
+              <option value="">Select...</option>
+              {SUBJECT_NAMES.map(s => (<option key={s} value={s}>{s}</option>))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Type</label>
+            <select className="mt-1 border rounded px-3 py-2 w-full" value={subjectType} onChange={e=>setSubjectType(e.target.value)} required>
+              <option value="">Select...</option>
+              {SUBJECT_TYPES.map(s => (<option key={s} value={s}>{s}</option>))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Grade</label>
+            <select className="mt-1 border rounded px-3 py-2 w-full" value={subjectGrade} onChange={e=>setSubjectGrade(e.target.value)} required>
+              <option value="">Select...</option>
+              {SUBJECT_GRADES.map(s => (<option key={s} value={s}>{s}</option>))}
+            </select>
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium">Sessions per Week</label>

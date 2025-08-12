@@ -205,14 +205,16 @@ export default function EditTutorPage() {
         return;
       }
 
-      // Update tutor status directly in Supabase
-      const { error } = await supabase
-        .from('tutors')
-        .update({ status })
-        .eq('id', tutorId);
-
-      if (error) {
-        throw new Error(`Failed to update tutor status: ${error.message}`);
+      // Update tutor status via backend (service role)
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/status`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(`Failed to update tutor status: ${err.error || resp.statusText}`);
       }
 
       console.log('🔍 TUTOR EDIT DEBUG: Tutor status updated successfully');

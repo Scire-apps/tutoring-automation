@@ -279,16 +279,38 @@ def update_subject_approvals(tutor_id):
             if found.data and len(found.data) > 0 and found.data[0].get('id'):
                 subject_id = found.data[0]['id']
             else:
-                # Create subject
+                # Create subject (handle unique conflicts by re-selecting)
                 insert_payload = {
                     'name': subject_name,
                     'category': subject_category,
                     'grade_level': subject_grade_level
                 }
-                created = supabase.table('subjects').insert(insert_payload).select('id').execute()
-                if not created.data or len(created.data) == 0:
-                    return jsonify({'error': 'Failed to create subject', 'details': created}), 500
-                subject_id = created.data[0]['id']
+                try:
+                    created = supabase.table('subjects').insert(insert_payload).select('id').execute()
+                    if created.data and len(created.data) > 0:
+                        subject_id = created.data[0]['id']
+                    else:
+                        # Fallback select
+                        fallback = supabase.table('subjects').select('id').eq('name', subject_name)
+                        if subject_category:
+                            fallback = fallback.eq('category', subject_category)
+                        if subject_grade_level:
+                            fallback = fallback.eq('grade_level', subject_grade_level)
+                        fb = fallback.limit(1).execute()
+                        if not fb.data or len(fb.data) == 0:
+                            return jsonify({'error': 'Failed to create subject (not found after insert)'}), 500
+                        subject_id = fb.data[0]['id']
+                except Exception as e:
+                    # Likely unique violation; select existing
+                    fallback = supabase.table('subjects').select('id').eq('name', subject_name)
+                    if subject_category:
+                        fallback = fallback.eq('category', subject_category)
+                    if subject_grade_level:
+                        fallback = fallback.eq('grade_level', subject_grade_level)
+                    fb = fallback.limit(1).execute()
+                    if not fb.data or len(fb.data) == 0:
+                        return jsonify({'error': 'Failed to create/find subject', 'details': str(e)}), 500
+                    subject_id = fb.data[0]['id']
 
         # Fetch tutor basic info (array column may not exist in some deployments)
         tutor_row = supabase.table('tutors').select('first_name, last_name, email, approved_subject_ids').eq('id', tutor_id).single().execute()
@@ -315,18 +337,43 @@ def update_subject_approvals(tutor_id):
         # Also mirror into subject_approvals as a history/log
         try:
             if action == 'approve':
+                # Manual upsert: check then update/insert
+                existing = (
+                    supabase
+                    .table('subject_approvals')
+                    .select('id')
+                    .eq('tutor_id', tutor_id)
+                    .eq('subject_id', subject_id)
+                    .limit(1)
+                    .execute()
+                )
                 now_iso = datetime.now(timezone.utc).isoformat()
-                supabase.table('subject_approvals').upsert({
-                    'tutor_id': tutor_id,
-                    'subject_id': subject_id,
-                    'status': 'approved',
-                    'approved_by': admin_id,
-                    'approved_at': now_iso
-                }, on_conflict='tutor_id,subject_id').execute()
+                if existing.data and len(existing.data) > 0:
+                    supabase.table('subject_approvals').update({
+                        'status': 'approved',
+                        'approved_by': admin_id,
+                        'approved_at': now_iso
+                    }).eq('tutor_id', tutor_id).eq('subject_id', subject_id).execute()
+                else:
+                    supabase.table('subject_approvals').insert({
+                        'tutor_id': tutor_id,
+                        'subject_id': subject_id,
+                        'status': 'approved',
+                        'approved_by': admin_id,
+                        'approved_at': now_iso
+                    }).execute()
             else:
                 # remove or mark as rejected
-                existing = supabase.table('subject_approvals').select('id').eq('tutor_id', tutor_id).eq('subject_id', subject_id).single().execute()
-                if existing.data:
+                existing = (
+                    supabase
+                    .table('subject_approvals')
+                    .select('id')
+                    .eq('tutor_id', tutor_id)
+                    .eq('subject_id', subject_id)
+                    .limit(1)
+                    .execute()
+                )
+                if existing.data and len(existing.data) > 0:
                     if action == 'reject':
                         supabase.table('subject_approvals').update({
                             'status': 'rejected',
@@ -336,8 +383,9 @@ def update_subject_approvals(tutor_id):
                     else:
                         supabase.table('subject_approvals').delete().eq('tutor_id', tutor_id).eq('subject_id', subject_id).execute()
         except Exception as e:
-            print(f"Subject approvals write failed: {e}")
-            return jsonify({'error': 'Failed to update subject approvals'}), 500
+            import traceback
+            print(f"Subject approvals write failed: {e}\n{traceback.format_exc()}")
+            return jsonify({'error': 'Failed to update subject approvals', 'details': str(e)}), 500
         
         # Send email notification for approval/rejection (not for removal)
         if action in ['approve', 'reject']:

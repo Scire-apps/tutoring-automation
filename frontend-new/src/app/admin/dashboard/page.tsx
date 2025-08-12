@@ -10,6 +10,7 @@ export default function AdminDashboardPage() {
   const [admin, setAdmin] = useState<Admin | null>(null);
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
+  const [opportunities, setOpportunities] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = (href: string) => { if (typeof window !== 'undefined') window.location.href = href; };
   
@@ -75,6 +76,15 @@ export default function AdminDashboardPage() {
         if (tutorsResp.ok) {
           const tutorsJson = await tutorsResp.json();
           setTutors((tutorsJson.tutors || []) as Tutor[]);
+        }
+
+        // Opportunities list (scoped by school if admin has one)
+        const oppResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/opportunities`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (oppResp.ok) {
+          const oppJson = await oppResp.json();
+          setOpportunities((oppJson.opportunities || []).slice(0, 10));
         }
       } catch (err) {
         console.error('Error fetching admin data:', err);
@@ -169,7 +179,68 @@ export default function AdminDashboardPage() {
           </div>
         </div>
         
-        
+        {/* School/Opportunities Section (shows if admin has a school or we have opps) */}
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+          <div className="px-4 py-5 sm:px-6">
+            <h2 className="text-lg leading-6 font-medium text-gray-900">
+              {admin?.school?.name ? `Recent Tutoring Opportunities at ${admin.school.name}` : 'Recent Tutoring Opportunities'}
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">
+              Latest tutoring requests
+            </p>
+          </div>
+          <ul className="divide-y divide-gray-200">
+            {opportunities.length === 0 ? (
+              <li className="px-4 py-4 text-gray-500 text-center">No tutoring opportunities found</li>
+            ) : (
+              opportunities.map((opportunity: any) => {
+                const tFirst = opportunity?.tutee?.first_name ?? opportunity?.tutee_first_name ?? '';
+                const tLast = opportunity?.tutee?.last_name ?? opportunity?.tutee_last_name ?? '';
+                const subj = opportunity?.subject?.name ?? opportunity?.subject ?? '';
+                const firstInitial = tFirst && typeof tFirst === 'string' ? tFirst.charAt(0) : '?';
+                const lastInitial = tLast && typeof tLast === 'string' ? tLast.charAt(0) : '';
+                return (
+                  <li key={opportunity.id} className="px-4 py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                            <span className="text-sm font-medium text-gray-700">
+                              {firstInitial}{lastInitial}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {tFirst} {tLast}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {subj}{opportunity.grade_level ? ` - Grade ${opportunity.grade_level}` : ''}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          opportunity.status === 'open' 
+                            ? 'bg-green-100 text-green-800'
+                            : opportunity.status === 'assigned'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {opportunity.status}
+                        </span>
+                        <div className="ml-4 text-sm text-gray-500">
+                          {new Date(opportunity.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })
+            )}
+          </ul>
+        </div>
+
         {/* Tutors Section */}
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:px-6">

@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 import { supabase } from '@/services/supabase';
 import api from '@/services/api';
-import type { RequestInit } from 'next/dist/server/web/spec-extension/request';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
@@ -17,7 +16,7 @@ export default function Home() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/role`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
           credentials: 'include',
-        } as RequestInit);
+        });
         const roleResp = await res.json();
         if (roleResp.role === 'admin') return router.replace('/admin/dashboard');
         if (roleResp.role === 'tutor') return router.replace('/dashboard');

@@ -145,7 +145,7 @@ export async function middleware(request: NextRequest) {
 
     console.log("Middleware: User role from database:", userRole);
 
-    // Allow both superadmin and admin roles to access admin routes
+    // Single admin role
     if (userRole !== "admin") {
       console.log(
         "Middleware: User is not an admin, access denied. Role:",
@@ -156,20 +156,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
-    // Check for role-specific route restrictions
-    if (userRole === "admin") {
-      // School admins should only access school-specific routes
-      if (pathname === "/admin/dashboard") {
-        console.log("Middleware: School admin trying to access superadmin route, redirecting");
-        return NextResponse.redirect(new URL("/admin/school/dashboard", request.url));
-      }
-      
-      // Allow school admins to access their specific routes
-      if (!pathname.startsWith("/admin/school/") && !pathname.startsWith("/admin/tutors/")) {
-        console.log("Middleware: School admin accessing non-school route, redirecting");
-        return NextResponse.redirect(new URL("/admin/school/dashboard", request.url));
-      }
-    }
+    // Single unified admin dashboard; no role-specific sub-routing
 
     console.log(
       "Middleware: Admin access granted for user:",

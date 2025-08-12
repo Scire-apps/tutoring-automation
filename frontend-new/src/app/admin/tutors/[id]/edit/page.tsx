@@ -117,54 +117,24 @@ export default function EditTutorPage() {
         return;
       }
 
-      console.log('🔍 TUTOR EDIT DEBUG: Bypassing backend API, querying Supabase directly...');
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? '';
+      // Fetch via backend endpoints (service role)
+      const [tutorResp, subjectsResp, approvalsResp] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/subjects`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/approvals`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      if (!tutorResp.ok) throw new Error('Tutor not found');
+      const tutorJson = await tutorResp.json();
+      const subjectsJson = subjectsResp.ok ? await subjectsResp.json() : { subjects: [] };
+      const approvalsJson = approvalsResp.ok ? await approvalsResp.json() : { subject_approvals: [] };
 
-      // Get tutor details directly from Supabase (like the dashboard does)
-      const { data: tutorData, error: tutorError } = await supabase
-        .from('tutors')
-        .select(`
-          *,
-          school:schools(name, domain)
-        `)
-        .eq('id', tutorId)
-        .single();
-
-      console.log('🔍 TUTOR EDIT DEBUG: Tutor query result:', tutorData);
-      console.log('🔍 TUTOR EDIT DEBUG: Tutor query error:', tutorError);
-
-      if (tutorError || !tutorData) {
-        throw new Error('Tutor not found');
-      }
-
-      // Get subject approvals for this tutor
-      const { data: approvalsData, error: approvalsError } = await supabase
-        .from('subject_approvals')
-        .select(`
-          *,
-          subject:subjects(id, name, category, grade_level)
-        `)
-        .eq('tutor_id', tutorId);
-
-      console.log('🔍 TUTOR EDIT DEBUG: Approvals query result:', approvalsData);
-      console.log('🔍 TUTOR EDIT DEBUG: Approvals query error:', approvalsError);
-
-      // Get all available subjects
-      const { data: subjectsData, error: subjectsError } = await supabase
-        .from('subjects')
-        .select('*')
-        .order('category, name');
-
-      console.log('🔍 TUTOR EDIT DEBUG: Subjects query result:', subjectsData?.length || 0, 'subjects');
-      console.log('🔍 TUTOR EDIT DEBUG: Subjects query error:', subjectsError);
-
-      // Structure the data like the backend API would
       const structuredData = {
-        tutor: tutorData,
-        subject_approvals: approvalsData || [],
-        available_subjects: subjectsData || []
+        tutor: tutorJson.tutor,
+        subject_approvals: approvalsJson.subject_approvals || [],
+        available_subjects: subjectsJson.subjects || [],
       };
-
-      console.log('🔍 TUTOR EDIT DEBUG: Final structured data:', structuredData);
       setTutorData(structuredData);
       
     } catch (err) {
@@ -185,29 +155,17 @@ export default function EditTutorPage() {
         return;
       }
 
-      // Get the admin ID for the approval record
-      const { data: adminData } = await supabase
-        .from('admins')
-        .select('id')
-        .eq('auth_id', user.id)
-        .single();
-
-      if (!adminData) {
-        throw new Error('Admin record not found');
-      }
-
-      const adminId = adminData.id;
-      console.log('🔍 TUTOR EDIT DEBUG: Admin ID:', adminId);
-
       if (action === 'remove') {
         // Remove the subject approval
         console.log('🔍 TUTOR EDIT DEBUG: Attempting to remove approval for:', { tutorId, subjectId });
         
-        const { data: deleteResult, error: deleteError } = await supabase
-          .from('subject_approvals')
-          .delete()
-          .eq('tutor_id', tutorId)
-          .eq('subject_id', subjectId);
+        const { data: { session } } = await supabase.auth.getSession();
+        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/subjects`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subject_id: subjectId, action: 'remove' })
+        });
+        if (!resp.ok) throw new Error('Failed to remove subject approval');
 
         console.log('🔍 TUTOR EDIT DEBUG: Delete result:', deleteResult);
         console.log('🔍 TUTOR EDIT DEBUG: Delete error:', deleteError);
@@ -217,68 +175,13 @@ export default function EditTutorPage() {
         }
         console.log('🔍 TUTOR EDIT DEBUG: Subject approval removed successfully');
       } else {
-        // Check if approval already exists
-        console.log('🔍 TUTOR EDIT DEBUG: Checking for existing approval:', { tutorId, subjectId });
-        
-        const { data: existingApproval, error: selectError } = await supabase
-          .from('subject_approvals')
-          .select('*')
-          .eq('tutor_id', tutorId)
-          .eq('subject_id', subjectId)
-          .single();
-
-        console.log('🔍 TUTOR EDIT DEBUG: Existing approval:', existingApproval);
-        console.log('🔍 TUTOR EDIT DEBUG: Select error:', selectError);
-
-        const approvalData = {
-          status: action === 'approve' ? 'approved' : 'rejected',
-          approved_by: null, // TODO: Fix schema - this should reference admins(id), not tutors(id)
-          approved_at: action === 'approve' ? new Date().toISOString() : null
-        };
-
-        console.log('🔍 TUTOR EDIT DEBUG: Approval data to save:', approvalData);
-
-        if (existingApproval) {
-          // Update existing approval
-          console.log('🔍 TUTOR EDIT DEBUG: Updating existing approval');
-          
-          const { data: updateResult, error: updateError } = await supabase
-            .from('subject_approvals')
-            .update(approvalData)
-            .eq('tutor_id', tutorId)
-            .eq('subject_id', subjectId);
-
-          console.log('🔍 TUTOR EDIT DEBUG: Update result:', updateResult);
-          console.log('🔍 TUTOR EDIT DEBUG: Update error:', updateError);
-
-          if (updateError) {
-            throw new Error(`Failed to update subject approval: ${updateError.message}`);
-          }
-          console.log('🔍 TUTOR EDIT DEBUG: Subject approval updated successfully');
-        } else {
-          // Create new approval
-          console.log('🔍 TUTOR EDIT DEBUG: Creating new approval');
-          
-          const newApprovalData = {
-            tutor_id: tutorId,
-            subject_id: subjectId,
-            ...approvalData
-          };
-
-          console.log('🔍 TUTOR EDIT DEBUG: New approval data:', newApprovalData);
-
-          const { data: insertResult, error: insertError } = await supabase
-            .from('subject_approvals')
-            .insert(newApprovalData);
-
-          console.log('🔍 TUTOR EDIT DEBUG: Insert result:', insertResult);
-          console.log('🔍 TUTOR EDIT DEBUG: Insert error:', insertError);
-
-          if (insertError) {
-            throw new Error(`Failed to create subject approval: ${insertError.message}`);
-          }
-          console.log('🔍 TUTOR EDIT DEBUG: Subject approval created successfully');
-        }
+        const { data: { session } } = await supabase.auth.getSession();
+        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/subjects`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subject_id: subjectId, action })
+        });
+        if (!resp.ok) throw new Error('Failed to update subject approval');
       }
 
       // Reload tutor data to reflect changes

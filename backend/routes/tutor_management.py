@@ -202,14 +202,36 @@ def get_tutor_details(tutor_id):
         # Get all available subjects
         subjects_result = supabase.table('subjects').select('*').order('category, name').execute()
         
+        # Also include current subject approvals with subject details
+        approvals = supabase.table('subject_approvals').select('''
+            *,
+            subject:subjects(id, name, category, grade_level)
+        ''').eq('tutor_id', tutor_id).execute()
+
         return jsonify({
             'tutor': tutor,
             'approved_subject_ids': tutor.get('approved_subject_ids', []) if isinstance(tutor, dict) else [],
-            'available_subjects': subjects_result.data or []
+            'available_subjects': subjects_result.data or [],
+            'subject_approvals': approvals.data or []
         }), 200
         
     except Exception as e:
         print(f"Error getting tutor details: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@tutor_management_bp.route('/api/admin/tutors/<tutor_id>/approvals', methods=['GET'])
+@require_admin
+def list_tutor_approvals(tutor_id):
+    """List subject approvals for a tutor with subject details"""
+    try:
+        supabase = get_supabase_client()
+        res = supabase.table('subject_approvals').select('''
+            *,
+            subject:subjects(id, name, category, grade_level)
+        ''').eq('tutor_id', tutor_id).execute()
+        return jsonify({'subject_approvals': res.data or []}), 200
+    except Exception as e:
+        print(f"Error listing tutor approvals: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @tutor_management_bp.route('/api/admin/tutors/<tutor_id>/subjects', methods=['POST'])

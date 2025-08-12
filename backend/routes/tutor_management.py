@@ -290,11 +290,11 @@ def update_subject_approvals(tutor_id):
                     return jsonify({'error': 'Failed to create subject'}), 500
                 subject_id = created.data['id']
 
-        # Fetch the tutor's current approved_subject_ids
-        tutor_row = supabase.table('tutors').select('approved_subject_ids, first_name, last_name, email').eq('id', tutor_id).single().execute()
+        # Fetch tutor basic info (array column may not exist in some deployments)
+        tutor_row = supabase.table('tutors').select('first_name, last_name, email, approved_subject_ids').eq('id', tutor_id).single().execute()
         if not tutor_row.data:
             return jsonify({'error': 'Tutor not found'}), 404
-        current_ids = tutor_row.data.get('approved_subject_ids') or []
+        current_ids = (tutor_row.data.get('approved_subject_ids') or []) if isinstance(tutor_row.data, dict) else []
         
         updated_ids = list(current_ids)
         if action == 'approve':
@@ -303,10 +303,14 @@ def update_subject_approvals(tutor_id):
         else:  # 'reject' and 'remove' both result in removal
             updated_ids = [sid for sid in updated_ids if sid != subject_id]
         
-        # Update the tutor record (array of approved subject IDs)
-        supabase.table('tutors').update({
-            'approved_subject_ids': updated_ids
-        }).eq('id', tutor_id).execute()
+        # Update the tutor record (array of approved subject IDs) when column exists
+        try:
+            supabase.table('tutors').update({
+                'approved_subject_ids': updated_ids
+            }).eq('id', tutor_id).execute()
+        except Exception as e:
+            # Column may not exist; proceed since subject_approvals is source of truth
+            print(f"Skipping approved_subject_ids update: {e}")
 
         # Also mirror into subject_approvals as a history/log
         try:

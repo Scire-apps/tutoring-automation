@@ -64,38 +64,25 @@ export default function CompleteSessionPage() {
         return;
       }
 
-      // Get job data
-      const { data: jobData, error: jobError } = await supabase
-        .from('tutoring_jobs')
-        .select('*')
-        .eq('id', jobId)
-        .eq('tutor_id', tutorData.id)
-        .single();
+      // Get job data via backend (ensures ownership and expands opportunity)
+      const { data: { session } } = await supabase.auth.getSession();
+      const jobResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/jobs/${jobId}`, {
+        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }
+      });
+      if (!jobResp.ok) {
+        setError('Job not found or you do not have permission to complete it');
+        return;
+      }
+      const jobJson = await jobResp.json();
+      const jobData = jobJson.job;
 
       if (jobError || !jobData) {
         setError('Job not found or you do not have permission to complete it');
         return;
       }
 
-      // Get opportunity data
-      const { data: opportunityData, error: opportunityError } = await supabase
-        .from('tutoring_opportunities')
-        .select('*')
-        .eq('id', jobData.opportunity_id)
-        .single();
-
-      if (opportunityError || !opportunityData) {
-        setError('Could not load tutoring opportunity details');
-        return;
-      }
-
-      // Combine the data
-      const fullJobData = {
-        ...jobData,
-        tutoring_opportunity: opportunityData
-      };
-
-      setJob(fullJobData);
+      // Backend already expanded opportunity relationally in jobJson.job
+      setJob(jobData);
       
     } catch (err) {
       console.error('Error loading job data:', err);
@@ -221,71 +208,17 @@ export default function CompleteSessionPage() {
         });
       }, 100);
       
-      // Create session recording record with just the metadata (no actual file upload)
-      const { data: recordingData, error: recordingError } = await supabase
-        .from('session_recordings')
-        .insert({
-          job_id: job.id,
-          file_path: `metadata_only/${job.id}_${Date.now()}_${fileName}`, // Just for reference
-          file_url: null, // No actual file URL since we're not uploading
-          duration_seconds: duration,
-          volunteer_hours: hours,
-          status: 'approved' // Auto-approve the hours
-        })
-        .select()
-        .single();
-      
-      if (recordingError) {
+      // Complete via backend (service key): create recording, update hours and statuses
+      const { data: { session } } = await supabase.auth.getSession();
+      const completeResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/jobs/${job.id}/complete`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration_seconds: duration, file_name: fileName, file_type: fileType, file_size: fileSize })
+      });
+      if (!completeResp.ok) {
         clearInterval(progressInterval);
-        throw new Error(`Failed to create recording record: ${recordingError.message}`);
-      }
-      
-      // Update tutor's volunteer hours
-      const { data: tutorData, error: tutorError } = await supabase
-        .from('tutors')
-        .select('id, volunteer_hours')
-        .eq('auth_id', user?.id)
-        .single();
-        
-      if (tutorError) {
-        clearInterval(progressInterval);
-        throw new Error(`Failed to get tutor data: ${tutorError.message}`);
-      }
-      
-      // Add the new hours to the tutor's existing hours
-      const updatedHours = (tutorData.volunteer_hours || 0) + hours;
-      
-      // Update the tutor's volunteer hours
-      const { error: updateHoursError } = await supabase
-        .from('tutors')
-        .update({ volunteer_hours: updatedHours })
-        .eq('id', tutorData.id);
-        
-      if (updateHoursError) {
-        clearInterval(progressInterval);
-        throw new Error(`Failed to update volunteer hours: ${updateHoursError.message}`);
-      }
-      
-      // Update job status to completed
-      const { error: jobUpdateError } = await supabase
-        .from('tutoring_jobs')
-        .update({ status: 'completed' })
-        .eq('id', job.id);
-      
-      if (jobUpdateError) {
-        clearInterval(progressInterval);
-        throw new Error(`Failed to update job status: ${jobUpdateError.message}`);
-      }
-      
-      // Update opportunity status to completed
-      const { error: oppUpdateError } = await supabase
-        .from('tutoring_opportunities')
-        .update({ status: 'completed' })
-        .eq('id', job.opportunity_id);
-      
-      if (oppUpdateError) {
-        clearInterval(progressInterval);
-        throw new Error(`Failed to update opportunity status: ${oppUpdateError.message}`);
+        const errJson = await completeResp.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Failed to complete job');
       }
       
       // Complete the progress bar

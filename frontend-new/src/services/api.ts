@@ -96,6 +96,23 @@ export async function acceptOpportunity(opportunityId: string, finalizedSchedule
   );
 }
 
+export async function listOpenOpportunities() {
+  return apiRequest<{ opportunities: any[] }>(
+    '/api/tutor/opportunities',
+    { method: 'GET' }
+  );
+}
+
+export async function completeJob(
+  jobId: string,
+  payload: { duration_seconds?: number; file_name?: string; file_type?: string; file_size?: number }
+) {
+  return apiRequest<{ message: string; volunteer_hours_added: number }>(
+    `/api/tutor/jobs/${jobId}/complete`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  );
+}
+
 export async function listSubjects() {
   return apiRequest<{ subjects: any[] }>(
     '/api/subjects',
@@ -302,6 +319,8 @@ const apiService = {
   createTuteeOpportunity,
   getTutorDashboard,
   acceptOpportunity,
+  listOpenOpportunities,
+  completeJob,
   listSubjects,
   listSchoolsPublic,
 };

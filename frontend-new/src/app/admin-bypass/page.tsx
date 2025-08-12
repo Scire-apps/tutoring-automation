@@ -214,12 +214,7 @@ export default function AdminBypassPage() {
             </div>
             <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
               <div className="flex space-x-4">
-                <a
-                  href="/admin-bypass/invitations"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Manage Admin Invitations
-                </a>
+                {/* Invitations feature removed */}
               </div>
             </div>
           </div>

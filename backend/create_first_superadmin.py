@@ -67,7 +67,7 @@ def create_first_superadmin():
                 print(f"Go to Supabase Dashboard > Authentication > Users and confirm the email")
                 print(f"\nYou can now log in at: http://localhost:3000/auth/login")
                 print(f"After logging in, access the admin dashboard at: http://localhost:3000/admin/dashboard")
-                print(f"Manage invitations at: http://localhost:3000/admin/invitations")
+                # Invitations feature removed
                 return True
             else:
                 print("❌ Failed to create admin record")

@@ -476,51 +476,5 @@ def get_email_service() -> EmailService:
     return EmailService()
 
 def send_invitation_email(to_email: str, invitation_url: str, role: str) -> bool:
-    """
-    Send an admin invitation email
-    
-    Args:
-        to_email: Recipient email address
-        invitation_url: URL for completing registration
-        role: Admin role (admin or superadmin)
-        
-    Returns:
-        bool: True if email was sent successfully, False otherwise
-    """
-    email_service = get_email_service()
-    
-    subject = f"Invitation to join Tutoring System as {role.title()}"
-    
-    html_body = f"""
-    <html>
-    <body>
-        <h2>Invitation to join Tutoring System</h2>
-        <p>You have been invited to join the Tutoring System as a <strong>{role.title()}</strong>.</p>
-        
-        <p>Please click the button below to complete your registration:</p>
-        
-        <a href="{invitation_url}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
-            Complete Registration
-        </a>
-        
-        <p><small>Or copy and paste this link into your browser: {invitation_url}</small></p>
-        
-        <p><em>This invitation will expire in 7 days.</em></p>
-        
-        <p>If you did not expect this invitation, please ignore this email.</p>
-    </body>
-    </html>
-    """
-    
-    text_body = f"""
-You have been invited to join the Tutoring System as a {role.title()}.
-
-Please visit the following link to complete your registration:
-{invitation_url}
-
-This invitation will expire in 7 days.
-
-If you did not expect this invitation, please ignore this email.
-    """
-    
-    return email_service.send_email(to_email, subject, html_body, text_body)
+    # Invitations removed from the system: make this a no-op
+    return False

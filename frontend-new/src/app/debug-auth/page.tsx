@@ -95,9 +95,7 @@ export default function DebugAuthPage() {
               <a href="/admin/dashboard" className="block text-blue-600 hover:text-blue-500">
                 /admin/dashboard
               </a>
-              <a href="/admin/invitations" className="block text-blue-600 hover:text-blue-500">
-                /admin/invitations
-              </a>
+              {/* /admin/invitations removed */}
               <a href="/admin-bypass" className="block text-blue-600 hover:text-blue-500">
                 /admin-bypass (working version)
               </a>

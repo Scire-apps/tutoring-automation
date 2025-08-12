@@ -242,78 +242,23 @@ export default function EditTutorPage() {
         throw new Error('Please select subject, grade level, and course level');
       }
 
-      // Get the admin ID for the approval record
-      const { data: adminData } = await supabase
-        .from('admins')
-        .select('id')
-        .eq('auth_id', user.id)
-        .single();
-
-      if (!adminData) {
-        throw new Error('Admin record not found');
-      }
-
-      // Step 1: First check if a subject with this name and grade level exists
+      // Build subject info and request backend to approve
       const subjectName = `${selectedSubject} ${selectedGrade} ${selectedCourseLevel}`;
-      console.log('🔍 TUTOR EDIT DEBUG: Looking for subject:', subjectName);
-      
-      const { data: existingSubject, error: subjectQueryError } = await supabase
-        .from('subjects')
-        .select('id')
-        .eq('name', subjectName)
-        .single();
-      
-      console.log('🔍 TUTOR EDIT DEBUG: Existing subject:', existingSubject);
-      console.log('🔍 TUTOR EDIT DEBUG: Subject query error:', subjectQueryError);
-      
-      let subjectId;
-      
-      if (!existingSubject) {
-        // Step 2: If subject doesn't exist, create it
-        console.log('🔍 TUTOR EDIT DEBUG: Creating new subject:', subjectName);
-        
-        const { data: newSubject, error: createSubjectError } = await supabase
-          .from('subjects')
-          .insert({
-            name: subjectName,
-            category: selectedSubject,
-            grade_level: `${selectedGrade} ${selectedCourseLevel}`
-          })
-          .select('id')
-          .single();
-        
-        console.log('🔍 TUTOR EDIT DEBUG: New subject result:', newSubject);
-        console.log('🔍 TUTOR EDIT DEBUG: Create subject error:', createSubjectError);
-        
-        if (createSubjectError) {
-          throw new Error(`Failed to create subject: ${createSubjectError.message}`);
-        }
-        
-        subjectId = newSubject.id;
-      } else {
-        subjectId = existingSubject.id;
-      }
-      
-      // Step 3: Create the subject approval
-      console.log('🔍 TUTOR EDIT DEBUG: Creating approval for subject ID:', subjectId);
-      
-      const approvalData = {
-        tutor_id: tutorId,
-        subject_id: subjectId,
-        status: 'approved',
-        approved_by: null, // TODO: Fix schema to reference admins table
-        approved_at: new Date().toISOString()
-      };
-      
-      const { data: insertResult, error: insertError } = await supabase
-        .from('subject_approvals')
-        .insert(approvalData);
-      
-      console.log('🔍 TUTOR EDIT DEBUG: Insert result:', insertResult);
-      console.log('🔍 TUTOR EDIT DEBUG: Insert error:', insertError);
-      
-      if (insertError) {
-        throw new Error(`Failed to add certification: ${insertError.message}`);
+      console.log('🔍 TUTOR EDIT DEBUG: Approving subject via backend:', subjectName);
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/subjects`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approve',
+          subject_name: subjectName,
+          subject_category: selectedSubject,
+          subject_grade_level: `${selectedGrade} ${selectedCourseLevel}`
+        })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to add certification');
       }
       
       console.log('🔍 TUTOR EDIT DEBUG: Certification added successfully');

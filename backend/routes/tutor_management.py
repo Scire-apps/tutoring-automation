@@ -267,50 +267,34 @@ def update_subject_approvals(tutor_id):
         
         admin_id = admin_result.data['id']
         
-        # If we need a subject_id and it's missing, find or create the subject
+        # If we need a subject_id and it's missing, find or create the subject (name-only is canonical)
         if action != 'remove' and not subject_id:
-            # Normalize input
             subject_name = (subject_name or '').strip()
-            subject_category = (subject_category or '').strip() or None
-            subject_grade_level = (subject_grade_level or '').strip() or None
+            if not subject_name:
+                return jsonify({'error': 'subject_name is required'}), 400
 
-            # Try exact match on all three
-            find_all = supabase.table('subjects').select('id').eq('name', subject_name)
-            if subject_category:
-                find_all = find_all.eq('category', subject_category)
-            if subject_grade_level:
-                find_all = find_all.eq('grade_level', subject_grade_level)
-            found = find_all.limit(1).execute()
-            if found.data and len(found.data) > 0 and found.data[0].get('id'):
-                subject_id = found.data[0]['id']
+            # First: try by name only (most reliable across schemas)
+            found_by_name = supabase.table('subjects').select('id').eq('name', subject_name).limit(1).execute()
+            if found_by_name.data and len(found_by_name.data) > 0:
+                subject_id = found_by_name.data[0]['id']
             else:
-                # Try match by name only
-                found_by_name = supabase.table('subjects').select('id').eq('name', subject_name).limit(1).execute()
-                if found_by_name.data and len(found_by_name.data) > 0:
-                    subject_id = found_by_name.data[0]['id']
-                else:
-                    # Create subject (handle unique conflicts by re-selecting)
-                    insert_payload = {
-                        'name': subject_name,
-                        'category': subject_category,
-                        'grade_level': subject_grade_level
-                    }
-                    try:
-                        created = supabase.table('subjects').insert(insert_payload).select('id').execute()
-                        if created.data and len(created.data) > 0:
-                            subject_id = created.data[0]['id']
-                        else:
-                            # Fallback select by name
-                            fb = supabase.table('subjects').select('id').eq('name', subject_name).limit(1).execute()
-                            if not fb.data or len(fb.data) == 0:
-                                return jsonify({'error': 'Failed to create subject (not found after insert)'}), 500
-                            subject_id = fb.data[0]['id']
-                    except Exception as e:
-                        # Likely unique violation; select existing by name
+                # Create minimal subject row (name only) to avoid schema mismatch on optional columns
+                try:
+                    created = supabase.table('subjects').insert({'name': subject_name}).select('id').execute()
+                    if created.data and len(created.data) > 0:
+                        subject_id = created.data[0]['id']
+                    else:
+                        # Fallback select by name
                         fb = supabase.table('subjects').select('id').eq('name', subject_name).limit(1).execute()
                         if not fb.data or len(fb.data) == 0:
-                            return jsonify({'error': 'Failed to create/find subject', 'details': str(e)}), 500
+                            return jsonify({'error': 'Failed to create subject (not found after insert)'}), 500
                         subject_id = fb.data[0]['id']
+                except Exception as e:
+                    # Unique violation or other constraint: attempt to find by name again
+                    fb = supabase.table('subjects').select('id').eq('name', subject_name).limit(1).execute()
+                    if not fb.data or len(fb.data) == 0:
+                        return jsonify({'error': 'Failed to create/find subject', 'details': str(e)}), 500
+                    subject_id = fb.data[0]['id']
 
         # Fetch tutor basic info (array column may not exist in some deployments)
         tutor_row = supabase.table('tutors').select('first_name, last_name, email, approved_subject_ids').eq('id', tutor_id).single().execute()

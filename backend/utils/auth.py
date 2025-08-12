@@ -11,9 +11,9 @@ def require_auth(f):
     """Decorator to require authentication for API endpoints"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Skip authentication for OPTIONS requests (CORS preflight)
+        # Short-circuit CORS preflight: return empty 204 so CORS headers are applied
         if request.method == 'OPTIONS':
-            return f(*args, **kwargs)
+            return ('', 204)
         
         # Get the authorization header
         auth_header = request.headers.get('Authorization')

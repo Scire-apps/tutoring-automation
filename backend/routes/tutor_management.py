@@ -241,10 +241,18 @@ def update_subject_approvals(tutor_id):
     try:
         data = request.get_json()
         subject_id = data.get('subject_id')
+        subject_name = data.get('subject_name')
+        subject_category = data.get('subject_category')
+        subject_grade_level = data.get('subject_grade_level')
         action = data.get('action')  # 'approve', 'reject', or 'remove'
         
-        if not subject_id or not action:
-            return jsonify({'error': 'subject_id and action are required'}), 400
+        if not action:
+            return jsonify({'error': 'action is required'}), 400
+        
+        # If subject_id not provided and we are not removing, try to resolve/create by name
+        if action != 'remove' and not subject_id:
+            if not subject_name:
+                return jsonify({'error': 'subject_id or subject_name is required'}), 400
         
         if action not in ['approve', 'reject', 'remove']:
             return jsonify({'error': 'Invalid action'}), 400
@@ -258,6 +266,29 @@ def update_subject_approvals(tutor_id):
         
         admin_id = admin_result.data['id']
         
+        # If we need a subject_id and it's missing, find or create the subject
+        if action != 'remove' and not subject_id:
+            # Try to find by (name, category, grade_level)
+            find_q = supabase.table('subjects').select('id').eq('name', subject_name)
+            if subject_category:
+                find_q = find_q.eq('category', subject_category)
+            if subject_grade_level:
+                find_q = find_q.eq('grade_level', subject_grade_level)
+            found = find_q.single().execute()
+            if found.data and found.data.get('id'):
+                subject_id = found.data['id']
+            else:
+                # Create subject
+                insert_payload = {
+                    'name': subject_name,
+                    'category': subject_category,
+                    'grade_level': subject_grade_level
+                }
+                created = supabase.table('subjects').insert(insert_payload).select('id').single().execute()
+                if not created.data:
+                    return jsonify({'error': 'Failed to create subject'}), 500
+                subject_id = created.data['id']
+
         # Fetch the tutor's current approved_subject_ids
         tutor_row = supabase.table('tutors').select('approved_subject_ids, first_name, last_name, email').eq('id', tutor_id).single().execute()
         if not tutor_row.data:
@@ -276,7 +307,7 @@ def update_subject_approvals(tutor_id):
             'approved_subject_ids': updated_ids
         }).eq('id', tutor_id).execute()
 
-        # Also mirror into subject_approvals as a history/log (if table exists)
+        # Also mirror into subject_approvals as a history/log
         try:
             if action == 'approve':
                 supabase.table('subject_approvals').upsert({
@@ -298,9 +329,9 @@ def update_subject_approvals(tutor_id):
                         }).eq('tutor_id', tutor_id).eq('subject_id', subject_id).execute()
                     else:
                         supabase.table('subject_approvals').delete().eq('tutor_id', tutor_id).eq('subject_id', subject_id).execute()
-        except Exception:
-            # table may not exist; ignore
-            pass
+        except Exception as e:
+            print(f"Subject approvals write failed: {e}")
+            return jsonify({'error': 'Failed to update subject approvals'}), 500
         
         # Send email notification for approval/rejection (not for removal)
         if action in ['approve', 'reject']:
@@ -368,7 +399,7 @@ def update_subject_approvals(tutor_id):
                 print(f"Failed to send approval notification email: {e}")
                 # Don't fail the entire operation if email fails
         
-        return jsonify({'message': f'Subject approval {action}d successfully'}), 200
+        return jsonify({'message': f'Subject approval {action}d successfully', 'subject_id': subject_id}), 200
         
     except Exception as e:
         print(f"Error updating subject approvals: {e}")

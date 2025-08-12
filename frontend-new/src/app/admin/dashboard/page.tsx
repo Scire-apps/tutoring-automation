@@ -134,20 +134,7 @@ export default function AdminDashboardPage() {
         {isSuperAdmin() && (
           <div className="mb-8">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Link
-                href="/admin/invitations"
-                className="relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-6 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                </svg>
-                <span className="mt-2 block text-sm font-medium text-gray-900">
-                  Manage Admin Invitations
-                </span>
-                <span className="mt-1 block text-xs text-gray-500">
-                  Create and manage invitations for new administrators
-                </span>
-              </Link>
+              {/* Invitations feature removed */}
             </div>
           </div>
         )}

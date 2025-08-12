@@ -113,9 +113,7 @@ export default function LoginPage() {
               Register here
             </Link>
           </p>
-          <p className="mt-1 text-center text-sm text-gray-500">
-            Admin registration is by invitation only
-          </p>
+          {/* Invitations removed */}
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

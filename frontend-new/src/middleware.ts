@@ -159,7 +159,7 @@ export async function middleware(request: NextRequest) {
     // Check for role-specific route restrictions
     if (userRole === "admin") {
       // School admins should only access school-specific routes
-      if (pathname === "/admin/dashboard" || pathname.startsWith("/admin/invitations")) {
+      if (pathname === "/admin/dashboard") {
         console.log("Middleware: School admin trying to access superadmin route, redirecting");
         return NextResponse.redirect(new URL("/admin/school/dashboard", request.url));
       }

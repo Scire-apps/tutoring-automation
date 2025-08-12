@@ -11,9 +11,20 @@ def require_auth(f):
     """Decorator to require authentication for API endpoints"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Short-circuit CORS preflight: return empty 204 so CORS headers are applied
+        # Short-circuit CORS preflight with explicit CORS headers
         if request.method == 'OPTIONS':
-            return ('', 204)
+            from flask import make_response
+            origin = request.headers.get('Origin', '*')
+            resp = make_response('', 204)
+            # Mirror origin to support credentials
+            resp.headers['Access-Control-Allow-Origin'] = origin
+            resp.headers['Vary'] = 'Origin'
+            resp.headers['Access-Control-Allow-Credentials'] = 'true'
+            resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+            req_headers = request.headers.get('Access-Control-Request-Headers', 'Authorization, Content-Type, X-Requested-With, Accept, Origin')
+            resp.headers['Access-Control-Allow-Headers'] = req_headers
+            resp.headers['Access-Control-Max-Age'] = '86400'
+            return resp
         
         # Get the authorization header
         auth_header = request.headers.get('Authorization')

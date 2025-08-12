@@ -62,41 +62,18 @@ def list_opportunities_for_admin():
         admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
         school_id = admin_res.data.get('school_id') if admin_res.data else None
 
-        # Preferred (new schema with relations)
-        try:
-            if school_id:
-                # Collect tutee ids for this school and filter by tutee_id
-                tutees_res = supabase.table('tutees').select('id').eq('school_id', school_id).execute()
-                tutee_ids = [t['id'] for t in (tutees_res.data or [])]
-            else:
-                tutee_ids = None
+        # Embedded subject schema
+        if school_id:
+            tutees_res = supabase.table('tutees').select('id').eq('school_id', school_id).execute()
+            tutee_ids = [t['id'] for t in (tutees_res.data or [])]
+        else:
+            tutee_ids = None
 
-            query = (
-                supabase
-                .table('tutoring_opportunities')
-                .select('''
-                    id, tutee_id, subject_id, grade_level, status, created_at,
-                    tutee:tutees(id, first_name, last_name, email, school_id),
-                    subject:subjects(id, name, category, grade_level)
-                ''')
-                .order('created_at', desc=True)
-            )
-            if tutee_ids and len(tutee_ids) > 0:
-                query = query.in_('tutee_id', tutee_ids)
-            res = query.limit(50).execute()
-            return jsonify({'opportunities': res.data or []}), 200
-        except Exception:
-            # Fallback for legacy schema columns
-            query = supabase.table('tutoring_opportunities').select(
-                'id, tutee_first_name, tutee_last_name, subject, grade_level, status, created_at, school'
-            ).order('created_at', desc=True)
-            if school_id:
-                # legacy: filter by school name value in row
-                school_res = supabase.table('schools').select('name').eq('id', school_id).single().execute()
-                if school_res.data:
-                    query = query.eq('school', school_res.data.get('name'))
-            res = query.limit(50).execute()
-            return jsonify({'opportunities': res.data or []}), 200
+        query = supabase.table('tutoring_opportunities').select('*').order('created_at', desc=True)
+        if tutee_ids and len(tutee_ids) > 0:
+            query = query.in_('tutee_id', tutee_ids)
+        res = query.limit(50).execute()
+        return jsonify({'opportunities': res.data or []}), 200
     except Exception as e:
         print(f"Error listing opportunities for admin: {e}")
         return jsonify({'error': 'Internal server error'}), 500
@@ -114,17 +91,7 @@ def list_jobs_for_admin():
         school_id = admin_res.data.get('school_id') if admin_res.data else None
 
         # Build base query with related entities
-        query = (
-            supabase
-            .table('tutoring_jobs')
-            .select('''
-                *,
-                tutor:tutors(id, first_name, last_name, email, school_id, school:schools(name,domain)),
-                tutee:tutees(id, first_name, last_name, email, school_id),
-                subject:subjects(id, name, category, grade_level)
-            ''')
-            .order('created_at', desc=True)
-        )
+        query = supabase.table('tutoring_jobs').select('*').order('created_at', desc=True)
 
         # If admin has school, limit using IDs for reliability
         if school_id:
@@ -223,13 +190,10 @@ def get_tutor_details(tutor_id):
 @tutor_management_bp.route('/api/admin/tutors/<tutor_id>/approvals', methods=['GET'])
 @require_admin
 def list_tutor_approvals(tutor_id):
-    """List subject approvals for a tutor with subject details"""
+    """List subject approvals for a tutor (embedded subject fields)"""
     try:
         supabase = get_supabase_client()
-        res = supabase.table('subject_approvals').select('''
-            *,
-            subject:subjects(id, name, category, grade_level)
-        ''').eq('tutor_id', tutor_id).execute()
+        res = supabase.table('subject_approvals').select('*').eq('tutor_id', tutor_id).execute()
         return jsonify({'subject_approvals': res.data or []}), 200
     except Exception as e:
         print(f"Error listing tutor approvals: {e}")
@@ -238,22 +202,22 @@ def list_tutor_approvals(tutor_id):
 @tutor_management_bp.route('/api/admin/tutors/<tutor_id>/subjects', methods=['POST'])
 @require_admin
 def update_subject_approvals(tutor_id):
-    """Update subject approvals for a tutor"""
+    """Update subject approvals for a tutor (embedded subject fields)"""
     try:
         data = request.get_json()
-        subject_id = data.get('subject_id')
-        subject_name = data.get('subject_name')
-        subject_category = data.get('subject_category')
-        subject_grade_level = data.get('subject_grade_level')
+        subject_id = data.get('subject_id')  # deprecated
+        subject_name = (data.get('subject_name') or '').strip()
+        subject_type = (data.get('subject_type') or '').strip()
+        subject_grade = str(data.get('subject_grade') or '').strip()
         action = data.get('action')  # 'approve', 'reject', or 'remove'
         
         if not action:
             return jsonify({'error': 'action is required'}), 400
         
-        # If subject_id not provided and we are not removing, try to resolve/create by name
-        if action != 'remove' and not subject_id:
-            if not subject_name:
-                return jsonify({'error': 'subject_id or subject_name is required'}), 400
+        # Validate embedded subject fields when approving/rejecting
+        if action != 'remove':
+            if not subject_name or not subject_type or not subject_grade:
+                return jsonify({'error': 'subject_name, subject_type, subject_grade are required'}), 400
         
         if action not in ['approve', 'reject', 'remove']:
             return jsonify({'error': 'Invalid action'}), 400
@@ -267,105 +231,46 @@ def update_subject_approvals(tutor_id):
         
         admin_id = admin_result.data['id']
         
-        # If we need a subject_id and it's missing, find or create the subject (name-only is canonical)
-        if action != 'remove' and not subject_id:
-            subject_name = (subject_name or '').strip()
-            if not subject_name:
-                return jsonify({'error': 'subject_name is required'}), 400
-
-            # First: try by name only (most reliable across schemas)
-            found_by_name = supabase.table('subjects').select('id').eq('name', subject_name).limit(1).execute()
-            if found_by_name.data and len(found_by_name.data) > 0:
-                subject_id = found_by_name.data[0]['id']
-            else:
-                # Create minimal subject row (name only) to avoid schema mismatch on optional columns
-                try:
-                    created = supabase.table('subjects').insert({'name': subject_name}).select('id').execute()
-                    if created.data and len(created.data) > 0:
-                        subject_id = created.data[0]['id']
-                    else:
-                        # Fallback select by name
-                        fb = supabase.table('subjects').select('id').eq('name', subject_name).limit(1).execute()
-                        if not fb.data or len(fb.data) == 0:
-                            return jsonify({'error': 'Failed to create subject (not found after insert)'}), 500
-                        subject_id = fb.data[0]['id']
-                except Exception as e:
-                    # Unique violation or other constraint: attempt to find by name again
-                    fb = supabase.table('subjects').select('id').eq('name', subject_name).limit(1).execute()
-                    if not fb.data or len(fb.data) == 0:
-                        return jsonify({'error': 'Failed to create/find subject', 'details': str(e)}), 500
-                    subject_id = fb.data[0]['id']
+        # Deprecated subjects table path removed; we now embed subject fields
 
         # Fetch tutor basic info (array column may not exist in some deployments)
-        tutor_row = supabase.table('tutors').select('first_name, last_name, email, approved_subject_ids').eq('id', tutor_id).single().execute()
+        tutor_row = supabase.table('tutors').select('first_name, last_name, email').eq('id', tutor_id).single().execute()
         if not tutor_row.data:
             return jsonify({'error': 'Tutor not found'}), 404
-        current_ids = (tutor_row.data.get('approved_subject_ids') or []) if isinstance(tutor_row.data, dict) else []
-        
-        updated_ids = list(current_ids)
-        if action == 'approve':
-            if subject_id not in updated_ids:
-                updated_ids.append(subject_id)
-        else:  # 'reject' and 'remove' both result in removal
-            updated_ids = [sid for sid in updated_ids if sid != subject_id]
-        
-        # Update the tutor record (array of approved subject IDs) when column exists
-        try:
-            supabase.table('tutors').update({
-                'approved_subject_ids': updated_ids
-            }).eq('id', tutor_id).execute()
-        except Exception as e:
-            # Column may not exist; proceed since subject_approvals is source of truth
-            print(f"Skipping approved_subject_ids update: {e}")
+        # No more approved_subject_ids column maintenance; subject_approvals is source of truth
 
-        # Also mirror into subject_approvals as a history/log
+        # Write into subject_approvals (embedded fields)
         try:
             if action == 'approve':
-                # Manual upsert: check then update/insert
-                existing = (
-                    supabase
-                    .table('subject_approvals')
-                    .select('id')
-                    .eq('tutor_id', tutor_id)
-                    .eq('subject_id', subject_id)
-                    .limit(1)
-                    .execute()
-                )
+                existing = supabase.table('subject_approvals').select('id').eq('tutor_id', tutor_id).eq('subject_name', subject_name).eq('subject_type', subject_type).eq('subject_grade', subject_grade).limit(1).execute()
                 now_iso = datetime.now(timezone.utc).isoformat()
                 if existing.data and len(existing.data) > 0:
                     supabase.table('subject_approvals').update({
                         'status': 'approved',
                         'approved_by': admin_id,
                         'approved_at': now_iso
-                    }).eq('tutor_id', tutor_id).eq('subject_id', subject_id).execute()
+                    }).eq('tutor_id', tutor_id).eq('subject_name', subject_name).eq('subject_type', subject_type).eq('subject_grade', subject_grade).execute()
                 else:
                     supabase.table('subject_approvals').insert({
                         'tutor_id': tutor_id,
-                        'subject_id': subject_id,
+                        'subject_name': subject_name,
+                        'subject_type': subject_type,
+                        'subject_grade': subject_grade,
                         'status': 'approved',
                         'approved_by': admin_id,
                         'approved_at': now_iso
                     }).execute()
             else:
-                # remove or mark as rejected
-                existing = (
-                    supabase
-                    .table('subject_approvals')
-                    .select('id')
-                    .eq('tutor_id', tutor_id)
-                    .eq('subject_id', subject_id)
-                    .limit(1)
-                    .execute()
-                )
+                existing = supabase.table('subject_approvals').select('id').eq('tutor_id', tutor_id).eq('subject_name', subject_name).eq('subject_type', subject_type).eq('subject_grade', subject_grade).limit(1).execute()
                 if existing.data and len(existing.data) > 0:
                     if action == 'reject':
                         supabase.table('subject_approvals').update({
                             'status': 'rejected',
                             'approved_by': admin_id,
                             'approved_at': None
-                        }).eq('tutor_id', tutor_id).eq('subject_id', subject_id).execute()
+                        }).eq('tutor_id', tutor_id).eq('subject_name', subject_name).eq('subject_type', subject_type).eq('subject_grade', subject_grade).execute()
                     else:
-                        supabase.table('subject_approvals').delete().eq('tutor_id', tutor_id).eq('subject_id', subject_id).execute()
+                        supabase.table('subject_approvals').delete().eq('tutor_id', tutor_id).eq('subject_name', subject_name).eq('subject_type', subject_type).eq('subject_grade', subject_grade).execute()
         except Exception as e:
             import traceback
             print(f"Subject approvals write failed: {e}\n{traceback.format_exc()}")
@@ -374,17 +279,14 @@ def update_subject_approvals(tutor_id):
         # Send email notification for approval/rejection (not for removal)
         if action in ['approve', 'reject']:
             try:
-                # Get subject details
-                subject_result = supabase.table('subjects').select('name').eq('id', subject_id).single().execute()
                 # Get admin details
                 admin_details = supabase.table('admins').select('first_name, last_name').eq('id', admin_id).single().execute()
                 
-                if tutor_row.data and subject_result.data and admin_details.data:
+                if tutor_row.data and admin_details.data:
                     from utils.email_service import get_email_service
                     
                     tutor_name = f"{tutor_row.data['first_name']} {tutor_row.data['last_name']}"
                     admin_name = f"{admin_details.data['first_name']} {admin_details.data['last_name']}"
-                    subject_name = subject_result.data['name']
                     
                     # Create approval notification data
                     approval_details = {
@@ -447,17 +349,16 @@ def update_subject_approvals(tutor_id):
 @tutor_management_bp.route('/api/admin/subjects', methods=['GET'])
 @require_admin
 def get_all_subjects():
-    """Get all available subjects"""
-    try:
-        supabase = get_supabase_client()
-        
-        result = supabase.table('subjects').select('*').order('category, name').execute()
-        
-        return jsonify({'subjects': result.data or []}), 200
-        
-    except Exception as e:
-        print(f"Error getting subjects: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+    """Return hardcoded subject options per spec (no subjects table)."""
+    return jsonify({
+        'subjects': [
+            {'name': 'Math'},
+            {'name': 'English'},
+            {'name': 'Science'},
+        ],
+        'types': ['Academic','ALP','IB'],
+        'grades': ['9','10','11','12']
+    }), 200
 
 @tutor_management_bp.route('/api/admin/tutors/<tutor_id>/status', methods=['PUT'])
 @require_admin

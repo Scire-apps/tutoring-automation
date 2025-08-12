@@ -461,7 +461,7 @@ export default function OpportunitiesPage() {
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <div className="text-sm font-medium text-gray-900 truncate">
-                                   {opportunity.subject?.name ?? ''}
+                                   {opportunity.subject_name} • {opportunity.subject_type} • Grade {opportunity.subject_grade}
                                   </div>
                                   {opportunity.priority === "high" && (
                                     <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
@@ -469,19 +469,14 @@ export default function OpportunitiesPage() {
                                     </span>
                                   )}
                                 </div>
-                                {opportunity.grade_level && (
-                                  <div className="text-xs text-gray-500">
-                                    Grade {opportunity.grade_level}
-                                  </div>
-                                )}
+                                
                               </div>
                             </div>
                           </td>
                           <td className="px-3 py-4">
-                            <div className="text-sm text-gray-900 truncate">
-                              {opportunity.tutee?.first_name ?? ''}{" "}
-                              {opportunity.tutee?.last_name ?? ''}
-                            </div>
+                             <div className="text-sm text-gray-900 truncate">
+                              {opportunity.tutee_first_name ?? ''} {opportunity.tutee_last_name ?? ''}
+                             </div>
                             {opportunity.tutee_pronouns && (
                               <div className="text-xs text-gray-500 truncate">
                                 ({opportunity.tutee_pronouns})
@@ -534,11 +529,7 @@ export default function OpportunitiesPage() {
                           </td>
                           <td className="px-3 py-4 text-right text-sm font-medium">
                             <div className="flex items-center justify-end space-x-1">
-                              {canApplyForSubject(
-                                opportunity.subject,
-                                opportunity.grade_level,
-                                opportunity.course_level
-                              ) ? (
+                              {approvedSubjects.some(a => a.subject_name === opportunity.subject_name && a.subject_type === opportunity.subject_type && String(a.subject_grade) === String(opportunity.subject_grade)) ? (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();

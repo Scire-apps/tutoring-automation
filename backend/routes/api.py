@@ -126,13 +126,7 @@ def services_status():
     return jsonify(services)
 
 
-@api_bp.route('/subjects', methods=['GET'])
-@require_auth
-def list_subjects():
-    """List all subjects (authenticated)"""
-    supabase = get_supabase_client()
-    result = supabase.table('subjects').select('*').order('category, name').execute()
-    return jsonify({'subjects': result.data or []})
+# Subjects endpoint removed: subjects table no longer used (embedded fields)
 
 
 @api_bp.route('/public/schools', methods=['GET'])

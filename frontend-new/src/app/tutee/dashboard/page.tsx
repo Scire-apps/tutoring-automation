@@ -127,11 +127,11 @@ export default function TuteeDashboardPage() {
                         <div className="flex items-center">
                           <div className="flex-shrink-0">
                             <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                              <span className="text-white font-medium">{o.subject?.name?.charAt(0) || 'S'}</span>
+                              <span className="text-white font-medium">{(o.subject_name || 'S').charAt(0)}</span>
                             </div>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{o.subject?.name || 'Subject'}</div>
+                            <div className="text-sm font-medium text-gray-900">{o.subject_name} • {o.subject_type} • Grade {o.subject_grade}</div>
                             <div className="text-sm text-gray-500">Status: {o.status}</div>
                             {o.sessions_per_week && (
                               <div className="text-xs text-gray-400 mt-1">Sessions/week: {o.sessions_per_week}</div>
@@ -169,7 +169,7 @@ export default function TuteeDashboardPage() {
                     <div className="px-4 py-4 sm:px-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{j.subject?.name || 'Subject'}</div>
+                           <div className="text-sm font-medium text-gray-900">{j.subject_name} • {j.subject_type} • Grade {j.subject_grade}</div>
                           <div className="text-sm text-gray-500">Tutor: {j.tutor?.first_name} {j.tutor?.last_name}</div>
                           {j.scheduled_time && (
                             <div className="text-xs text-gray-400 mt-1">Scheduled: {new Date(j.scheduled_time).toLocaleString()}</div>

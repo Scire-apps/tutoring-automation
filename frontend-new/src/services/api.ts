@@ -67,8 +67,9 @@ export async function getTuteeDashboard() {
 }
 
 export async function createTuteeOpportunity(payload: {
-  subject_id: string;
-  grade_level?: string;
+  subject_name: 'Math'|'English'|'Science';
+  subject_type: 'Academic'|'ALP'|'IB';
+  subject_grade: '9'|'10'|'11'|'12';
   sessions_per_week: number;
   availability: any;
   location_preference?: string;
@@ -113,12 +114,7 @@ export async function completeJob(
   );
 }
 
-export async function listSubjects() {
-  return apiRequest<{ subjects: any[] }>(
-    '/api/subjects',
-    { method: 'GET' }
-  );
-}
+// listSubjects removed (no subjects table)
 
 export async function listSchoolsPublic() {
   const url = `${API_URL}/api/public/schools`;
@@ -321,7 +317,6 @@ const apiService = {
   acceptOpportunity,
   listOpenOpportunities,
   completeJob,
-  listSubjects,
   listSchoolsPublic,
 };
 

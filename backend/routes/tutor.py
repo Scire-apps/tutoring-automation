@@ -18,19 +18,18 @@ def get_tutor_dashboard():
     tutor = tutor_result.data
     approved_subject_ids = tutor.get('approved_subject_ids') or []
 
-    # Opportunities visible to tutors: all open
-    opps = supabase.table('tutoring_opportunities').select('''
-        *,
-        subject:subjects(id, name, category, grade_level),
-        tutee:tutees(id, first_name, last_name)
-    ''').eq('status', 'open').order('created_at', desc=True).execute()
+    # Opportunities visible to tutors: all open (embedded subject fields)
+    opps = supabase.table('tutoring_opportunities').select('*').eq('status', 'open').order('created_at', desc=True).execute()
 
-    # Jobs belonging to this tutor
-    jobs = supabase.table('tutoring_jobs').select('''
-        *,
-        subject:subjects(id, name, category, grade_level),
-        tutee:tutees(id, first_name, last_name)
-    ''').eq('tutor_id', tutor['id']).order('created_at', desc=True).execute()
+    # Jobs belonging to this tutor (embed opportunity for UI convenience)
+    jobs = (
+        supabase
+        .table('tutoring_jobs')
+        .select('*, tutoring_opportunity:tutoring_opportunities(*)')
+        .eq('tutor_id', tutor['id'])
+        .order('created_at', desc=True)
+        .execute()
+    )
 
     return jsonify({
         'tutor': tutor,
@@ -59,11 +58,23 @@ def accept_opportunity(opportunity_id: str):
     opp = opp_result.data
 
     # Check subject approval strictly via subject_approvals
-    subject_id = opp.get('subject_id')
-    if subject_id:
-        approval = supabase.table('subject_approvals').select('id').eq('tutor_id', tutor['id']).eq('subject_id', subject_id).eq('status', 'approved').single().execute()
-        if not approval.data:
-            return jsonify({'error': 'Not approved for this subject'}), 403
+    # Check approval by embedded fields
+    subj_name = opp.get('subject_name')
+    subj_type = opp.get('subject_type')
+    subj_grade = opp.get('subject_grade')
+    approval = (
+        supabase
+        .table('subject_approvals')
+        .select('id')
+        .eq('tutor_id', tutor['id'])
+        .eq('subject_name', subj_name)
+        .eq('subject_type', subj_type)
+        .eq('subject_grade', str(subj_grade))
+        .single()
+        .execute()
+    )
+    if not approval.data:
+        return jsonify({'error': 'Not approved for this subject'}), 403
 
     # Expect finalized schedule in body
     data = request.get_json() or {}
@@ -76,7 +87,9 @@ def accept_opportunity(opportunity_id: str):
         'opportunity_id': opp['id'],
         'tutor_id': tutor['id'],
         'tutee_id': opp.get('tutee_id'),
-        'subject_id': subject_id,
+        'subject_name': subj_name,
+        'subject_type': subj_type,
+        'subject_grade': str(subj_grade),
         'finalized_schedule': finalized_schedule,
         'status': 'scheduled'
     }
@@ -107,15 +120,19 @@ def tutor_approvals():
     supabase = get_supabase_client()
     tutor_res = supabase.table('tutors').select('id').eq('auth_id', request.user_id).single().execute()
     if not tutor_res.data:
-        return jsonify({'approved_subjects': []}), 200
+        return jsonify({'approved_subjects': [], 'approvals': []}), 200
     tutor_id = tutor_res.data['id']
-    approvals = supabase.table('subject_approvals').select('*').eq('tutor_id', tutor_id).eq('status', 'approved').execute()
-    subject_ids = [a['subject_id'] for a in (approvals.data or []) if a.get('subject_id')]
-    names = []
-    if subject_ids:
-        subs = supabase.table('subjects').select('*').in_('id', subject_ids).execute()
-        names = [s.get('name') for s in (subs.data or []) if s.get('name')]
-    return jsonify({'approved_subjects': names}), 200
+    approvals = supabase.table('subject_approvals').select('subject_name, subject_type, subject_grade, status').eq('tutor_id', tutor_id).eq('status', 'approved').execute()
+    triples = [
+        {
+            'subject_name': a.get('subject_name'),
+            'subject_type': a.get('subject_type'),
+            'subject_grade': a.get('subject_grade'),
+        }
+        for a in (approvals.data or [])
+        if a.get('subject_name') and a.get('subject_type') and a.get('subject_grade')
+    ]
+    return jsonify({'approved_subjects': triples, 'approvals': approvals.data or []}), 200
 
 
 @tutor_bp.route('/api/tutor/opportunities', methods=['GET'])
@@ -123,15 +140,10 @@ def tutor_approvals():
 def list_open_opportunities():
     supabase = get_supabase_client()
     try:
-        # Return relational shape: include subject and tutee
         res = (
             supabase
             .table('tutoring_opportunities')
-            .select('''
-                *,
-                subject:subjects(id, name, category, grade_level),
-                tutee:tutees(id, first_name, last_name, email, school_id)
-            ''')
+            .select('*, tutee:tutees(id, first_name, last_name, email, school_id)')
             .eq('status', 'open')
             .order('created_at')
             .execute()
@@ -150,20 +162,34 @@ def apply_to_opportunity(opportunity_id: str):
         return jsonify({'error': 'Tutor not found'}), 404
     tutor_id = tutor_res.data['id']
 
-    # Verify subject approval first using subject_approvals
-    opp_res = supabase.table('tutoring_opportunities').select('subject_id').eq('id', opportunity_id).single().execute()
+    # Verify subject approval first using embedded fields
+    opp_res = supabase.table('tutoring_opportunities').select('subject_name, subject_type, subject_grade, tutee_id').eq('id', opportunity_id).single().execute()
     if not opp_res.data:
         return jsonify({'error': 'Opportunity not found'}), 404
-    subject_id = opp_res.data.get('subject_id')
-    if subject_id:
-        approval = supabase.table('subject_approvals').select('id').eq('tutor_id', tutor_id).eq('subject_id', subject_id).eq('status', 'approved').single().execute()
-        if not approval.data:
-            return jsonify({'error': 'Not approved for this subject'}), 403
+    subj_name = opp_res.data.get('subject_name')
+    subj_type = opp_res.data.get('subject_type')
+    subj_grade = str(opp_res.data.get('subject_grade'))
+    approval = (
+        supabase.table('subject_approvals')
+        .select('id')
+        .eq('tutor_id', tutor_id)
+        .eq('subject_name', subj_name)
+        .eq('subject_type', subj_type)
+        .eq('subject_grade', subj_grade)
+        .single()
+        .execute()
+    )
+    if not approval.data:
+        return jsonify({'error': 'Not approved for this subject'}), 403
 
     # create job with scheduled status minimal
     job_ins = supabase.table('tutoring_jobs').insert({
         'opportunity_id': opportunity_id,
         'tutor_id': tutor_id,
+        'tutee_id': opp_res.data.get('tutee_id'),
+        'subject_name': subj_name,
+        'subject_type': subj_type,
+        'subject_grade': subj_grade,
         'status': 'scheduled'
     }).execute()
     if not job_ins.data:
@@ -189,19 +215,8 @@ def get_job(job_id: str):
         return jsonify({'error': 'Job not found'}), 404
     job = job_res.data
 
-    # Expand opportunity relationally
-    opp_res = (
-        supabase
-        .table('tutoring_opportunities')
-        .select('''
-            *,
-            subject:subjects(id, name, category, grade_level),
-            tutee:tutees(id, first_name, last_name, email, school_id)
-        ''')
-        .eq('id', job['opportunity_id'])
-        .single()
-        .execute()
-    )
+    # Expand opportunity (no subjects relation now)
+    opp_res = supabase.table('tutoring_opportunities').select('*').eq('id', job['opportunity_id']).single().execute()
     opportunity = opp_res.data if opp_res.data else None
     job['tutoring_opportunity'] = opportunity
     return jsonify({'job': job}), 200

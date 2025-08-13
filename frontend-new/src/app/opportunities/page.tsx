@@ -158,45 +158,7 @@ export default function OpportunitiesPage() {
       if (!resp.ok) { setError('Failed to apply'); setApplyingTo(null); return; }
       const job = (await resp.json()).job;
 
-      // Send job assignment notification email
-      try {
-          const opportunity = opportunities.find(
-          (opp) => opp.id === opportunityId
-        );
-        if (opportunity) {
-          // Get tutor's full name from auth user or construct from available data
-          const tutorName =
-            user?.user_metadata?.full_name ||
-            `${user?.user_metadata?.first_name || ""} ${
-              user?.user_metadata?.last_name || ""
-            }`.trim() ||
-            user?.email?.split("@")[0] ||
-            "Tutor";
-
-          await apiService.sendJobAssignmentNotification(
-            user?.email || "",
-            tutorName,
-            {
-              subject_name: (opportunity as any).subject_name,
-              subject_type: (opportunity as any).subject_type,
-              subject_grade: (opportunity as any).subject_grade,
-              tutee_name: `${(opportunity as any).tutee_first_name ?? ''} ${(opportunity as any).tutee_last_name ?? ''}`.trim(),
-              location: (opportunity as any).location_preference ?? '',
-            },
-            job.id
-          );
-          console.log("Job assignment notification sent successfully");
-        }
-      } catch (emailError) {
-        console.error(
-          "Failed to send job assignment notification:",
-          emailError
-        );
-        // Don't fail the entire process if email fails - this is expected in development
-        console.log(
-          "Email sending failed (expected in development mode) - continuing with job application"
-        );
-      }
+      // Job assignment email will be sent after tutor finalizes schedule
 
       // Remove the opportunity from the list
       setOpportunities((prev) =>

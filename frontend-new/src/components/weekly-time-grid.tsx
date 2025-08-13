@@ -19,12 +19,14 @@ interface WeeklyTimeGridProps {
   value: WeeklySelection;
   onChange: (next: WeeklySelection) => void;
   allowed?: AllowedMap; // optional mask to constrain selectable cells
+  maxMinutesPerSession?: number; // limit total selected minutes for this grid
+  disallowedDays?: DayKey[]; // days forbidden (e.g., already used by other sessions)
   className?: string;
 }
 
 const DAY_KEYS: DayKey[] = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-export function WeeklyTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30, value, onChange, allowed, className }: WeeklyTimeGridProps) {
+export function WeeklyTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30, value, onChange, allowed, maxMinutesPerSession, disallowedDays, className }: WeeklyTimeGridProps) {
   const rows = useMemo(() => {
     const out: string[] = [];
     const totalSteps = ((endHour - startHour) * 60) / stepMinutes;
@@ -43,6 +45,7 @@ export function WeeklyTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30, 
   const dragStartRef = useRef<number | null>(null);
 
   const isAllowed = (day: DayKey, slotIndex: number) => {
+    if (disallowedDays && disallowedDays.includes(day)) return false;
     if (!allowed) return true;
     const time = rows[slotIndex];
     const endIdx = slotIndex + 1 < rows.length ? slotIndex + 1 : slotIndex;
@@ -76,7 +79,12 @@ export function WeeklyTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30, 
       setDayRanges(day, ranges);
     } else {
       ranges.push({ start, end });
-      setDayRanges(day, ranges);
+      const merged = mergeRanges(ranges);
+      if (maxMinutesPerSession) {
+        const total = merged.reduce((acc, r) => acc + diffMinutes(r.start, r.end), 0);
+        if (total > maxMinutesPerSession) return; // prevent exceeding limit
+      }
+      setDayRanges(day, merged);
     }
   };
 
@@ -181,6 +189,12 @@ export function compressSelectionToWeeklyMap(selection: WeeklySelection): { [k: 
     out[day] = ranges.map(r => `${r.start}-${r.end}`);
   });
   return out;
+}
+
+function diffMinutes(start: string, end: string): number {
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  return (eh * 60 + em) - (sh * 60 + sm);
 }
 
 

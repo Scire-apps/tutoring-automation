@@ -564,48 +564,13 @@ export default function TutorDashboard() {
                                     </p>
                                     {job.scheduled_time ? (
                                       <p>
-                                        <span className="font-medium">
-                                          Scheduled Time:
-                                        </span>{" "}
+                                        <span className="font-medium">Scheduled Time:</span>{" "}
                                         {formatTime(job.scheduled_time)}
                                       </p>
                                     ) : (
                                       <p>
-                                        <span className="font-medium">
-                                          Availability:
-                                        </span>{" "}
-                                        {job.tutoring_opportunity
-                                          .availability && (
-                                          <span className="inline-flex items-center">
-                                            <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                              {formatTime(
-                                                job.tutoring_opportunity.availability.split(
-                                                  " - "
-                                                )[0]
-                                              )}
-                                            </span>
-                                            <svg
-                                              className="w-3 h-3 mx-1 text-gray-500"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                            >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth="2"
-                                                d="M14 5l7 7m0 0l-7 7m7-7H3"
-                                              />
-                                            </svg>
-                                            <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                              {formatTime(
-                                                job.tutoring_opportunity.availability.split(
-                                                  " - "
-                                                )[1]
-                                              )}
-                                            </span>
-                                          </span>
-                                        )}
+                                        <span className="font-medium">Availability:</span>{" "}
+                                        {job.finalized_schedule ? 'Weekly schedule set' : 'No weekly schedule yet'}
                                       </p>
                                     )}
                                     <p>

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/providers';
 import api from '@/services/api';
 import { TuteeLayout } from '@/components/tutee-layout';
+import { WeeklyTimeGrid, WeeklySelection, compressSelectionToWeeklyMap } from '@/components/weekly-time-grid';
 
 export default function TuteeRequestPage() {
   const { user, isLoading } = useAuth();
@@ -18,13 +19,7 @@ export default function TuteeRequestPage() {
   const [subjectType, setSubjectType] = useState('');
   const [subjectGrade, setSubjectGrade] = useState('');
   const [sessionsPerWeek, setSessionsPerWeek] = useState(1);
-  const [availability, setAvailability] = useState<any>({});
-  const [dayEnabled, setDayEnabled] = useState<{ [key: string]: boolean }>({
-    Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false, Sun: false
-  });
-  const [dayRanges, setDayRanges] = useState<{ [key: string]: Array<{ start: string; end: string }> }>({
-    Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: []
-  });
+  const [availabilities, setAvailabilities] = useState<WeeklySelection[]>([{},{},{}].slice(0,1));
   const [locationPreference, setLocationPreference] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,17 +39,19 @@ export default function TuteeRequestPage() {
     setLoading(true);
     setError(null);
     try {
-      // Build availability JSON from UI ranges
-      const built: { [key: string]: string[] } = {};
-      Object.entries(dayRanges).forEach(([day, ranges]) => {
-        if (dayEnabled[day] && ranges.length > 0) {
-          const items = ranges
-            .filter(r => r.start && r.end)
-            .map(r => `${r.start}-${r.end}`);
-          if (items.length) built[day] = items;
-        }
+      // Merge all session availabilities into a single weekly map for storage
+      const merged: { [key: string]: Set<string> } = {} as any;
+      for (const sel of availabilities.slice(0, sessionsPerWeek)) {
+        const m = compressSelectionToWeeklyMap(sel);
+        Object.entries(m).forEach(([day, ranges]) => {
+          if (!merged[day]) merged[day] = new Set();
+          ranges.forEach(r => merged[day].add(r));
+        });
+      }
+      const finalAvailability: { [key: string]: string[] } = {};
+      Object.entries(merged).forEach(([day, set]) => {
+        finalAvailability[day] = Array.from(set);
       });
-      const finalAvailability = Object.keys(built).length ? built : availability;
       await api.createTuteeOpportunity({
         subject_name: subjectName,
         subject_type: subjectType,
@@ -102,80 +99,34 @@ export default function TuteeRequestPage() {
         </div>
         <div>
           <label className="block text-sm font-medium">Sessions per Week</label>
-          <input type="number" min={1} max={7} className="mt-1 border rounded px-3 py-2 w-full" value={sessionsPerWeek} onChange={e=>setSessionsPerWeek(Number(e.target.value))} required />
+          <select className="mt-1 border rounded px-3 py-2 w-full" value={sessionsPerWeek} onChange={e=>{
+            const n = Number(e.target.value); setSessionsPerWeek(n);
+            setAvailabilities(prev => {
+              const next = prev.slice(0, n);
+              while (next.length < n) next.push({});
+              return next;
+            });
+          }}>
+            {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
         </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Availability</label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((day) => (
-                <div key={day} className="border rounded p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium">{day}</div>
-                    <label className="flex items-center space-x-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={dayEnabled[day]}
-                        onChange={(e) => setDayEnabled(prev => ({ ...prev, [day]: e.target.checked }))}
-                      />
-                      <span>Available</span>
-                    </label>
-                  </div>
-                  {dayEnabled[day] && (
-                    <div className="mt-3 space-y-2">
-                      {(dayRanges[day] || []).map((range, idx) => (
-                        <div key={idx} className="flex items-center space-x-2">
-                          <input
-                            type="time"
-                            className="border rounded px-2 py-1 flex-1"
-                            value={range.start}
-                            onChange={(e) => {
-                              setDayRanges(prev => {
-                                const next = { ...prev };
-                                const copy = [...(next[day] || [])];
-                                copy[idx] = { ...copy[idx], start: e.target.value };
-                                next[day] = copy;
-                                return next;
-                              })
-                            }}
-                          />
-                          <span className="text-gray-500">to</span>
-                          <input
-                            type="time"
-                            className="border rounded px-2 py-1 flex-1"
-                            value={range.end}
-                            onChange={(e) => {
-                              setDayRanges(prev => {
-                                const next = { ...prev };
-                                const copy = [...(next[day] || [])];
-                                copy[idx] = { ...copy[idx], end: e.target.value };
-                                next[day] = copy;
-                                return next;
-                              })
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="text-red-600 text-sm"
-                            onClick={() => setDayRanges(prev => {
-                              const next = { ...prev };
-                              const copy = [...(next[day] || [])];
-                              copy.splice(idx, 1);
-                              next[day] = copy;
-                              return next;
-                            })}
-                          >Remove</button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        className="text-blue-600 text-sm"
-                        onClick={() => setDayRanges(prev => ({ ...prev, [day]: [ ...(prev[day] || []), { start: '', end: '' } ] }))}
-                      >+ Add time range</button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+          <label className="block text-sm font-medium mb-2">Availability</label>
+          <div className="space-y-6">
+            {Array.from({ length: sessionsPerWeek }).map((_, idx) => (
+              <div key={idx} className="border rounded p-3">
+                <div className="mb-2 text-sm font-medium text-gray-700">Session {idx+1} availability</div>
+                <WeeklyTimeGrid
+                  value={(availabilities[idx] || {}) as WeeklySelection}
+                  onChange={(next) => setAvailabilities(prev => {
+                    const arr = prev.slice();
+                    arr[idx] = next;
+                    return arr;
+                  })}
+                />
+              </div>
+            ))}
+          </div>
           </div>
         <div>
           <label className="block text-sm font-medium">Location Preference</label>

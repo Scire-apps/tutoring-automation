@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase as sharedSupabase } from '@/services/supabase';
 import { useAuth } from '@/app/providers';
 import apiService from '@/services/api';
+import { WeeklyTimeGrid, WeeklySelection, compressSelectionToWeeklyMap } from '@/components/weekly-time-grid';
 
 interface TutoringJob {
   id: string;
@@ -25,8 +26,7 @@ export default function SchedulingPage() {
   const [job, setJob] = useState<TutoringJob | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>('');
-  const [selectedTime, setSelectedTime] = useState<string>('');
+  const [sessionSelections, setSessionSelections] = useState<WeeklySelection[]>([]);
   const [scheduling, setScheduling] = useState(false);
   const [availabilityOptions, setAvailabilityOptions] = useState<string[]>([]);
   
@@ -53,10 +53,8 @@ export default function SchedulingPage() {
       const jobData = json.job;
       setJob(jobData);
       const opportunityData = jobData?.tutoring_opportunity;
-      if (opportunityData?.availability_formatted) {
-        const options = opportunityData.availability_formatted.split(',').map((o: string)=>o.trim()).filter(Boolean);
-        setAvailabilityOptions(options);
-      }
+      const sessions = Number(opportunityData?.sessions_per_week || 1);
+      setSessionSelections(Array.from({ length: sessions }, () => ({})));
       
     } catch (err) {
       console.error('Error loading job data:', err);
@@ -67,24 +65,31 @@ export default function SchedulingPage() {
   };
 
   const handleScheduleSession = async () => {
-    if (!selectedDate || !selectedTime) {
-      setError('Please select both a date and time');
-      return;
-    }
-
     try {
       setScheduling(true);
-      
-      // Format the scheduled time
-      const scheduledDateTime = `${selectedDate}T${selectedTime}:00`;
-      
+      const weeklyMerged: { [k: string]: Set<string> } = {} as any;
+      for (const sel of sessionSelections) {
+        const m = compressSelectionToWeeklyMap(sel);
+        Object.entries(m).forEach(([day, ranges]) => {
+          if (!weeklyMerged[day]) weeklyMerged[day] = new Set();
+          ranges.forEach(r => weeklyMerged[day].add(r));
+        });
+      }
+      const finalized: { [k: string]: string[] } = {};
+      Object.entries(weeklyMerged).forEach(([day, set]) => {
+        finalized[day] = Array.from(set);
+      });
+
       const { data: { session } } = await supabase.auth.getSession();
       const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/jobs/${jobId}/schedule`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scheduled_time: scheduledDateTime })
+        body: JSON.stringify({ finalized_schedule: finalized })
       });
-      if (!r.ok) throw new Error('Failed to schedule');
+      if (!r.ok) {
+        const j = await r.json().catch(()=>({}));
+        throw new Error(j.details || 'Failed to schedule');
+      }
       
       // Get tutor data for email notification
       const { data: tutorData, error: tutorError } = await supabase
@@ -127,7 +132,6 @@ export default function SchedulingPage() {
         }
       }
       
-      // Redirect to dashboard
       router.push('/dashboard?scheduled=success');
       
     } catch (err) {
@@ -386,35 +390,19 @@ export default function SchedulingPage() {
             
             {/* Scheduling Form */}
             <div>
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Select a Time</h2>
-              
-              {/* Date Selection */}
-              <div className="mb-4">
-                <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  id="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              
-              {/* Time Selection */}
-              <div className="mb-6">
-                <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-1">
-                  Time
-                </label>
-                <input
-                  type="time"
-                  id="time"
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Select Weekly Times</h2>
+              <div className="space-y-6">
+                {sessionSelections.map((sel, idx) => (
+                  <div key={idx} className="border rounded p-3">
+                    <div className="mb-2 text-sm font-medium text-gray-700">Session {idx+1}</div>
+                    <WeeklyTimeGrid
+                      value={sel}
+                      onChange={(next)=> setSessionSelections(prev=>{
+                        const arr = prev.slice(); arr[idx]=next; return arr;
+                      })}
+                    />
+                  </div>
+                ))}
               </div>
               
               {/* Availability Options */}
@@ -483,10 +471,10 @@ export default function SchedulingPage() {
                 <button
                   type="button"
                   onClick={handleScheduleSession}
-                  disabled={!selectedDate || !selectedTime || scheduling}
+                  disabled={scheduling}
                   className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {scheduling ? 'Scheduling...' : 'Schedule Session'}
+                  {scheduling ? 'Scheduling...' : 'Save Weekly Schedule'}
                 </button>
               </div>
             </div>

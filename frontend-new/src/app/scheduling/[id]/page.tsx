@@ -453,6 +453,8 @@ export default function SchedulingPage() {
                     <WeeklyTimeGrid
                       value={sel}
                       allowed={allowedMask as any}
+                      maxMinutesPerSession={180}
+                      disallowedDays={Array.from(new Set(Object.entries(sessionSelections).filter(([i])=> Number(i)!==idx).flatMap(([,s])=> Object.keys(compressSelectionToWeeklyMap(s as any))))) as any}
                       onChange={(next)=> setSessionSelections(prev=>{
                         const arr = prev.slice(); arr[idx]=next; return arr;
                       })}

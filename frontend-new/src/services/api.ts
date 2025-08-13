@@ -206,9 +206,11 @@ export async function sendJobAssignmentNotification(
   tutorEmail: string,
   tutorName: string,
   jobDetails: {
-    subject: string;
+    subject_name?: string;
+    subject_type?: string;
+    subject_grade?: string;
+    subject?: string; // legacy
     tutee_name: string;
-    grade_level: string;
     location: string;
   },
   jobId?: string

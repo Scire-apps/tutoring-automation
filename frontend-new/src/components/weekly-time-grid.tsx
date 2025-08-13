@@ -132,7 +132,11 @@ export function WeeklyTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30, 
                       onMouseEnter={() => onMouseEnterCell(day, rowIdx)}
                       className={
                         `h-6 border-b border-l cursor-pointer ` +
-                        (selected ? 'bg-blue-500/80' : allowedHere ? 'hover:bg-blue-200/40' : 'bg-gray-100 cursor-not-allowed')
+                        (selected
+                          ? 'bg-blue-500/80'
+                          : allowedHere
+                            ? 'bg-green-50 hover:bg-green-100'
+                            : 'bg-gray-100 cursor-not-allowed')
                       }
                       title={`${day} ${t}`}
                     />

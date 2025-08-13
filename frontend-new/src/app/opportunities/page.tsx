@@ -116,8 +116,8 @@ export default function OpportunitiesPage() {
           });
           if (!apprResp.ok) throw new Error('approvals failed');
           const apprJson = await apprResp.json();
-          const subjectNames = apprJson.approved_subjects || [];
-          setApprovedSubjects(subjectNames);
+          const subjectTriples = apprJson.approved_subjects || [];
+          setApprovedSubjects(subjectTriples);
         } catch (approvalErr) {
           console.error("Exception fetching subject approvals:", approvalErr);
           setApprovedSubjects([]);
@@ -160,7 +160,7 @@ export default function OpportunitiesPage() {
 
       // Send job assignment notification email
       try {
-        const opportunity = opportunities.find(
+          const opportunity = opportunities.find(
           (opp) => opp.id === opportunityId
         );
         if (opportunity) {
@@ -177,10 +177,11 @@ export default function OpportunitiesPage() {
             user?.email || "",
             tutorName,
             {
-              subject: opportunity.subject?.name ?? '',
-              tutee_name: `${opportunity.tutee?.first_name ?? ''} ${opportunity.tutee?.last_name ?? ''}`.trim(),
-              grade_level: opportunity.grade_level,
-              location: opportunity.location_preference ?? '',
+              subject_name: (opportunity as any).subject_name,
+              subject_type: (opportunity as any).subject_type,
+              subject_grade: (opportunity as any).subject_grade,
+              tutee_name: `${(opportunity as any).tutee_first_name ?? ''} ${(opportunity as any).tutee_last_name ?? ''}`.trim(),
+              location: (opportunity as any).location_preference ?? '',
             },
             job.id
           );

@@ -33,6 +33,7 @@ def create_app():
 
     CORS(
         app,
+        resources={r"/api/*": {"origins": allowed_origins}},
         origins=allowed_origins,
         supports_credentials=True,
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -44,6 +45,8 @@ def create_app():
             "Origin",
         ],
         expose_headers=["Content-Disposition"],
+        automatic_options=True,
+        always_send=True,
     )
     
     # Register blueprints

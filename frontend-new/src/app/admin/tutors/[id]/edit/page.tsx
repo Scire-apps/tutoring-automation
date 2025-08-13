@@ -143,13 +143,6 @@ export default function EditTutorPage() {
           })
         });
         if (!resp.ok) throw new Error('Failed to remove subject approval');
-
-        console.log('🔍 TUTOR EDIT DEBUG: Delete result:', deleteResult);
-        console.log('🔍 TUTOR EDIT DEBUG: Delete error:', deleteError);
-
-        if (deleteError) {
-          throw new Error(`Failed to remove subject approval: ${deleteError.message}`);
-        }
         console.log('🔍 TUTOR EDIT DEBUG: Subject approval removed successfully');
       } else {
         const { data: { session } } = await supabase.auth.getSession();

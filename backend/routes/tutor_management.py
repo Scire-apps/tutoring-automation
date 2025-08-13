@@ -167,19 +167,13 @@ def get_tutor_details(tutor_id):
         
         tutor = tutor_result.data
         
-        # Get all available subjects
-        subjects_result = supabase.table('subjects').select('*').order('category, name').execute()
-        
-        # Also include current subject approvals with subject details
-        approvals = supabase.table('subject_approvals').select('''
-            *,
-            subject:subjects(id, name, category, grade_level)
-        ''').eq('tutor_id', tutor_id).execute()
+        # Embedded subject model: approvals are stored with subject_name/type/grade
+        approvals = supabase.table('subject_approvals').select('*').eq('tutor_id', tutor_id).execute()
 
         return jsonify({
             'tutor': tutor,
-            'approved_subject_ids': tutor.get('approved_subject_ids', []) if isinstance(tutor, dict) else [],
-            'available_subjects': subjects_result.data or [],
+            'approved_subject_ids': [],
+            'available_subjects': [],
             'subject_approvals': approvals.data or []
         }), 200
         

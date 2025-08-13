@@ -51,16 +51,7 @@ export default function LoginPage() {
             window.location.reload();
             return;
           }
-          // Ensure backend account for returning verified users who didn't get created during signup
-          try {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/ensure`, {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ account_type: 'tutee' })
-            });
-          } catch (e) {
-            // non-fatal
-          }
+          // Do not auto-create a tutee on login; backend account creation is handled based on signup intent
           const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/role`, {
             headers: { Authorization: `Bearer ${session.access_token}` },
             credentials: 'include',

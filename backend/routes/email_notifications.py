@@ -132,13 +132,30 @@ def send_session_confirmation():
             db = get_db_manager()
             job_id = data.get('job_id')
             if job_id:
+                # Build content safely for single or weekly schedule
+                if has_weekly:
+                    weekly = session_details.get('weekly_schedule', {})
+                    # Flatten weekly schedule into a readable string
+                    parts = []
+                    for day, ranges in weekly.items():
+                        if isinstance(ranges, list) and ranges:
+                            parts.append(f"{day}: {', '.join(ranges)}")
+                    content_text = (
+                        f"Session confirmation for {subj_text} at {location} with weekly schedule — "
+                        + ("; ".join(parts) if parts else "no times provided")
+                    )
+                else:
+                    date = session_details.get('date', '')
+                    time = session_details.get('time', '')
+                    content_text = f"Session confirmation for {subj_text} on {date} at {time} ({location})"
+
                 # Log communication for tutor
                 db.insert_record("communications", {
                     "job_id": job_id,
                     "type": "email",
                     "recipient": tutor_email,
-                    "subject": f"Session confirmation for {session_details['subject']}",
-                    "content": f"Session confirmation for {session_details['subject']} on {session_details['date']} at {session_details['time']}",
+                    "subject": f"Session confirmation for {subj_text}",
+                    "content": content_text,
                     "status": "sent"
                 })
                 # Log communication for tutee
@@ -146,8 +163,8 @@ def send_session_confirmation():
                     "job_id": job_id,
                     "type": "email",
                     "recipient": tutee_email,
-                    "subject": f"Session confirmation for {session_details['subject']}",
-                    "content": f"Session confirmation for {session_details['subject']} on {session_details['date']} at {session_details['time']}",
+                    "subject": f"Session confirmation for {subj_text}",
+                    "content": content_text,
                     "status": "sent"
                 })
         except Exception as e:

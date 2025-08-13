@@ -120,61 +120,19 @@ export default function SchedulingPage() {
         throw new Error(j.details || 'Failed to schedule');
       }
       
-      // Get tutor data for email notification
-      const { data: tutorData, error: tutorError } = await supabase
-        .from('tutors')
-        .select('first_name, last_name, email')
-        .eq('auth_id', user?.id)
-        .single();
-        
-      if (tutorError) {
-        console.error('Error fetching tutor data for email:', tutorError);
-        // Continue even if email sending fails
-      } else {
-        // Format date and time for email
-        const formattedDate = formatDate(selectedDate);
-        const formattedTime = formatTime(`${selectedTime}:00`);
-        
-        // Prepare session details for email
-        const sessionDetails = {
-          subject: job.tutoring_opportunity?.subject || '',
-          date: formattedDate,
-          time: formattedTime,
-          location: job.tutoring_opportunity?.session_location || '',
-          tutor_name: `${tutorData.first_name} ${tutorData.last_name}`,
-          tutee_name: `${job.tutoring_opportunity?.tutee?.first_name ?? ''} ${job.tutoring_opportunity?.tutee?.last_name ?? ''}`
-        };
-        
-        // Send confirmation emails
-        try {
-          await apiService.sendSessionConfirmation(
-            tutorData.email,
-            job.tutoring_opportunity?.tutee?.email || '',
-            sessionDetails,
-            jobId
-          );
-          console.log('Session confirmation emails sent successfully');
-        } catch (emailError) {
-          console.error('Failed to send confirmation emails:', emailError);
-          // Continue even if email sending fails - this is expected in development
-          console.log('Email sending failed (expected in development mode) - continuing with scheduling');
-        }
-      }
-      
       // Send session confirmation email with weekly schedule to both parties (best-effort)
       try {
         const weekly = Object.fromEntries(Object.entries(finalized).map(([d,v])=>[d, v]));
         await apiService.sendSessionConfirmation(
-          job?.tutoring_opportunity?.tutor_email || (user?.email || ''),
-          job?.tutoring_opportunity?.tutee_email || '',
+          // Tutor email
+          user?.email || '',
+          // Tutee email from opportunity payload
+          job?.tutoring_opportunity?.email || '',
           {
             subject: `${job?.tutoring_opportunity?.subject_name || ''} • ${job?.tutoring_opportunity?.subject_type || ''} • Grade ${job?.tutoring_opportunity?.subject_grade || ''}`.trim(),
-            location: job?.tutoring_opportunity?.session_location || '',
-            tutor_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Tutor',
+            location: job?.tutoring_opportunity?.location_preference || '',
+            tutor_name: (user?.user_metadata?.full_name || `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || user?.email?.split('@')[0] || 'Tutor'),
             tutee_name: `${job?.tutoring_opportunity?.tutee_first_name ?? ''} ${job?.tutoring_opportunity?.tutee_last_name ?? ''}`.trim(),
-            // weekly schedule branch
-            date: '',
-            time: '',
             weekly_schedule: weekly as any,
           } as any,
           jobId

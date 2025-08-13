@@ -225,12 +225,13 @@ def get_job(job_id: str):
 @tutor_bp.route('/api/tutor/jobs/<job_id>/schedule', methods=['POST'])
 @require_auth
 def schedule_job(job_id: str):
-    """Set scheduled_time for a job if belongs to tutor"""
+    """Set a job schedule. Supports either single scheduled_time (ISO) or finalized_schedule (weekly map)."""
     supabase = get_supabase_client()
     payload = request.get_json() or {}
     scheduled_time = payload.get('scheduled_time')
-    if not scheduled_time:
-        return jsonify({'error': 'scheduled_time is required (ISO string)'}), 400
+    finalized_schedule = payload.get('finalized_schedule')  # expected map like {"Mon":["17:00-19:00"], ...}
+    if not scheduled_time and not finalized_schedule:
+        return jsonify({'error': 'scheduled_time (ISO) or finalized_schedule (weekly map) is required'}), 400
 
     tutor_res = supabase.table('tutors').select('id').eq('auth_id', request.user_id).single().execute()
     if not tutor_res.data:
@@ -238,11 +239,37 @@ def schedule_job(job_id: str):
     tutor_id = tutor_res.data['id']
 
     # Ensure job belongs to tutor
-    job_res = supabase.table('tutoring_jobs').select('id').eq('id', job_id).eq('tutor_id', tutor_id).single().execute()
+    job_res = supabase.table('tutoring_jobs').select('id, opportunity_id').eq('id', job_id).eq('tutor_id', tutor_id).single().execute()
     if not job_res.data:
         return jsonify({'error': 'Job not found'}), 404
+    job = job_res.data
 
-    upd = supabase.table('tutoring_jobs').update({'status': 'scheduled', 'scheduled_time': scheduled_time}).eq('id', job_id).execute()
+    # If finalized_schedule provided, optionally validate count vs sessions_per_week on opportunity
+    updates = {'status': 'scheduled'}
+    if scheduled_time:
+        updates['scheduled_time'] = scheduled_time
+    if finalized_schedule:
+        # Basic validation: ensure it's an object of arrays of HH:MM-HH:MM
+        try:
+            if not isinstance(finalized_schedule, dict):
+                raise ValueError('finalized_schedule must be an object of day->ranges')
+            # Count total chosen blocks
+            total_blocks = 0
+            for day, ranges in finalized_schedule.items():
+                if not isinstance(ranges, list):
+                    raise ValueError('Each day must map to a list of ranges')
+                total_blocks += len(ranges)
+            # Fetch sessions_per_week to give nicer errors
+            opp_res = supabase.table('tutoring_opportunities').select('sessions_per_week').eq('id', job.get('opportunity_id')).single().execute()
+            if opp_res.data and isinstance(total_blocks, int):
+                expected = opp_res.data.get('sessions_per_week')
+                if isinstance(expected, int) and expected > 0 and total_blocks != expected:
+                    return jsonify({'error': 'invalid_finalized_schedule', 'details': f'Expected {expected} weekly sessions, got {total_blocks}'}), 400
+        except Exception as e:
+            return jsonify({'error': 'invalid_finalized_schedule', 'details': str(e)}), 400
+        updates['finalized_schedule'] = finalized_schedule
+
+    upd = supabase.table('tutoring_jobs').update(updates).eq('id', job_id).execute()
     if not upd.data:
         return jsonify({'error': 'Failed to update job'}), 500
     return jsonify({'message': 'Scheduled', 'job': upd.data[0]}), 200

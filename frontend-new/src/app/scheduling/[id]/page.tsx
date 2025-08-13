@@ -29,6 +29,7 @@ export default function SchedulingPage() {
   const [sessionSelections, setSessionSelections] = useState<WeeklySelection[]>([]);
   const [scheduling, setScheduling] = useState(false);
   const [availabilityOptions, setAvailabilityOptions] = useState<string[]>([]);
+  const [allowedMask, setAllowedMask] = useState<{ [k: string]: Array<{ start: string; end: string }> }>({});
   
   const { user } = useAuth();
   const router = useRouter();
@@ -55,6 +56,16 @@ export default function SchedulingPage() {
       const opportunityData = jobData?.tutoring_opportunity;
       const sessions = Number(opportunityData?.sessions_per_week || 1);
       setSessionSelections(Array.from({ length: sessions }, () => ({})));
+      // Build allowed mask from opportunity availability JSON {Mon:["17:00-19:00", ...]}
+      const a = (opportunityData?.availability || {}) as { [k: string]: string[] };
+      const mask: { [k: string]: Array<{ start: string; end: string }> } = {};
+      Object.entries(a).forEach(([day, arr]) => {
+        mask[day] = (arr || []).map((s: string) => {
+          const [start, end] = s.split('-');
+          return { start, end };
+        });
+      });
+      setAllowedMask(mask);
       
     } catch (err) {
       console.error('Error loading job data:', err);
@@ -67,18 +78,36 @@ export default function SchedulingPage() {
   const handleScheduleSession = async () => {
     try {
       setScheduling(true);
+      // Validate constraints: max 3 hours per session, all sessions on different days
+      const perSessionRanges = sessionSelections.map(sel => compressSelectionToWeeklyMap(sel));
+      const daysChosen = new Set<string>();
+      for (const m of perSessionRanges) {
+        let sessionDay: string | null = null;
+        let totalMinutes = 0;
+        Object.entries(m).forEach(([day, ranges]) => {
+          if (ranges.length) {
+            sessionDay = day;
+            for (const r of ranges) {
+              const [s,e] = r.split('-');
+              totalMinutes += diffMinutes(s,e);
+            }
+          }
+        });
+        if (!sessionDay) throw new Error('Each session requires at least one selected time block');
+        if (daysChosen.has(sessionDay)) throw new Error('Each session must be on a different day');
+        daysChosen.add(sessionDay);
+        if (totalMinutes > 180) throw new Error('Each session must be 3 hours or less');
+      }
+      // Merge all sessions into a single weekly map for backend
       const weeklyMerged: { [k: string]: Set<string> } = {} as any;
-      for (const sel of sessionSelections) {
-        const m = compressSelectionToWeeklyMap(sel);
+      for (const m of perSessionRanges) {
         Object.entries(m).forEach(([day, ranges]) => {
           if (!weeklyMerged[day]) weeklyMerged[day] = new Set();
           ranges.forEach(r => weeklyMerged[day].add(r));
         });
       }
       const finalized: { [k: string]: string[] } = {};
-      Object.entries(weeklyMerged).forEach(([day, set]) => {
-        finalized[day] = Array.from(set);
-      });
+      Object.entries(weeklyMerged).forEach(([day, set]) => finalized[day] = Array.from(set));
 
       const { data: { session } } = await supabase.auth.getSession();
       const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/jobs/${jobId}/schedule`, {
@@ -132,6 +161,26 @@ export default function SchedulingPage() {
         }
       }
       
+      // Send session confirmation email with weekly schedule to both parties (best-effort)
+      try {
+        const weekly = Object.fromEntries(Object.entries(finalized).map(([d,v])=>[d, v]));
+        await apiService.sendSessionConfirmation(
+          job?.tutoring_opportunity?.tutor_email || (user?.email || ''),
+          job?.tutoring_opportunity?.tutee_email || '',
+          {
+            subject: `${job?.tutoring_opportunity?.subject_name || ''} • ${job?.tutoring_opportunity?.subject_type || ''} • Grade ${job?.tutoring_opportunity?.subject_grade || ''}`.trim(),
+            location: job?.tutoring_opportunity?.session_location || '',
+            tutor_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Tutor',
+            tutee_name: `${job?.tutoring_opportunity?.tutee_first_name ?? ''} ${job?.tutoring_opportunity?.tutee_last_name ?? ''}`.trim(),
+            // weekly schedule branch
+            date: '',
+            time: '',
+            weekly_schedule: weekly as any,
+          } as any,
+          jobId
+        );
+      } catch (e) { /* non-fatal */ }
+
       router.push('/dashboard?scheduled=success');
       
     } catch (err) {
@@ -141,6 +190,12 @@ export default function SchedulingPage() {
       setScheduling(false);
     }
   };
+
+  function diffMinutes(start: string, end: string): number {
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    return (eh*60+em) - (sh*60+sm);
+  }
   
   const handleCancelJob = async () => {
     if (!job) return;
@@ -397,6 +452,7 @@ export default function SchedulingPage() {
                     <div className="mb-2 text-sm font-medium text-gray-700">Session {idx+1}</div>
                     <WeeklyTimeGrid
                       value={sel}
+                      allowed={allowedMask as any}
                       onChange={(next)=> setSessionSelections(prev=>{
                         const arr = prev.slice(); arr[idx]=next; return arr;
                       })}
@@ -405,43 +461,12 @@ export default function SchedulingPage() {
                 ))}
               </div>
               
-              {/* Availability Options */}
-              {availabilityOptions.length > 0 && (
-                <div className="mb-6">
-                  <p className="block text-sm font-medium text-gray-700 mb-2">
-                    Suggested Times (Based on Tutee Availability)
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {availabilityOptions.map((option, index) => (
-                      <div 
-                        key={index}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm cursor-pointer hover:bg-blue-200"
-                        onClick={() => {
-                          // This is a simplified example - in a real app, you'd parse the option
-                          // and set both date and time accordingly
-                          alert(`You selected: ${option}\nPlease use the date and time pickers to set the exact time.`);
-                        }}
-                      >
-                        {formatAvailabilityOption(option)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Availability Options removed (using weekly grid now) */}
               
               {/* Contact Info */}
               <div className="mb-6 p-4 bg-yellow-50 rounded-md">
-                <h3 className="text-sm font-medium text-yellow-800 mb-2">Need a different time?</h3>
-                <p className="text-sm text-yellow-700">
-                  If none of these times work for you, you can email the tutee directly at{' '}
-                  <a 
-                    href={`mailto:${job.tutoring_opportunity?.tutee_email}`}
-                    className="text-blue-600 hover:text-blue-800 underline"
-                  >
-                    {job.tutoring_opportunity?.tutee_email}
-                  </a>
-                  {' '}to suggest an alternative time.
-                </p>
+                <h3 className="text-sm font-medium text-yellow-800 mb-2">Note</h3>
+                <p className="text-sm text-yellow-700">Select up to 3 hours per session. Each session must be on a different day and within the tutee's availability (green regions).</p>
               </div>
               
               {/* Error Message */}

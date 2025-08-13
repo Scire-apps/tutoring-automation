@@ -68,18 +68,62 @@ def send_session_confirmation():
     tutee_email = data['tutee_email']
     session_details = data['session_details']
     
-    # Validate session details
-    required_session_fields = ['subject', 'date', 'time', 'location', 'tutor_name', 'tutee_name']
-    for field in required_session_fields:
+    # Validate session details - support classic (date/time) or weekly_schedule
+    required_basic_fields = ['subject', 'location', 'tutor_name', 'tutee_name']
+    for field in required_basic_fields:
         if field not in session_details:
             return jsonify({'error': f'Missing required session detail: {field}'}), 400
+    has_single = 'date' in session_details and 'time' in session_details
+    has_weekly = 'weekly_schedule' in session_details and isinstance(session_details.get('weekly_schedule'), dict)
+    if not (has_single or has_weekly):
+        return jsonify({'error': 'Provide either date/time or weekly_schedule'}), 400
     
     # Send confirmation emails
     email_service = get_email_service()
-    success = email_service.send_session_confirmation(
-        tutor_email=tutor_email,
-        tutee_email=tutee_email,
-        session_details=session_details
+    # Build HTML/text bodies including weekly schedule when present
+    subj_text = session_details['subject']
+    location = session_details['location']
+    tutor_name = session_details['tutor_name']
+    tutee_name = session_details['tutee_name']
+    if has_weekly:
+        weekly = session_details['weekly_schedule']
+        def format_weekly_html(w):
+            rows = []
+            for day, ranges in w.items():
+                if isinstance(ranges, list) and ranges:
+                    rows.append(f"<li><strong>{day}:</strong> {', '.join(ranges)}</li>")
+            return '\n'.join(rows) if rows else '<li>No times provided</li>'
+        schedule_html = format_weekly_html(weekly)
+        html = f"""
+        <html><body>
+        <h2>Session Confirmation</h2>
+        <p>Hello {tutor_name} and {tutee_name},</p>
+        <p>Your tutoring sessions have been scheduled for <strong>{subj_text}</strong> at <strong>{location}</strong> with the following weekly schedule:</p>
+        <ul>{schedule_html}</ul>
+        <p>Thank you!</p>
+        </body></html>
+        """
+        text = f"Session Confirmation for {subj_text} at {location}\n" + '\n'.join([
+            f"{day}: {', '.join(ranges)}" for day, ranges in weekly.items() if isinstance(ranges, list) and ranges
+        ])
+    else:
+        date = session_details['date']
+        time = session_details['time']
+        html = f"""
+        <html><body>
+        <h2>Session Confirmation</h2>
+        <p>Hello {tutor_name} and {tutee_name},</p>
+        <p>Your tutoring session has been scheduled for <strong>{subj_text}</strong> on <strong>{date}</strong> at <strong>{time}</strong> ({location}).</p>
+        <p>Thank you!</p>
+        </body></html>
+        """
+        text = f"Session Confirmation for {subj_text} on {date} at {time} ({location})"
+
+    # Send emails to both parties
+    email_service = get_email_service()
+    success = (
+        email_service.send_email(tutor_email, f"Session Confirmation: {subj_text}", html, text)
+        and email_service.send_email(tutee_email, f"Session Confirmation: {subj_text}", html, text)
     )
     
     if success:
@@ -133,14 +177,20 @@ def send_job_assignment_notification():
     tutor_name = data['tutor_name']
     job_details = data['job_details']
     
-    # Validate job details
-    required_job_fields = ['subject', 'tutee_name', 'grade_level', 'location']
+    # Validate job details (support both legacy and new fields)
+    required_job_fields = ['tutee_name', 'location']
     for field in required_job_fields:
         if field not in job_details:
             return jsonify({'error': f'Missing required job detail: {field}'}), 400
     
+    # Normalize subject line from new triplet fields if provided
+    subj_name = job_details.get('subject') or job_details.get('subject_name') or 'Subject'
+    subj_type = job_details.get('subject_type')
+    subj_grade = job_details.get('subject_grade')
+    full_subject = subj_name if not (subj_type and subj_grade) else f"{subj_name} • {subj_type} • Grade {subj_grade}"
+    
     # Create email content
-    subject = f"New Tutoring Assignment: {job_details['subject']}"
+    subject = f"New Tutoring Assignment: {full_subject}"
     
     html_body = f"""
     <html>
@@ -149,9 +199,8 @@ def send_job_assignment_notification():
         <p>Hello {tutor_name},</p>
         <p>Congratulations! You have been assigned a new tutoring opportunity:</p>
         <ul>
-            <li><strong>Subject:</strong> {job_details['subject']}</li>
+            <li><strong>Subject:</strong> {full_subject}</li>
             <li><strong>Student:</strong> {job_details['tutee_name']}</li>
-            <li><strong>Grade Level:</strong> {job_details['grade_level']}</li>
             <li><strong>Location:</strong> {job_details['location']}</li>
         </ul>
         <p>Please log into the tutoring platform to schedule your session with the student.</p>

@@ -49,20 +49,56 @@ def get_role():
 @auth_bp.route('/api/account/ensure', methods=['POST'])
 @require_auth
 def ensure_account():
-    """Ensure a tutor/tutee row exists for the current user"""
+    """Ensure a tutor or tutee row exists for the current user, without creating cross-role records.
+
+    Hard rules:
+    - If the user already exists as an admin, do nothing here (admins are managed separately).
+    - If the user already exists as a tutor, only upsert the tutor record.
+    - If the user already exists as a tutee, only upsert the tutee record.
+    - If the user has no role yet, create only the requested account_type (tutor or tutee).
+    """
     supabase = get_supabase_client()
     payload = request.get_json() or {}
-    account_type = payload.get('account_type')  # 'tutor' | 'tutee'
+    requested_type = payload.get('account_type')  # 'tutor' | 'tutee'
     first_name = payload.get('first_name')
     last_name = payload.get('last_name')
     school_id = payload.get('school_id')
     email = request.user_email
     auth_id = request.user_id
 
-    if account_type not in ['tutor', 'tutee']:
+    if requested_type not in ['tutor', 'tutee']:
         return jsonify({ 'error': 'account_type is required' }), 400
 
-    table = 'tutors' if account_type == 'tutor' else 'tutees'
+    # Detect existing role bindings
+    existing_role = None  # 'admin' | 'tutor' | 'tutee' | None
+    try:
+        a = supabase.table('admins').select('id').eq('auth_id', auth_id).single().execute()
+        if a.data:
+            existing_role = 'admin'
+    except Exception:
+        pass
+    if existing_role != 'admin':
+        try:
+            t = supabase.table('tutors').select('id').eq('auth_id', auth_id).single().execute()
+            if t.data:
+                existing_role = 'tutor'
+        except Exception:
+            pass
+        if existing_role != 'tutor':
+            try:
+                te = supabase.table('tutees').select('id').eq('auth_id', auth_id).single().execute()
+                if te.data:
+                    existing_role = 'tutee'
+            except Exception:
+                pass
+
+    # Admins: do not create a tutor/tutee implicitly
+    if existing_role == 'admin':
+        return jsonify({ 'status': 'admin_exists' }), 200
+
+    # If user already has a role, force the operation to that role to avoid cross-creation
+    effective_type = existing_role if existing_role in ['tutor', 'tutee'] else requested_type
+    table = 'tutors' if effective_type == 'tutor' else 'tutees'
 
     # Check exists first
     try:
@@ -81,7 +117,7 @@ def ensure_account():
         'last_name': last_name or '',
         'school_id': school_id
     }
-    if account_type == 'tutor':
+    if effective_type == 'tutor':
         data.update({ 'status': 'pending', 'volunteer_hours': 0 })
 
     # Try insert, on conflict perform update

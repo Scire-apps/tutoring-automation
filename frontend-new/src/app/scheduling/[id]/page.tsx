@@ -402,6 +402,8 @@ export default function SchedulingPage() {
                     value={dateSelection}
                     allowed={allowedMask as any}
                     maxMinutesPerSession={180}
+                    singleDayOnly
+                    singleContiguousRange
                     onChange={(next)=> setDateSelection(next)}
                   />
                 </div>

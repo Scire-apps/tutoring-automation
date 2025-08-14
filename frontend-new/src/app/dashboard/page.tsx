@@ -468,7 +468,7 @@ export default function TutorDashboard() {
                                 </div>
                                 <div className="text-sm text-gray-500">
                                   {job.tutoring_opportunity?.location_preference || ''}{" "}
-                                  • {job.status}
+                                  • {job.status === 'pending_tutee_scheduling' ? 'awaiting tutee scheduling' : job.status === 'pending_tutor_scheduling' ? 'awaiting tutor scheduling' : job.status}
                                 </div>
                                 {job.scheduled_time ? (
                                   <div className="text-xs text-gray-400 mt-1">
@@ -484,12 +484,16 @@ export default function TutorDashboard() {
                             <div className="flex items-center space-x-2">
                               <span
                                 className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                  job.status === "scheduled"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-yellow-100 text-yellow-800"
+                                  job.status === 'scheduled'
+                                    ? 'bg-green-100 text-green-800'
+                                    : job.status === 'pending_tutor_scheduling'
+                                    ? 'bg-orange-100 text-orange-800'
+                                    : job.status === 'pending_tutee_scheduling'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-yellow-100 text-yellow-800'
                                 }`}
                               >
-                                {job.status}
+                                {job.status === 'pending_tutee_scheduling' ? 'awaiting tutee scheduling' : job.status === 'pending_tutor_scheduling' ? 'awaiting tutor scheduling' : job.status}
                               </span>
                               <button
                                 onClick={(e) => {
@@ -584,7 +588,7 @@ export default function TutorDashboard() {
                               </div>
 
                               <div className="mt-4 flex flex-wrap gap-2">
-                                {job.status === "pending" && (
+                                {job.status === "pending_tutor_scheduling" && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();

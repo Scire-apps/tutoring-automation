@@ -20,11 +20,8 @@ def cancel_job(job_id: str):
     if not tutor_res.data or tutor_res.data['id'] != job_res.data['tutor_id']:
         return jsonify({'error': 'Forbidden'}), 403
 
-    # Update job to cancelled
+    # Update job to cancelled; do not resurrect the deleted opportunity in single-session flow
     supabase.table('tutoring_jobs').update({'status': 'cancelled'}).eq('id', job_id).execute()
-    # Return opportunity to open + high priority
-    opp_id = job_res.data['opportunity_id']
-    supabase.table('tutoring_opportunities').update({'status': 'open', 'priority': 'high'}).eq('id', opp_id).execute()
 
     return jsonify({'message': 'Job cancelled and opportunity reopened'}), 200
 
@@ -75,11 +72,10 @@ def complete_job(job_id: str):
         new_hours = current_hours + volunteer_hours
         supabase.table('tutors').update({'volunteer_hours': new_hours}).eq('id', tutor_id).execute()
 
-        # Update job and opportunity statuses
-        supabase.table('tutoring_jobs').update({'status': 'completed'}).eq('id', job_id).execute()
-        supabase.table('tutoring_opportunities').update({'status': 'completed'}).eq('id', opportunity_id).execute()
+        # In single-session flow, remove the job after completion
+        supabase.table('tutoring_jobs').delete().eq('id', job_id).execute()
 
-        return jsonify({'message': 'Job completed', 'volunteer_hours_added': volunteer_hours}), 200
+        return jsonify({'message': 'Job completed and removed', 'volunteer_hours_added': volunteer_hours}), 200
     except Exception as e:
         return jsonify({'error': 'failed_to_complete_job', 'details': str(e)}), 500
 

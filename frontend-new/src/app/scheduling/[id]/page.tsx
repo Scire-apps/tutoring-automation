@@ -7,7 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase as sharedSupabase } from '@/services/supabase';
 import { useAuth } from '@/app/providers';
 import apiService from '@/services/api';
-import { WeeklyTimeGrid, WeeklySelection, compressSelectionToWeeklyMap } from '@/components/weekly-time-grid';
+import { TwoWeekTimeGrid, compressSelectionToDateMap } from '@/components/two-week-time-grid';
 
 interface TutoringJob {
   id: string;
@@ -28,7 +28,8 @@ export default function SchedulingPage() {
   const [job, setJob] = useState<TutoringJob | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sessionSelections, setSessionSelections] = useState<WeeklySelection[]>([]);
+  const [dateSelection, setDateSelection] = useState<{[date: string]: Array<{start:string;end:string}>}>({});
+  const [durationMinutes, setDurationMinutes] = useState<number>(60);
   const [scheduling, setScheduling] = useState(false);
   const [availabilityOptions, setAvailabilityOptions] = useState<string[]>([]);
   const [allowedMask, setAllowedMask] = useState<{ [k: string]: Array<{ start: string; end: string }> }>({});
@@ -56,13 +57,11 @@ export default function SchedulingPage() {
       const jobData = json.job;
       setJob(jobData);
       const opportunityData = jobData?.tutoring_opportunity;
-      const sessions = Number(opportunityData?.sessions_per_week || 1);
-      setSessionSelections(Array.from({ length: sessions }, () => ({})));
-      // Build allowed mask from opportunity availability JSON {Mon:["17:00-19:00", ...]}
-      const a = (opportunityData?.availability || {}) as { [k: string]: string[] };
+      // Build allowed mask from tutee_availability (date keys)
+      const a = (jobData?.tutee_availability || {}) as { [k: string]: string[] };
       const mask: { [k: string]: Array<{ start: string; end: string }> } = {};
-      Object.entries(a).forEach(([day, arr]) => {
-        mask[day] = (arr || []).map((s: string) => {
+      Object.entries(a).forEach(([date, arr]) => {
+        mask[date] = (arr || []).map((s: string) => {
           const [start, end] = s.split('-');
           return { start, end };
         });
@@ -80,51 +79,40 @@ export default function SchedulingPage() {
   const handleScheduleSession = async () => {
     try {
       setScheduling(true);
-      // Validate constraints: max 3 hours per session, all sessions on different days
-      const perSessionRanges = sessionSelections.map(sel => compressSelectionToWeeklyMap(sel));
-      const daysChosen = new Set<string>();
-      for (const m of perSessionRanges) {
-        let sessionDay: string | null = null;
-        let totalMinutes = 0;
-        Object.entries(m).forEach(([day, ranges]) => {
-          if (ranges.length) {
-            sessionDay = day;
-            for (const r of ranges) {
-              const [s,e] = r.split('-');
-              totalMinutes += diffMinutes(s,e);
-            }
-          }
-        });
-        if (!sessionDay) throw new Error('Each session requires at least one selected time block');
-        if (daysChosen.has(sessionDay)) throw new Error('Each session must be on a different day');
-        daysChosen.add(sessionDay);
-        if (totalMinutes > 180) throw new Error('Each session must be 3 hours or less');
-      }
-      // Merge all sessions into a single weekly map for backend
-      const weeklyMerged: { [k: string]: Set<string> } = {} as any;
-      for (const m of perSessionRanges) {
-        Object.entries(m).forEach(([day, ranges]) => {
-          if (!weeklyMerged[day]) weeklyMerged[day] = new Set();
-          ranges.forEach(r => weeklyMerged[day].add(r));
-        });
-      }
-      const finalized: { [k: string]: string[] } = {};
-      Object.entries(weeklyMerged).forEach(([day, set]) => finalized[day] = Array.from(set));
+      // Single session: exactly one day/time selection
+      const m = compressSelectionToDateMap(dateSelection || {});
+      let pickedDate: string | null = null;
+      let pickedRange: string | null = null;
+      Object.entries(m).forEach(([date, ranges]) => {
+        if (!pickedDate && Array.isArray(ranges) && ranges.length > 0) {
+          pickedDate = date;
+          pickedRange = ranges[0];
+        }
+      });
+      if (!pickedDate || !pickedRange) throw new Error('Please select a time slot');
+      const [start, end] = pickedRange.split('-');
+      const mins = diffMinutes(start, end);
+      if (mins < 60 || mins > 180) throw new Error('Session must be 1 to 3 hours');
+
+      // Build ISO from date + start time in local timezone
+      const [y,mn,d] = pickedDate.split('-').map(Number);
+      const [sh, sm] = start.split(':').map(Number);
+      const dt = new Date(y, mn-1, d, sh, sm);
+      const iso = dt.toISOString();
 
       const { data: { session } } = await supabase.auth.getSession();
       const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/jobs/${jobId}/schedule`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ finalized_schedule: finalized })
+        body: JSON.stringify({ scheduled_time: iso, duration_minutes: mins })
       });
       if (!r.ok) {
         const j = await r.json().catch(()=>({}));
         throw new Error(j.details || 'Failed to schedule');
       }
       
-      // Send session confirmation email with weekly schedule to both parties (best-effort)
+      // Send session confirmation email with single date/time (best-effort)
       try {
-        const weekly = Object.fromEntries(Object.entries(finalized).map(([d,v])=>[d, v]));
         await apiService.sendSessionConfirmation(
           // Tutor email
           user?.email || '',
@@ -135,7 +123,8 @@ export default function SchedulingPage() {
             location: job?.tutoring_opportunity?.location_preference || '',
             tutor_name: (user?.user_metadata?.full_name || `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || user?.email?.split('@')[0] || 'Tutor'),
             tutee_name: `${job?.tutoring_opportunity?.tutee_first_name ?? ''} ${job?.tutoring_opportunity?.tutee_last_name ?? ''}`.trim(),
-            weekly_schedule: weekly as any,
+            date: pickedDate,
+            time: start,
           } as any,
           jobId
         );
@@ -405,25 +394,26 @@ export default function SchedulingPage() {
             
             {/* Scheduling Form */}
             <div>
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Select Weekly Times</h2>
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Select Session Time</h2>
               <div className="space-y-6">
-                {sessionSelections.map((sel, idx) => (
-                  <div key={idx} className="border rounded p-3">
-                    <div className="mb-2 text-sm font-medium text-gray-700">Session {idx+1}</div>
-                    <WeeklyTimeGrid
-                      value={sel}
-                      allowed={allowedMask as any}
-                      maxMinutesPerSession={180}
-                      disallowedDays={Array.from(new Set(Object.entries(sessionSelections).filter(([i])=> Number(i)!==idx).flatMap(([,s])=> Object.keys(compressSelectionToWeeklyMap(s as any))))) as any}
-                      onChange={(next)=> setSessionSelections(prev=>{
-                        const arr = prev.slice(); arr[idx]=next; return arr;
-                      })}
-                    />
-                  </div>
-                ))}
+                <div className="border rounded p-3">
+                  <div className="mb-2 text-sm font-medium text-gray-700">Choose a time (1–3 hours) within the tutee's availability</div>
+                  <TwoWeekTimeGrid
+                    value={dateSelection}
+                    allowed={allowedMask as any}
+                    maxMinutesPerSession={180}
+                    onChange={(next)=> setDateSelection(next)}
+                  />
+                </div>
               </div>
               
-              {/* Availability Options removed (using weekly grid now) */}
+              {/* Duration control */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                <select value={durationMinutes} onChange={(e)=> setDurationMinutes(Number(e.target.value))} className="border rounded px-3 py-2">
+                  {[60,90,120,150,180].map(m=> (<option key={m} value={m}>{m}</option>))}
+                </select>
+              </div>
               
               {/* Contact Info */}
               <div className="mb-6 p-4 bg-yellow-50 rounded-md">
@@ -461,7 +451,7 @@ export default function SchedulingPage() {
                   disabled={scheduling}
                   className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {scheduling ? 'Scheduling...' : 'Save Weekly Schedule'}
+                  {scheduling ? 'Scheduling...' : 'Save Schedule'}
                 </button>
               </div>
             </div>

@@ -21,28 +21,40 @@ def get_tutor_dashboard():
     # Opportunities visible to tutors: all open (embedded subject fields)
     opps = supabase.table('tutoring_opportunities').select('*').eq('status', 'open').order('created_at', desc=True).execute()
 
-    # Jobs belonging to this tutor (embed opportunity for UI convenience)
-    jobs = (
+    # Jobs belonging to this tutor
+    jobs_res = (
         supabase
         .table('tutoring_jobs')
-        .select('*, tutoring_opportunity:tutoring_opportunities(*)')
+        .select('*')
         .eq('tutor_id', tutor['id'])
         .order('created_at', desc=True)
         .execute()
     )
 
+    jobs = jobs_res.data or []
+    # Attach synthetic tutoring_opportunity from snapshot if available
+    for j in jobs:
+        if j.get('opportunity_snapshot'):
+            j['tutoring_opportunity'] = j['opportunity_snapshot']
+
     return jsonify({
         'tutor': tutor,
         'approved_subject_ids': approved_subject_ids,
         'opportunities': opps.data or [],
-        'jobs': jobs.data or []
+        'jobs': jobs
     })
 
 
 @tutor_bp.route('/api/tutor/opportunities/<opportunity_id>/accept', methods=['POST'])
 @require_auth
 def accept_opportunity(opportunity_id: str):
-    """Tutor accepts an opportunity; creates a job with finalized schedule"""
+    """Tutor accepts an opportunity; creates a job and moves to pending tutee scheduling.
+
+    New single-session flow: when a tutor accepts, we remove the opportunity
+    from the opportunities pool (delete row) and create a corresponding job
+    in status 'pending_tutee_scheduling'. Tutee will then provide availability
+    on the job; afterward tutor finalizes schedule.
+    """
     supabase = get_supabase_client()
 
     # Get tutor
@@ -76,13 +88,8 @@ def accept_opportunity(opportunity_id: str):
     if not approval.data:
         return jsonify({'error': 'Not approved for this subject'}), 403
 
-    # Expect finalized schedule in body
-    data = request.get_json() or {}
-    finalized_schedule = data.get('finalized_schedule')  # array of {date, time}
-    if not finalized_schedule or not isinstance(finalized_schedule, list):
-        return jsonify({'error': 'finalized_schedule (list) is required'}), 400
-
-    # Create job
+    # Create job (single-session, pending tutee scheduling)
+    opportunity_snapshot = opp
     job_insert = {
         'opportunity_id': opp['id'],
         'tutor_id': tutor['id'],
@@ -90,16 +97,16 @@ def accept_opportunity(opportunity_id: str):
         'subject_name': subj_name,
         'subject_type': subj_type,
         'subject_grade': str(subj_grade),
-        'finalized_schedule': finalized_schedule,
-        'status': 'scheduled'
+        'opportunity_snapshot': opportunity_snapshot,
+        'status': 'pending_tutee_scheduling'
     }
 
     job_res = supabase.table('tutoring_jobs').insert(job_insert).execute()
     if not job_res.data:
         return jsonify({'error': 'Failed to create job'}), 500
 
-    # Mark opportunity as assigned
-    supabase.table('tutoring_opportunities').update({'status': 'assigned'}).eq('id', opportunity_id).execute()
+    # Remove opportunity now that it has been accepted
+    supabase.table('tutoring_opportunities').delete().eq('id', opportunity_id).execute()
 
     return jsonify({'message': 'Job created', 'job': job_res.data[0]}), 201
 
@@ -182,7 +189,9 @@ def apply_to_opportunity(opportunity_id: str):
     if not approval.data:
         return jsonify({'error': 'Not approved for this subject'}), 403
 
-    # create job with scheduled status minimal
+    # Create job and move to pending tutee scheduling; snapshot the opportunity
+    # so we can surface details later even after deleting the opportunity row.
+    opportunity_snapshot = opp_res.data
     job_ins = supabase.table('tutoring_jobs').insert({
         'opportunity_id': opportunity_id,
         'tutor_id': tutor_id,
@@ -190,13 +199,14 @@ def apply_to_opportunity(opportunity_id: str):
         'subject_name': subj_name,
         'subject_type': subj_type,
         'subject_grade': subj_grade,
-        'status': 'scheduled'
+        'opportunity_snapshot': opportunity_snapshot,
+        'status': 'pending_tutee_scheduling'
     }).execute()
     if not job_ins.data:
         return jsonify({'error': 'Failed to create job'}), 500
 
-    # mark opportunity assigned
-    supabase.table('tutoring_opportunities').update({'status': 'assigned'}).eq('id', opportunity_id).execute()
+    # Remove the opportunity since it's been accepted/applied
+    supabase.table('tutoring_opportunities').delete().eq('id', opportunity_id).execute()
     return jsonify({'job': job_ins.data[0]}), 201
 
 
@@ -215,23 +225,41 @@ def get_job(job_id: str):
         return jsonify({'error': 'Job not found'}), 404
     job = job_res.data
 
-    # Expand opportunity (no subjects relation now)
-    opp_res = supabase.table('tutoring_opportunities').select('*').eq('id', job['opportunity_id']).single().execute()
-    opportunity = opp_res.data if opp_res.data else None
-    job['tutoring_opportunity'] = opportunity
+    # Provide a synthetic 'tutoring_opportunity' object for UI compatibility,
+    # sourced from opportunity_snapshot (if present).
+    if job.get('opportunity_snapshot'):
+        job['tutoring_opportunity'] = job['opportunity_snapshot']
+    else:
+        job['tutoring_opportunity'] = None
     return jsonify({'job': job}), 200
 
 
 @tutor_bp.route('/api/tutor/jobs/<job_id>/schedule', methods=['POST'])
 @require_auth
 def schedule_job(job_id: str):
-    """Set a job schedule. Supports either single scheduled_time (ISO) or finalized_schedule (weekly map)."""
+    """Finalize a single-session schedule.
+
+    Expects payload: { scheduled_time: ISO8601 string, duration_minutes: 60..180 }
+    Only one session is allowed. Will set status to 'scheduled'.
+    """
     supabase = get_supabase_client()
     payload = request.get_json() or {}
     scheduled_time = payload.get('scheduled_time')
-    finalized_schedule = payload.get('finalized_schedule')  # expected map like {"Mon":["17:00-19:00"], ...}
-    if not scheduled_time and not finalized_schedule:
-        return jsonify({'error': 'scheduled_time (ISO) or finalized_schedule (weekly map) is required'}), 400
+    duration_minutes = payload.get('duration_minutes')
+    if not scheduled_time:
+        return jsonify({'error': 'scheduled_time is required'}), 400
+    try:
+        # Basic ISO validation
+        from datetime import datetime
+        datetime.fromisoformat(scheduled_time.replace('Z', '+00:00'))
+    except Exception:
+        return jsonify({'error': 'scheduled_time must be ISO8601'}), 400
+    try:
+        duration_minutes = int(duration_minutes)
+    except Exception:
+        return jsonify({'error': 'duration_minutes must be an integer'}), 400
+    if duration_minutes < 60 or duration_minutes > 180:
+        return jsonify({'error': 'duration_minutes must be between 60 and 180'}), 400
 
     tutor_res = supabase.table('tutors').select('id').eq('auth_id', request.user_id).single().execute()
     if not tutor_res.data:
@@ -244,31 +272,7 @@ def schedule_job(job_id: str):
         return jsonify({'error': 'Job not found'}), 404
     job = job_res.data
 
-    # If finalized_schedule provided, optionally validate count vs sessions_per_week on opportunity
-    updates = {'status': 'scheduled'}
-    if scheduled_time:
-        updates['scheduled_time'] = scheduled_time
-    if finalized_schedule:
-        # Basic validation: ensure it's an object of arrays of HH:MM-HH:MM
-        try:
-            if not isinstance(finalized_schedule, dict):
-                raise ValueError('finalized_schedule must be an object of day->ranges')
-            # Count total chosen blocks
-            total_blocks = 0
-            for day, ranges in finalized_schedule.items():
-                if not isinstance(ranges, list):
-                    raise ValueError('Each day must map to a list of ranges')
-                total_blocks += len(ranges)
-            # Fetch sessions_per_week to give nicer errors
-            opp_res = supabase.table('tutoring_opportunities').select('sessions_per_week').eq('id', job.get('opportunity_id')).single().execute()
-            if opp_res.data and isinstance(total_blocks, int):
-                expected = opp_res.data.get('sessions_per_week')
-                if isinstance(expected, int) and expected > 0 and total_blocks != expected:
-                    return jsonify({'error': 'invalid_finalized_schedule', 'details': f'Expected {expected} weekly sessions, got {total_blocks}'}), 400
-        except Exception as e:
-            return jsonify({'error': 'invalid_finalized_schedule', 'details': str(e)}), 400
-        updates['finalized_schedule'] = finalized_schedule
-
+    updates = {'status': 'scheduled', 'scheduled_time': scheduled_time, 'duration_minutes': duration_minutes}
     upd = supabase.table('tutoring_jobs').update(updates).eq('id', job_id).execute()
     if not upd.data:
         return jsonify({'error': 'Failed to update job'}), 500

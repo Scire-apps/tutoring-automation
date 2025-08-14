@@ -18,8 +18,7 @@ export default function TuteeRequestPage() {
   const [subjectName, setSubjectName] = useState('');
   const [subjectType, setSubjectType] = useState('');
   const [subjectGrade, setSubjectGrade] = useState('');
-  const [sessionsPerWeek, setSessionsPerWeek] = useState(1);
-  const [availabilities, setAvailabilities] = useState<WeeklySelection[]>([{},{},{}].slice(0,1));
+  // Single-session flow: no weekly availability at request time
   const [locationPreference, setLocationPreference] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,26 +37,11 @@ export default function TuteeRequestPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    try {
-      // Merge all session availabilities into a single weekly map for storage
-      const merged: { [key: string]: Set<string> } = {} as any;
-      for (const sel of availabilities.slice(0, sessionsPerWeek)) {
-        const m = compressSelectionToWeeklyMap(sel);
-        Object.entries(m).forEach(([day, ranges]) => {
-          if (!merged[day]) merged[day] = new Set();
-          ranges.forEach(r => merged[day].add(r));
-        });
-      }
-      const finalAvailability: { [key: string]: string[] } = {};
-      Object.entries(merged).forEach(([day, set]) => {
-        finalAvailability[day] = Array.from(set);
-      });
-      await api.createTuteeOpportunity({
+      try {
+        await api.createTuteeOpportunity({
         subject_name: subjectName,
         subject_type: subjectType,
         subject_grade: subjectGrade,
-        sessions_per_week: sessionsPerWeek,
-        availability: finalAvailability,
         location_preference: locationPreference,
         additional_notes: notes,
       });
@@ -97,37 +81,7 @@ export default function TuteeRequestPage() {
             </select>
           </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium">Sessions per Week</label>
-          <select className="mt-1 border rounded px-3 py-2 w-full" value={sessionsPerWeek} onChange={e=>{
-            const n = Number(e.target.value); setSessionsPerWeek(n);
-            setAvailabilities(prev => {
-              const next = prev.slice(0, n);
-              while (next.length < n) next.push({});
-              return next;
-            });
-          }}>
-            {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </div>
-          <div>
-          <label className="block text-sm font-medium mb-2">Availability</label>
-          <div className="space-y-6">
-            {Array.from({ length: sessionsPerWeek }).map((_, idx) => (
-              <div key={idx} className="border rounded p-3">
-                <div className="mb-2 text-sm font-medium text-gray-700">Session {idx+1} availability</div>
-                <WeeklyTimeGrid
-                  value={(availabilities[idx] || {}) as WeeklySelection}
-                  onChange={(next) => setAvailabilities(prev => {
-                    const arr = prev.slice();
-                    arr[idx] = next;
-                    return arr;
-                  })}
-                />
-              </div>
-            ))}
-          </div>
-          </div>
+        {/* No availability selection at request time in single-session flow */}
         <div>
           <label className="block text-sm font-medium">Location Preference</label>
           <input className="mt-1 border rounded px-3 py-2 w-full" value={locationPreference} onChange={e=>setLocationPreference(e.target.value)} placeholder="In-person / Online" />

@@ -72,8 +72,6 @@ export async function createTuteeOpportunity(payload: {
   subject_name: 'Math'|'English'|'Science';
   subject_type: 'Academic'|'ALP'|'IB';
   subject_grade: '9'|'10'|'11'|'12';
-  sessions_per_week: number;
-  availability: any;
   location_preference?: string;
   additional_notes?: string;
   priority?: 'low' | 'normal' | 'high';
@@ -92,10 +90,10 @@ export async function getTutorDashboard() {
   );
 }
 
-export async function acceptOpportunity(opportunityId: string, finalizedSchedule: Array<{ date: string; time: string }>) {
+export async function acceptOpportunity(opportunityId: string) {
   return apiRequest<{ message: string; job: any }>(
     `/api/tutor/opportunities/${opportunityId}/accept`,
-    { method: 'POST', body: JSON.stringify({ finalized_schedule: finalizedSchedule }) }
+    { method: 'POST' }
   );
 }
 
@@ -113,6 +111,27 @@ export async function completeJob(
   return apiRequest<{ message: string; volunteer_hours_added: number }>(
     `/api/tutor/jobs/${jobId}/complete`,
     { method: 'POST', body: JSON.stringify(payload) }
+  );
+}
+
+export async function setTuteeAvailability(
+  jobId: string,
+  availability: { [date: string]: string[] }
+) {
+  return apiRequest<{ message: string; job: any }>(
+    `/api/tutee/jobs/${jobId}/availability`,
+    { method: 'POST', body: JSON.stringify({ availability }) }
+  );
+}
+
+export async function scheduleJob(
+  jobId: string,
+  scheduledTimeIso: string,
+  durationMinutes: number
+) {
+  return apiRequest<{ message: string; job: any }>(
+    `/api/tutor/jobs/${jobId}/schedule`,
+    { method: 'POST', body: JSON.stringify({ scheduled_time: scheduledTimeIso, duration_minutes: durationMinutes }) }
   );
 }
 
@@ -319,6 +338,8 @@ const apiService = {
   createTuteeOpportunity,
   getTutorDashboard,
   acceptOpportunity,
+  setTuteeAvailability,
+  scheduleJob,
   listOpenOpportunities,
   completeJob,
   listSchoolsPublic,

@@ -13,6 +13,7 @@ export default function TuteeDashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (isLoading) return;
@@ -168,33 +169,57 @@ export default function TuteeDashboardPage() {
               <ul className="divide-y divide-gray-200">
                 {data.jobs.map((j: any) => (
                   <li key={j.id}>
-                    <details className="px-4 py-4 sm:px-6 group">
-                      <summary className="flex items-center justify-between cursor-pointer list-none">
+                    <div
+                      className="px-4 py-4 sm:px-6 cursor-pointer"
+                      onClick={() => {
+                        const s = new Set(expandedJobs);
+                        if (s.has(j.id)) s.delete(j.id); else s.add(j.id);
+                        setExpandedJobs(s);
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
                         <div>
                           <div className="text-sm font-medium text-gray-900">{j.subject_name} • {j.subject_type} • Grade {j.subject_grade}</div>
                           <div className="text-sm text-gray-500">Tutor: {j.tutor?.first_name} {j.tutor?.last_name}</div>
                         </div>
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${j.status === 'scheduled' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{j.status}</span>
-                      </summary>
-                      <div className="mt-4 pl-2 border-l border-gray-200">
-                        {j.finalized_schedule && typeof j.finalized_schedule === 'object' ? (
-                          <div className="space-y-2">
-                            {Object.entries(j.finalized_schedule).map(([day, ranges]: any) => (
-                              <div key={day} className="text-sm text-gray-700">
-                                <span className="font-medium mr-2">{day}:</span>
-                                {ranges.length ? (
-                                  <span>{ranges.join(', ')}</span>
-                                ) : (
-                                  <span className="text-gray-400">No time set</span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-sm text-gray-500">No weekly schedule yet.</div>
-                        )}
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          j.status === 'scheduled' ? 'bg-green-100 text-green-800' :
+                          j.status === 'pending_tutor_scheduling' ? 'bg-orange-100 text-orange-800' :
+                          j.status === 'pending_tutee_scheduling' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>{
+                          j.status === 'pending_tutee_scheduling' ? 'awaiting your scheduling' :
+                          j.status === 'pending_tutor_scheduling' ? 'awaiting tutor scheduling' : j.status
+                        }</span>
                       </div>
-                    </details>
+                      {expandedJobs.has(j.id) && (
+                        <div className="mt-4 pl-2 border-l border-gray-200">
+                          {j.scheduled_time ? (
+                            <div className="text-sm text-gray-700">
+                              <span className="font-medium mr-2">Scheduled:</span>
+                              {new Date(j.scheduled_time).toLocaleString()}
+                            </div>
+                          ) : j.tutee_availability ? (
+                            <div className="text-sm text-gray-700">
+                              <div className="font-medium mb-1">Your availability</div>
+                              <div className="space-y-1">
+                                {Object.entries(j.tutee_availability).map(([date, ranges]: any) => (
+                                  <div key={date} className="text-sm text-gray-700">
+                                    <span className="font-medium mr-2">{new Date(date as string).toLocaleDateString()}</span>
+                                    {Array.isArray(ranges) && ranges.length ? ranges.join(', ') : <span className="text-gray-400">No time set</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-500">No schedule yet.</div>
+                          )}
+                          {j.status === 'pending_tutee_scheduling' && (
+                            <div className="mt-4">
+                              <Link href={`/tutee/schedule/${j.id}`} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700">Set your availability</Link>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>

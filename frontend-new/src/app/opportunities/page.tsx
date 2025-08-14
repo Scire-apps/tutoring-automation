@@ -165,8 +165,8 @@ export default function OpportunitiesPage() {
         prev.filter((opp) => opp.id !== opportunityId)
       );
 
-      // Redirect to scheduling interface
-      router.push(`/scheduling/${job.id}`);
+      // Redirect back to tutor dashboard (tutee must set availability first)
+      router.push('/dashboard');
     } catch (err) {
       console.error("Error applying for opportunity:", err);
       setError("An error occurred while applying");

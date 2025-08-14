@@ -18,6 +18,8 @@ interface TwoWeekTimeGridProps {
   allowed?: AllowedDateMap;
   maxMinutesPerSession?: number;
   className?: string;
+  singleDayOnly?: boolean;        // if true, only one date may have selection
+  singleContiguousRange?: boolean; // if true, at most one contiguous range per date
 }
 
 function formatDateKey(d: Date) {
@@ -39,7 +41,7 @@ function computeDateColumns(): string[] {
   return cols;
 }
 
-export function TwoWeekTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30, value, onChange, allowed, maxMinutesPerSession, className }: TwoWeekTimeGridProps) {
+export function TwoWeekTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30, value, onChange, allowed, maxMinutesPerSession, className, singleDayOnly, singleContiguousRange }: TwoWeekTimeGridProps) {
   const dateCols = useMemo(() => computeDateColumns(), []);
 
   const rows = useMemo(() => {
@@ -71,8 +73,21 @@ export function TwoWeekTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30,
     return (value[date] || []).slice();
   };
 
-  const setDateRanges = (date: string, ranges: Range[]) => {
-    const next: DateSelection = { ...value, [date]: mergeRanges(sortRanges(ranges)) };
+  const setDateRanges = (date: string, ranges: Range[], lastStart?: string, lastEnd?: string) => {
+    let merged = mergeRanges(sortRanges(ranges));
+    if (singleContiguousRange && merged.length > 1) {
+      // Keep only the range that contains the last toggled slot
+      const chosenIdx = merged.findIndex(r => lastStart! >= r.start && (lastEnd || lastStart!) <= r.end);
+      merged = chosenIdx >= 0 ? [merged[chosenIdx]] : [merged[0]];
+    }
+    let next: DateSelection = { ...value, [date]: merged };
+    if (singleDayOnly) {
+      // Clear other dates
+      next = Object.keys(next).reduce((acc: DateSelection, key) => {
+        if (key === date) acc[key] = next[key]; else acc[key] = [];
+        return acc;
+      }, {} as DateSelection);
+    }
     onChange(next);
   };
 
@@ -88,7 +103,7 @@ export function TwoWeekTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30,
       if (r.start < start) newRanges.push({ start: r.start, end: start });
       if (end < r.end) newRanges.push({ start: end, end: r.end });
       ranges.splice(idx, 1, ...newRanges);
-      setDateRanges(date, ranges);
+      setDateRanges(date, ranges, start, end);
     } else {
       ranges.push({ start, end });
       const merged = mergeRanges(ranges);
@@ -96,7 +111,7 @@ export function TwoWeekTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30,
         const total = merged.reduce((acc, r) => acc + diffMinutes(r.start, r.end), 0);
         if (total > maxMinutesPerSession) return;
       }
-      setDateRanges(date, merged);
+      setDateRanges(date, merged, start, end);
     }
   };
 

@@ -272,6 +272,28 @@ def schedule_job(job_id: str):
         return jsonify({'error': 'Job not found'}), 404
     job = job_res.data
 
+    # Validate the chosen time fits within tutee_availability if provided
+    # Get job with tutee_availability
+    job_detail = supabase.table('tutoring_jobs').select('tutee_availability').eq('id', job_id).single().execute()
+    if job_detail.data and isinstance(job_detail.data.get('tutee_availability'), dict):
+        try:
+            from datetime import datetime
+            chosen = datetime.fromisoformat(scheduled_time.replace('Z', '+00:00'))
+            date_key = chosen.date().isoformat()
+            ranges = job_detail.data['tutee_availability'].get(date_key) or []
+            # Permit only if chosen start lies within any allowed [start,end]
+            hhmm = chosen.strftime('%H:%M')
+            def within(r: str) -> bool:
+                parts = r.split('-')
+                if len(parts) != 2:
+                    return False
+                s, e = parts
+                return s <= hhmm < e
+            if not any(within(r) for r in ranges):
+                return jsonify({'error': 'chosen_time_not_in_tutee_availability'}), 400
+        except Exception:
+            pass
+
     updates = {'status': 'scheduled', 'scheduled_time': scheduled_time, 'duration_minutes': duration_minutes}
     upd = supabase.table('tutoring_jobs').update(updates).eq('id', job_id).execute()
     if not upd.data:

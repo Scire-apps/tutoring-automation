@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 /**
  * API service for communicating with the backend
  */

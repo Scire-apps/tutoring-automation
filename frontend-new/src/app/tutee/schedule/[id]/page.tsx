@@ -79,7 +79,8 @@ export default function TuteeSchedulePage() {
         <p className="text-sm text-gray-600 mt-1">Select all times you can meet over the next 14 days (excluding the next 2 days). The tutor will choose one time from your selection.</p>
 
         <div className="mt-6">
-          <TwoWeekTimeGrid value={selection} onChange={setSelection} maxMinutesPerSession={180} />
+          {/* No cap on total selectable minutes for tutee availability */}
+          <TwoWeekTimeGrid value={selection} onChange={setSelection} />
         </div>
 
         {error && <div className="mt-4 text-red-600 text-sm">{error}</div>}

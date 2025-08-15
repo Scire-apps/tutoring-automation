@@ -30,6 +30,7 @@ export default function SchedulingPage() {
   const [error, setError] = useState<string | null>(null);
   const [dateSelection, setDateSelection] = useState<{[date: string]: Array<{start:string;end:string}>}>({});
   const [durationMinutes, setDurationMinutes] = useState<number>(60);
+  const [desiredMinutesFromTutee, setDesiredMinutesFromTutee] = useState<number | null>(null);
   const [scheduling, setScheduling] = useState(false);
   const [availabilityOptions, setAvailabilityOptions] = useState<string[]>([]);
   const [allowedMask, setAllowedMask] = useState<{ [k: string]: Array<{ start: string; end: string }> }>({});
@@ -67,6 +68,11 @@ export default function SchedulingPage() {
         });
       });
       setAllowedMask(mask);
+      // Desired session length
+      if (typeof jobData?.desired_duration_minutes === 'number') {
+        setDesiredMinutesFromTutee(jobData.desired_duration_minutes);
+        setDurationMinutes(jobData.desired_duration_minutes);
+      }
       
     } catch (err) {
       console.error('Error loading job data:', err);
@@ -410,13 +416,12 @@ export default function SchedulingPage() {
                 </div>
               </div>
               
-              {/* Duration control */}
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
-                <select value={durationMinutes} onChange={(e)=> setDurationMinutes(Number(e.target.value))} className="border rounded px-3 py-2">
-                  {[60,90,120,150,180].map(m=> (<option key={m} value={m}>{m}</option>))}
-                </select>
-              </div>
+              {/* Duration is fixed by tutee preference when provided */}
+              {desiredMinutesFromTutee && (
+                <div className="mt-4 text-sm text-gray-700">
+                  Session duration requested by tutee: <span className="font-medium">{desiredMinutesFromTutee} minutes</span>
+                </div>
+              )}
               
               {/* Contact Info */}
               <div className="mb-6 p-4 bg-yellow-50 rounded-md">

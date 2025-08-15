@@ -79,15 +79,25 @@ def create_tutoring_opportunity():
 def set_tutee_availability(job_id: str):
     """Tutee provides availability windows for the next 14 days (excluding next 2 days).
 
-    Expects JSON body: { "availability": { "YYYY-MM-DD": ["HH:MM-HH:MM", ...], ... } }
-    Sets job.tutee_availability and moves status to 'pending_tutor_scheduling'.
+    Expects JSON body: {
+      "availability": { "YYYY-MM-DD": ["HH:MM-HH:MM", ...], ... },
+      "desired_duration_minutes": 60|90|120|150|180
+    }
+    Sets job.tutee_availability and job.desired_duration_minutes, moves status to 'pending_tutor_scheduling'.
     """
     from datetime import datetime, timedelta, timezone
 
     payload = request.get_json() or {}
     availability = payload.get('availability')
+    desired_duration_minutes = payload.get('desired_duration_minutes')
     if not isinstance(availability, dict):
         return jsonify({'error': 'availability must be an object of date->time ranges'}), 400
+    try:
+        desired_duration_minutes = int(desired_duration_minutes)
+    except Exception:
+        return jsonify({'error': 'desired_duration_minutes must be provided (60..180)'}), 400
+    if desired_duration_minutes not in [60,90,120,150,180]:
+        return jsonify({'error': 'desired_duration_minutes must be one of 60,90,120,150,180'}), 400
 
     supabase = get_supabase_client()
 
@@ -142,7 +152,7 @@ def set_tutee_availability(job_id: str):
     upd = (
         supabase
         .table('tutoring_jobs')
-        .update({'tutee_availability': availability, 'status': 'pending_tutor_scheduling'})
+        .update({'tutee_availability': availability, 'desired_duration_minutes': desired_duration_minutes, 'status': 'pending_tutor_scheduling'})
         .eq('id', job_id)
         .execute()
     )

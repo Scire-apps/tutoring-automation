@@ -116,11 +116,12 @@ export async function completeJob(
 
 export async function setTuteeAvailability(
   jobId: string,
-  availability: { [date: string]: string[] }
+  availability: { [date: string]: string[] },
+  desiredDurationMinutes: number
 ) {
   return apiRequest<{ message: string; job: any }>(
     `/api/tutee/jobs/${jobId}/availability`,
-    { method: 'POST', body: JSON.stringify({ availability }) }
+    { method: 'POST', body: JSON.stringify({ availability, desired_duration_minutes: desiredDurationMinutes }) }
   );
 }
 

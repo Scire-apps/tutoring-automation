@@ -280,17 +280,18 @@ def schedule_job(job_id: str):
             from datetime import datetime
             chosen = datetime.fromisoformat(scheduled_time.replace('Z', '+00:00'))
             date_key = chosen.date().isoformat()
-            ranges = job_detail.data['tutee_availability'].get(date_key) or []
-            # Permit only if chosen start lies within any allowed [start,end]
-            hhmm = chosen.strftime('%H:%M')
-            def within(r: str) -> bool:
-                parts = r.split('-')
-                if len(parts) != 2:
-                    return False
-                s, e = parts
-                return s <= hhmm < e
-            if not any(within(r) for r in ranges):
-                return jsonify({'error': 'chosen_time_not_in_tutee_availability'}), 400
+            ranges = job_detail.data['tutee_availability'].get(date_key)
+            # Only enforce if availability exists for this exact date
+            if isinstance(ranges, list) and len(ranges) > 0:
+                hhmm = chosen.strftime('%H:%M')
+                def within(r: str) -> bool:
+                    parts = r.split('-')
+                    if len(parts) != 2:
+                        return False
+                    s, e = parts
+                    return s <= hhmm < e
+                if not any(within(r) for r in ranges):
+                    return jsonify({'error': 'chosen_time_not_in_tutee_availability'}), 400
         except Exception:
             pass
 

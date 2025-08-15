@@ -18,6 +18,7 @@ export default function TuteeSchedulePage() {
   const [job, setJob] = useState<any>(null);
   const [selection, setSelection] = useState<{ [date: string]: Array<{ start: string; end: string }> }>({});
   const [saving, setSaving] = useState(false);
+  const [desiredDuration, setDesiredDuration] = useState<number>(60);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,7 +51,10 @@ export default function TuteeSchedulePage() {
     try {
       setSaving(true);
       const availability = compressSelectionToDateMap(selection);
-      await api.setTuteeAvailability(jobId, availability);
+      // Simple guard
+      const hasAny = Object.values(availability).some(arr => Array.isArray(arr) && arr.length > 0);
+      if (!hasAny) throw new Error('Please mark at least one time you are available.');
+      await api.setTuteeAvailability(jobId, availability, desiredDuration);
       router.push('/tutee/dashboard');
     } catch (e: any) {
       setError(e?.message || 'Failed to save availability');
@@ -81,6 +85,13 @@ export default function TuteeSchedulePage() {
         <div className="mt-6">
           {/* No cap on total selectable minutes for tutee availability */}
           <TwoWeekTimeGrid value={selection} onChange={setSelection} />
+        </div>
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium mb-1">Desired session length (minutes)</label>
+          <select value={desiredDuration} onChange={e=> setDesiredDuration(Number(e.target.value))} className="border rounded px-3 py-2">
+            {[60,90,120,150,180].map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
         </div>
 
         {error && <div className="mt-4 text-red-600 text-sm">{error}</div>}

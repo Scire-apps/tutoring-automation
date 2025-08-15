@@ -274,7 +274,13 @@ def schedule_job(job_id: str):
 
     # Validate the chosen time fits within tutee_availability if provided
     # Get job with tutee_availability
-    job_detail = supabase.table('tutoring_jobs').select('tutee_availability').eq('id', job_id).single().execute()
+    job_detail = supabase.table('tutoring_jobs').select('tutee_availability, desired_duration_minutes').eq('id', job_id).single().execute()
+    if job_detail.data:
+        # Enforce exact duration match with tutee's desired duration when provided
+        desired = job_detail.data.get('desired_duration_minutes')
+        if isinstance(desired, int) and desired in [60,90,120,150,180]:
+            if duration_minutes != desired:
+                return jsonify({'error': 'duration_mismatch_with_tutee_preference'}), 400
     if job_detail.data and isinstance(job_detail.data.get('tutee_availability'), dict):
         try:
             from datetime import datetime

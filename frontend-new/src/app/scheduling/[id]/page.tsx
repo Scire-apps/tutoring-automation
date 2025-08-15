@@ -404,11 +404,11 @@ export default function SchedulingPage() {
               <h2 className="text-lg font-medium text-gray-900 mb-4">Select Session Time</h2>
               <div className="space-y-6">
                 <div className="border rounded p-3">
-                  <div className="mb-2 text-sm font-medium text-gray-700">Choose a time (1–3 hours) within the tutee's availability</div>
+                  <div className="mb-2 text-sm font-medium text-gray-700">Choose a time within the tutee's availability{desiredMinutesFromTutee ? ` — exactly ${desiredMinutesFromTutee} minutes` : ''}</div>
                   <TwoWeekTimeGrid
                     value={dateSelection}
                     allowed={allowedMask as any}
-                    maxMinutesPerSession={180}
+                    maxMinutesPerSession={desiredMinutesFromTutee ?? 180}
                     singleDayOnly
                     singleContiguousRange
                     onChange={(next)=> setDateSelection(next)}
@@ -426,7 +426,7 @@ export default function SchedulingPage() {
               {/* Contact Info */}
               <div className="mb-6 p-4 bg-yellow-50 rounded-md">
                 <h3 className="text-sm font-medium text-yellow-800 mb-2">Note</h3>
-                <p className="text-sm text-yellow-700">Select up to 3 hours per session. Each session must be on a different day and within the tutee's availability (green regions).</p>
+                <p className="text-sm text-yellow-700">You must select a single continuous block exactly equal to the tutee's requested duration{desiredMinutesFromTutee ? ` (${desiredMinutesFromTutee} minutes)` : ''}, and it must be within the tutee's availability (green regions).</p>
               </div>
               
               {/* Error Message */}

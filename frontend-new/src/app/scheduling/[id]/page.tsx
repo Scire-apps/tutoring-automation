@@ -93,6 +93,7 @@ export default function SchedulingPage() {
       const [start, end] = pickedRange.split('-');
       const mins = diffMinutes(start, end);
       if (mins < 60 || mins > 180) throw new Error('Session must be 1 to 3 hours');
+      if (mins < durationMinutes) throw new Error('Selected time block is shorter than the chosen duration');
 
       // Build ISO from date + start time in local timezone
       const [y,mn,d] = pickedDate.split('-').map(Number);
@@ -104,11 +105,11 @@ export default function SchedulingPage() {
       const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/jobs/${jobId}/schedule`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scheduled_time: iso, duration_minutes: mins })
+        body: JSON.stringify({ scheduled_time: iso, duration_minutes: durationMinutes })
       });
       if (!r.ok) {
         const j = await r.json().catch(()=>({}));
-        throw new Error(j.details || 'Failed to schedule');
+        throw new Error(j.error || j.details || 'Failed to schedule');
       }
       
       // Send session confirmation email with single date/time (best-effort)
@@ -132,9 +133,9 @@ export default function SchedulingPage() {
 
       router.push('/dashboard?scheduled=success');
       
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error scheduling session:', err);
-      setError('Failed to schedule the session. Please try again.');
+      setError(err?.message || 'Failed to schedule the session.');
     } finally {
       setScheduling(false);
     }

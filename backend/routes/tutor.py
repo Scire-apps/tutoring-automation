@@ -283,14 +283,22 @@ def schedule_job(job_id: str):
             ranges = job_detail.data['tutee_availability'].get(date_key)
             # Only enforce if availability exists for this exact date
             if isinstance(ranges, list) and len(ranges) > 0:
-                hhmm = chosen.strftime('%H:%M')
-                def within(r: str) -> bool:
+                start_hhmm = chosen.strftime('%H:%M')
+                # Ensure the entire duration fits within one allowed range on that date
+                def fits(r: str) -> bool:
                     parts = r.split('-')
                     if len(parts) != 2:
                         return False
                     s, e = parts
-                    return s <= hhmm < e
-                if not any(within(r) for r in ranges):
+                    # Compute end time string from start + duration_minutes
+                    sh, sm = map(int, start_hhmm.split(':'))
+                    eh = sh
+                    em = sm + int(duration_minutes)
+                    eh += em // 60
+                    em = em % 60
+                    end_hhmm = f"{eh:02d}:{em:02d}"
+                    return s <= start_hhmm and end_hhmm <= e
+                if not any(fits(r) for r in ranges):
                     return jsonify({'error': 'chosen_time_not_in_tutee_availability'}), 400
         except Exception:
             pass

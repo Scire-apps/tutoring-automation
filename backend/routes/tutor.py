@@ -231,6 +231,15 @@ def get_job(job_id: str):
         job['tutoring_opportunity'] = job['opportunity_snapshot']
     else:
         job['tutoring_opportunity'] = None
+
+    # Attach basic tutee info (email, name) for downstream uses like email
+    try:
+        if job.get('tutee_id'):
+            tutee_res = supabase.table('tutees').select('id, email, first_name, last_name').eq('id', job['tutee_id']).single().execute()
+            if tutee_res.data:
+                job['tutee'] = tutee_res.data
+    except Exception:
+        pass
     return jsonify({'job': job}), 200
 
 

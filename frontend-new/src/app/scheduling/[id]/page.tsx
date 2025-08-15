@@ -123,8 +123,8 @@ export default function SchedulingPage() {
         await apiService.sendSessionConfirmation(
           // Tutor email
           user?.email || '',
-          // Tutee email from opportunity payload
-          job?.tutoring_opportunity?.email || '',
+          // Tutee email: prefer fetched job.tutee.email, fallback to snapshot
+          (job as any)?.tutee?.email || job?.tutoring_opportunity?.email || '',
           {
             subject: `${job?.tutoring_opportunity?.subject_name || ''} • ${job?.tutoring_opportunity?.subject_type || ''} • Grade ${job?.tutoring_opportunity?.subject_grade || ''}`.trim(),
             location: job?.tutoring_opportunity?.location_preference || '',

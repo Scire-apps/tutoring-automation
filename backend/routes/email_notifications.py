@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 import logging
 from utils.email_service import get_email_service
 from utils.auth import require_auth
-from utils.db import get_db_manager
+from utils.db import get_db_manager, get_supabase_client
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -64,8 +64,8 @@ def send_session_confirmation():
             return jsonify({'error': f'Missing required field: {field}'}), 400
     
     # Extract data
-    tutor_email = data['tutor_email']
-    tutee_email = data['tutee_email']
+    tutor_email = data.get('tutor_email')
+    tutee_email = data.get('tutee_email')
     session_details = data['session_details']
     
     # Validate session details - support classic (date/time) or weekly_schedule
@@ -78,6 +78,27 @@ def send_session_confirmation():
     if not (has_single or has_weekly):
         return jsonify({'error': 'Provide either date/time or weekly_schedule'}), 400
     
+    # Resolve missing/invalid recipient emails using job context when possible
+    job_id = data.get('job_id')
+    def is_valid_email(addr: str) -> bool:
+        return isinstance(addr, str) and '@' in addr and '.' in addr.split('@')[-1]
+
+    if not is_valid_email(tutee_email) and job_id:
+        try:
+            supabase = get_supabase_client()
+            job_res = supabase.table('tutoring_jobs').select('tutee_id').eq('id', job_id).single().execute()
+            if job_res.data and job_res.data.get('tutee_id'):
+                tutee_res = supabase.table('tutees').select('email').eq('id', job_res.data['tutee_id']).single().execute()
+                if tutee_res.data and is_valid_email(tutee_res.data.get('email')):
+                    tutee_email = tutee_res.data['email']
+        except Exception as e:
+            logger.warning(f"Failed to resolve tutee email for job {job_id}: {e}")
+
+    if not is_valid_email(tutor_email):
+        return jsonify({'error': 'Invalid tutor_email'}), 400
+    if not is_valid_email(tutee_email):
+        return jsonify({'error': 'Invalid tutee_email'}), 400
+
     # Send confirmation emails
     email_service = get_email_service()
     # Build HTML/text bodies including weekly schedule when present
@@ -121,10 +142,9 @@ def send_session_confirmation():
 
     # Send emails to both parties
     email_service = get_email_service()
-    success = (
-        email_service.send_email(tutor_email, f"Session Confirmation: {subj_text}", html, text)
-        and email_service.send_email(tutee_email, f"Session Confirmation: {subj_text}", html, text)
-    )
+    tutor_ok = email_service.send_email(tutor_email, f"Session Confirmation: {subj_text}", html, text)
+    tutee_ok = email_service.send_email(tutee_email, f"Session Confirmation: {subj_text}", html, text)
+    success = tutor_ok and tutee_ok
     
     if success:
         # Log the communication in the database
@@ -173,7 +193,7 @@ def send_session_confirmation():
         logger.info(f"Session confirmation emails sent to {tutor_email} and {tutee_email}")
         return jsonify({'message': 'Session confirmation emails sent successfully'}), 200
     else:
-        return jsonify({'error': 'Failed to send session confirmation emails'}), 500
+        return jsonify({'error': 'Failed to send session confirmation emails', 'tutor_sent': tutor_ok, 'tutee_sent': tutee_ok}), 500
 
 @email_notifications_bp.route('/api/email/job-assignment', methods=['POST'])
 @require_auth

@@ -136,6 +136,13 @@ export async function scheduleJob(
   );
 }
 
+export async function cancelJob(jobId: string) {
+  return apiRequest<{ message: string; opportunity: any }>(
+    `/api/tutor/jobs/${jobId}/cancel`,
+    { method: 'POST' }
+  );
+}
+
 // listSubjects removed (no subjects table)
 
 export async function listSchoolsPublic() {
@@ -341,6 +348,7 @@ const apiService = {
   acceptOpportunity,
   setTuteeAvailability,
   scheduleJob,
+  cancelJob,
   listOpenOpportunities,
   completeJob,
   listSchoolsPublic,

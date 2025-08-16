@@ -48,6 +48,9 @@ def cancel_job(job_id: str):
     if not new_opp.data:
         return jsonify({'error': 'failed_to_recreate_opportunity'}), 500
 
+    # Remove communications associated with this job (since the pairing is cancelled)
+    supabase.table('communications').delete().eq('job_id', job_id).execute()
+    
     # Remove the job row entirely
     supabase.table('tutoring_jobs').delete().eq('id', job_id).execute()
 
@@ -100,6 +103,9 @@ def complete_job(job_id: str):
         new_hours = current_hours + volunteer_hours
         supabase.table('tutors').update({'volunteer_hours': new_hours}).eq('id', tutor_id).execute()
 
+        # Remove communications associated with this job (since it's completed)
+        supabase.table('communications').delete().eq('job_id', job_id).execute()
+        
         # In single-session flow, remove the job after completion
         supabase.table('tutoring_jobs').delete().eq('id', job_id).execute()
 

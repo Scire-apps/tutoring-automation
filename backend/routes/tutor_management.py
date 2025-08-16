@@ -149,6 +149,102 @@ def list_jobs_for_admin():
         print(f"Error listing jobs for admin: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+
+@tutor_management_bp.route('/api/admin/awaiting-verification', methods=['GET'])
+@require_admin
+def list_awaiting_verification_jobs():
+    """List all jobs awaiting admin verification."""
+    try:
+        supabase = get_supabase_client()
+        res = supabase.table('awaiting_verification_jobs').select('*').order('created_at', desc=True).execute()
+        return jsonify({'jobs': res.data or []}), 200
+    except Exception as e:
+        print(f"Error listing awaiting verification jobs: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@tutor_management_bp.route('/api/admin/awaiting-verification/<job_id>/recording', methods=['GET'])
+@require_admin
+def get_recording_link_for_job(job_id: str):
+    """Fetch the session recording link for a given job id (from session_recordings)."""
+    try:
+        supabase = get_supabase_client()
+        rec = supabase.table('session_recordings').select('recording_url').eq('job_id', job_id).single().execute()
+        return jsonify({'recording_url': (rec.data or {}).get('recording_url')}), 200
+    except Exception as e:
+        print(f"Error fetching recording link: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@tutor_management_bp.route('/api/admin/awaiting-verification/<job_id>/verify', methods=['POST'])
+@require_admin
+def verify_completed_job(job_id: str):
+    """Admin verifies a completed job: move to past_jobs and award hours.
+
+    Body: { awarded_hours: number }
+    """
+    try:
+        supabase = get_supabase_client()
+        data = request.get_json() or {}
+        awarded_hours = float(data.get('awarded_hours') or 0)
+        if awarded_hours < 0:
+            return jsonify({'error': 'awarded_hours must be non-negative'}), 400
+
+        # Load awaiting job
+        aw = supabase.table('awaiting_verification_jobs').select('*').eq('id', job_id).single().execute()
+        if not aw.data:
+            return jsonify({'error': 'Awaiting verification job not found'}), 404
+
+        # Identify admin
+        admin_res = supabase.table('admins').select('id').eq('auth_id', request.user_id).single().execute()
+        if not admin_res.data:
+            return jsonify({'error': 'Admin not found'}), 403
+
+        # Move to past_jobs
+        import datetime
+        now = datetime.datetime.utcnow().isoformat() + 'Z'
+        pj_row = {
+            'id': aw.data['id'],
+            'opportunity_id': aw.data.get('opportunity_id'),
+            'tutor_id': aw.data.get('tutor_id'),
+            'tutee_id': aw.data.get('tutee_id'),
+            'subject_name': aw.data.get('subject_name'),
+            'subject_type': aw.data.get('subject_type'),
+            'subject_grade': aw.data.get('subject_grade'),
+            'tutee_availability': aw.data.get('tutee_availability'),
+            'desired_duration_minutes': aw.data.get('desired_duration_minutes'),
+            'scheduled_time': aw.data.get('scheduled_time'),
+            'duration_minutes': aw.data.get('duration_minutes'),
+            'opportunity_snapshot': aw.data.get('opportunity_snapshot'),
+            'location': aw.data.get('location'),
+            'verified_by': admin_res.data['id'],
+            'verified_at': now,
+            'awarded_volunteer_hours': awarded_hours
+        }
+        ins = supabase.table('past_jobs').insert(pj_row).execute()
+        if not ins.data:
+            return jsonify({'error': 'failed_to_archive_job'}), 500
+
+        # Update tutor hours
+        try:
+            tutor_id = aw.data.get('tutor_id')
+            if tutor_id and awarded_hours:
+                tutor = supabase.table('tutors').select('volunteer_hours').eq('id', tutor_id).single().execute()
+                current = float((tutor.data or {}).get('volunteer_hours') or 0)
+                supabase.table('tutors').update({'volunteer_hours': current + float(awarded_hours)}).eq('id', tutor_id).execute()
+        except Exception:
+            pass
+
+        # Remove communications and awaiting row
+        supabase.table('communications').delete().eq('job_id', job_id).execute()
+        supabase.table('awaiting_verification_jobs').delete().eq('id', job_id).execute()
+
+        return jsonify({'message': 'Job verified and archived'}), 200
+    except Exception as e:
+        import traceback
+        print(f"Error verifying job: {e}\n{traceback.format_exc()}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @tutor_management_bp.route('/api/admin/tutors/<tutor_id>', methods=['GET'])
 @require_admin
 def get_tutor_details(tutor_id):
@@ -378,4 +474,17 @@ def update_tutor_status(tutor_id):
         
     except Exception as e:
         print(f"Error updating tutor status: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@tutor_management_bp.route('/api/admin/tutors/<tutor_id>/history', methods=['GET'])
+@require_admin
+def get_tutor_history(tutor_id: str):
+    """Return past jobs (verified) for a specific tutor."""
+    try:
+        supabase = get_supabase_client()
+        res = supabase.table('past_jobs').select('*').eq('tutor_id', tutor_id).order('created_at', desc=True).execute()
+        return jsonify({'jobs': res.data or []}), 200
+    except Exception as e:
+        print(f"Error fetching tutor history: {e}")
         return jsonify({'error': 'Internal server error'}), 500

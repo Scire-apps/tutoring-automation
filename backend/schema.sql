@@ -79,7 +79,7 @@ create table public.tutoring_opportunities (
   subject_type text not null check (subject_type in ('Academic','ALP','IB')),
   subject_grade text not null check (subject_grade in ('9','10','11','12')),
   sessions_per_week int not null default 1 check (sessions_per_week > 0),
-  availability jsonb not null default '{}'::jsonb, -- e.g. {"Mon":["16:00-17:00"], ...}
+  availability jsonb default null, -- single-session flow: initially null; later a date map {"YYYY-MM-DD":["HH:MM-HH:MM"]}
   location_preference text,
   additional_notes text,
   status text not null default 'open' check (status in ('open','assigned','completed','cancelled')),
@@ -90,29 +90,72 @@ create table public.tutoring_opportunities (
 
 create table public.tutoring_jobs (
   id uuid primary key default uuid_generate_v4(),
-  opportunity_id uuid not null references public.tutoring_opportunities(id),
+  opportunity_id uuid references public.tutoring_opportunities(id) on delete set null,
   tutor_id uuid not null references public.tutors(id),
   tutee_id uuid not null references public.tutees(id),
   subject_name text not null check (subject_name in ('Math','English','Science')),
   subject_type text not null check (subject_type in ('Academic','ALP','IB')),
   subject_grade text not null check (subject_grade in ('9','10','11','12')),
-  finalized_schedule jsonb not null default '[]'::jsonb, -- array of {date, time} (optional)
-  scheduled_time timestamptz, -- single scheduled datetime used by scheduling flow
+  -- single-session scheduling fields
+  tutee_availability jsonb, -- {"YYYY-MM-DD":["HH:MM-HH:MM", ...]}
+  desired_duration_minutes int, -- 60..180
+  scheduled_time timestamptz,
+  duration_minutes int,
+  opportunity_snapshot jsonb, -- denormalized details at time of acceptance
   location text,
-  status text not null default 'scheduled' check (status in ('scheduled','completed','cancelled')),
+  status text not null default 'pending_tutee_scheduling' check (status in ('pending_tutee_scheduling','pending_tutor_scheduling','scheduled','cancelled')),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
--- Session recordings
+-- Session recordings: store an external link per job
 create table public.session_recordings (
   id uuid primary key default uuid_generate_v4(),
-  job_id uuid not null references public.tutoring_jobs(id),
-  file_path text not null,
-  file_url text,
-  duration_seconds int,
-  volunteer_hours numeric(10,2),
-  status text not null default 'pending' check (status in ('pending','approved','rejected')),
+  job_id uuid not null, -- references the job id across its lifecycle
+  recording_url text not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(job_id)
+);
+
+-- Jobs awaiting admin verification (mirror of tutoring_jobs)
+create table public.awaiting_verification_jobs (
+  id uuid primary key, -- use original job id for continuity
+  opportunity_id uuid,
+  tutor_id uuid not null references public.tutors(id),
+  tutee_id uuid not null references public.tutees(id),
+  subject_name text not null check (subject_name in ('Math','English','Science')),
+  subject_type text not null check (subject_type in ('Academic','ALP','IB')),
+  subject_grade text not null check (subject_grade in ('9','10','11','12')),
+  tutee_availability jsonb,
+  desired_duration_minutes int,
+  scheduled_time timestamptz,
+  duration_minutes int,
+  opportunity_snapshot jsonb,
+  location text,
+  status text not null default 'awaiting_admin_verification',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Archive of completed/verified jobs
+create table public.past_jobs (
+  id uuid primary key, -- keep same id for traceability
+  opportunity_id uuid,
+  tutor_id uuid not null references public.tutors(id),
+  tutee_id uuid not null references public.tutees(id),
+  subject_name text not null check (subject_name in ('Math','English','Science')),
+  subject_type text not null check (subject_type in ('Academic','ALP','IB')),
+  subject_grade text not null check (subject_grade in ('9','10','11','12')),
+  tutee_availability jsonb,
+  desired_duration_minutes int,
+  scheduled_time timestamptz,
+  duration_minutes int,
+  opportunity_snapshot jsonb,
+  location text,
+  verified_by uuid references public.admins(id),
+  verified_at timestamptz,
+  awarded_volunteer_hours numeric(10,2) default 0,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -143,6 +186,8 @@ create index idx_tutoring_jobs_tutee_id on public.tutoring_jobs(tutee_id);
 create index idx_tutoring_jobs_opportunity_id on public.tutoring_jobs(opportunity_id);
 create index idx_tutoring_jobs_subject on public.tutoring_jobs(subject_name, subject_type, subject_grade);
 create index idx_session_recordings_job_id on public.session_recordings(job_id);
+create index idx_awaiting_verification_tutor_id on public.awaiting_verification_jobs(tutor_id);
+create index idx_past_jobs_tutor_id on public.past_jobs(tutor_id);
 create index idx_communications_job_id on public.communications(job_id);
 create index idx_communications_opportunity_id on public.communications(opportunity_id);
 create index idx_subject_approvals_tutor_id on public.subject_approvals(tutor_id);
@@ -156,6 +201,8 @@ alter table public.subject_approvals enable row level security;
 alter table public.tutoring_opportunities enable row level security;
 alter table public.tutoring_jobs enable row level security;
 alter table public.session_recordings enable row level security;
+alter table public.awaiting_verification_jobs enable row level security;
+alter table public.past_jobs enable row level security;
 alter table public.communications enable row level security;
 alter table public.admins enable row level security;
 
@@ -224,6 +271,21 @@ create policy tutoring_jobs_select on public.tutoring_jobs
     or exists (select 1 from public.admins where auth_id = auth.uid())
   );
 
+-- Awaiting verification jobs: visible to admins and assigned tutor
+create policy awaiting_verification_select on public.awaiting_verification_jobs
+  for select using (
+    exists (select 1 from public.admins where auth_id = auth.uid()) or
+    exists (select 1 from public.tutors where auth_id = auth.uid() and id = awaiting_verification_jobs.tutor_id)
+  );
+
+-- Past jobs: visible to admins and assigned tutor (and related tutee)
+create policy past_jobs_select on public.past_jobs
+  for select using (
+    exists (select 1 from public.admins where auth_id = auth.uid()) or
+    exists (select 1 from public.tutors where auth_id = auth.uid() and id = past_jobs.tutor_id) or
+    exists (select 1 from public.tutees where auth_id = auth.uid() and id = past_jobs.tutee_id)
+  );
+
 -- Session recordings: visible to assigned tutor, related tutee, or admins
 create policy session_recordings_select on public.session_recordings
   for select using (
@@ -238,6 +300,31 @@ create policy session_recordings_select on public.session_recordings
       where tutoring_jobs.id = session_recordings.job_id and tutees.auth_id = auth.uid()
     )
     or exists (select 1 from public.admins where auth_id = auth.uid())
+  );
+
+-- Allow tutors to insert/update their own job's recording link
+create policy session_recordings_upsert on public.session_recordings
+  for insert with check (
+    exists (
+      select 1 from public.tutoring_jobs
+      join public.tutors on tutoring_jobs.tutor_id = tutors.id
+      where tutoring_jobs.id = session_recordings.job_id and tutors.auth_id = auth.uid()
+    )
+  );
+
+create policy session_recordings_update on public.session_recordings
+  for update using (
+    exists (
+      select 1 from public.tutoring_jobs
+      join public.tutors on tutoring_jobs.tutor_id = tutors.id
+      where tutoring_jobs.id = session_recordings.job_id and tutors.auth_id = auth.uid()
+    )
+  ) with check (
+    exists (
+      select 1 from public.tutoring_jobs
+      join public.tutors on tutoring_jobs.tutor_id = tutors.id
+      where tutoring_jobs.id = session_recordings.job_id and tutors.auth_id = auth.uid()
+    )
   );
 
 -- Communications: visible to related tutor, related tutee, or admins

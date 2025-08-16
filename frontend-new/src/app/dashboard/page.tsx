@@ -145,6 +145,9 @@ export default function TutorDashboard() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
   const [cancellingJobId, setCancellingJobId] = useState<string | null>(null);
+  const [showRecordingModalFor, setShowRecordingModalFor] = useState<string | null>(null);
+  const [recordingUrlInput, setRecordingUrlInput] = useState<string>("");
+  const [pastJobs, setPastJobs] = useState<any[]>([]);
   const router = useRouter();
 
   // Check for URL parameters when component mounts
@@ -220,6 +223,13 @@ export default function TutorDashboard() {
           typeof a === 'string' ? { id: a, subject: a, status: 'approved' } : a
         ));
         setSubjectApprovals(approvals);
+        // Load past jobs
+        try {
+          const pj = await apiService.listTutorPastJobs();
+          setPastJobs(pj.jobs || []);
+        } catch (e) {
+          // ignore
+        }
         setIsLoading(false);
       } catch (err: any) {
         console.error("Error loading tutor dashboard:", err);
@@ -603,13 +613,23 @@ export default function TutorDashboard() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      router.push(
-                                        `/sessions/${job.id}/complete`
-                                      );
+                                      // disabled until a recording link is provided via modal
                                     }}
-                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700"
+                                    disabled
+                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 opacity-50 cursor-not-allowed"
                                   >
                                     Complete Session
+                                  </button>
+                                )}
+                                {job.status === "scheduled" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowRecordingModalFor(job.id);
+                                    }}
+                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-purple-600 hover:bg-purple-700"
+                                  >
+                                    Upload Recording Link
                                   </button>
                                 )}
                                 <button
@@ -687,6 +707,36 @@ export default function TutorDashboard() {
                   </div>
                 </div>
               )}
+          </div>
+
+          {/* Past Jobs */}
+          <div className="mb-8">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Past Jobs</h3>
+            {pastJobs.length > 0 ? (
+              <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                <ul className="divide-y divide-gray-200">
+                  {pastJobs.map((job) => (
+                    <li key={job.id} className="px-4 py-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {job.subject_name} • {job.subject_type} • Grade {job.subject_grade}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {job.scheduled_time ? new Date(job.scheduled_time).toLocaleString() : ''} • {job.duration_minutes ? `${job.duration_minutes} minutes` : ''}
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="text-center py-8 bg-white rounded-lg shadow">
+                <h4 className="text-sm font-medium text-gray-900">No past jobs</h4>
+                <p className="text-sm text-gray-500">Completed and verified jobs will show up here.</p>
+              </div>
+            )}
           </div>
 
         {/* Subject Approvals */}
@@ -768,5 +818,44 @@ export default function TutorDashboard() {
         </div>
       </div>
     </TutorLayout>
+    {showRecordingModalFor && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/40" onClick={() => setShowRecordingModalFor(null)}></div>
+        <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+          <h3 className="text-lg font-semibold mb-2">Upload Session Recording Link</h3>
+          <p className="text-sm text-gray-600 mb-4">Paste the URL to your session recording. You can edit this until you mark the session as completed.</p>
+          <input
+            type="url"
+            placeholder="https://..."
+            value={recordingUrlInput}
+            onChange={(e) => setRecordingUrlInput(e.target.value)}
+            className="w-full border rounded px-3 py-2 mb-4"
+          />
+          <div className="flex justify-end gap-2">
+            <button className="px-3 py-1.5 border rounded" onClick={() => setShowRecordingModalFor(null)}>Cancel</button>
+            <button
+              className="px-3 py-1.5 bg-purple-600 text-white rounded"
+              onClick={async () => {
+                try {
+                  if (!recordingUrlInput) return;
+                  await apiService.upsertRecordingLink(showRecordingModalFor, recordingUrlInput);
+                  // After link saved, allow completion
+                  await apiService.completeJob(showRecordingModalFor, {});
+                  setShowRecordingModalFor(null);
+                  setRecordingUrlInput("");
+                  // Remove job from active list
+                  setActiveJobs(prev => prev.filter(j => j.id !== showRecordingModalFor));
+                  setSuccessMessage('Recording link saved and session moved to awaiting verification.');
+                } catch (e) {
+                  setError('Failed to save recording link or complete session.');
+                }
+              }}
+            >
+              Save & Complete Session
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }

@@ -5,6 +5,61 @@ from utils.db import get_supabase_client
 jobs_bp = Blueprint('jobs', __name__)
 
 
+@jobs_bp.route('/api/tutor/jobs/<job_id>/recording-link', methods=['POST'])
+@require_auth
+def upsert_recording_link(job_id: str):
+    """Tutor provides or updates the external recording link for a scheduled job.
+
+    Body: { recording_url: string }
+    Allowed only while the job exists in tutoring_jobs (pre-completion).
+    """
+    supabase = get_supabase_client()
+
+    payload = request.get_json() or {}
+    recording_url = (payload.get('recording_url') or '').strip()
+    if not recording_url or not recording_url.startswith(('http://', 'https://')):
+        return jsonify({'error': 'A valid recording_url is required'}), 400
+
+    # Ensure requester is the assigned tutor and job exists in active jobs
+    job_res = supabase.table('tutoring_jobs').select('id, tutor_id').eq('id', job_id).single().execute()
+    if not job_res.data:
+        return jsonify({'error': 'Job not found or already completed'}), 404
+    tutor_res = supabase.table('tutors').select('id').eq('auth_id', request.user_id).single().execute()
+    if not tutor_res.data or tutor_res.data['id'] != job_res.data['tutor_id']:
+        return jsonify({'error': 'Forbidden'}), 403
+
+    # Upsert recording link by job_id (unique job_id)
+    try:
+        existing = supabase.table('session_recordings').select('id').eq('job_id', job_id).limit(1).execute()
+        if existing.data and len(existing.data) > 0:
+            upd = supabase.table('session_recordings').update({'recording_url': recording_url}).eq('job_id', job_id).execute()
+            if not upd.data:
+                return jsonify({'error': 'Failed to update recording link'}), 500
+            return jsonify({'message': 'Recording link updated', 'recording': upd.data[0]}), 200
+        else:
+            ins = supabase.table('session_recordings').insert({'job_id': job_id, 'recording_url': recording_url}).execute()
+            if not ins.data:
+                return jsonify({'error': 'Failed to save recording link'}), 500
+            return jsonify({'message': 'Recording link saved', 'recording': ins.data[0]}), 201
+    except Exception as e:
+        return jsonify({'error': 'recording_upsert_failed', 'details': str(e)}), 500
+
+
+@jobs_bp.route('/api/tutor/jobs/<job_id>/recording-link', methods=['GET'])
+@require_auth
+def get_recording_link(job_id: str):
+    """Tutor fetches the existing recording link for their job (if any)."""
+    supabase = get_supabase_client()
+    job_res = supabase.table('tutoring_jobs').select('id, tutor_id').eq('id', job_id).single().execute()
+    if not job_res.data:
+        return jsonify({'error': 'Job not found'}), 404
+    tutor_res = supabase.table('tutors').select('id').eq('auth_id', request.user_id).single().execute()
+    if not tutor_res.data or tutor_res.data['id'] != job_res.data['tutor_id']:
+        return jsonify({'error': 'Forbidden'}), 403
+    rec = supabase.table('session_recordings').select('recording_url').eq('job_id', job_id).single().execute()
+    return jsonify({'recording_url': (rec.data or {}).get('recording_url')}), 200
+
+
 @jobs_bp.route('/api/tutor/jobs/<job_id>/cancel', methods=['POST'])
 @require_auth
 def cancel_job(job_id: str):
@@ -60,17 +115,17 @@ def cancel_job(job_id: str):
 @jobs_bp.route('/api/tutor/jobs/<job_id>/complete', methods=['POST'])
 @require_auth
 def complete_job(job_id: str):
-    """Tutor completes a job; creates session recording, updates hours and statuses"""
+    """Tutor marks a job as completed; moves to awaiting verification.
+
+    Requirements:
+    - A recording link must exist in session_recordings for this job
+    - After moving, communications are removed and the active job is deleted
+    - Admin later verifies and moves to past_jobs with awarded hours
+    """
     supabase = get_supabase_client()
 
-    payload = request.get_json() or {}
-    duration_seconds = payload.get('duration_seconds')  # optional numeric
-    file_name = payload.get('file_name')
-    file_type = payload.get('file_type')
-    file_size = payload.get('file_size')
-
     # Ensure requester is the assigned tutor
-    job_res = supabase.table('tutoring_jobs').select('id, tutor_id, opportunity_id').eq('id', job_id).single().execute()
+    job_res = supabase.table('tutoring_jobs').select('*').eq('id', job_id).single().execute()
     if not job_res.data:
         return jsonify({'error': 'Job not found'}), 404
 
@@ -78,38 +133,39 @@ def complete_job(job_id: str):
     if not tutor_res.data or tutor_res.data['id'] != job_res.data['tutor_id']:
         return jsonify({'error': 'Forbidden'}), 403
 
-    tutor_id = tutor_res.data['id']
-    opportunity_id = job_res.data['opportunity_id']
+    # Require existing recording link
+    rec = supabase.table('session_recordings').select('id, recording_url').eq('job_id', job_id).single().execute()
+    if not rec.data or not rec.data.get('recording_url'):
+        return jsonify({'error': 'recording_required', 'details': 'Please upload the session recording link before completing.'}), 400
 
     try:
-        # Compute hours (exact hours based on duration if provided)
-        volunteer_hours = 0
-        if isinstance(duration_seconds, (int, float)) and duration_seconds > 0:
-            volunteer_hours = float(duration_seconds) / 3600.0
-
-        # Insert session recording metadata (no actual upload handled here)
-        rec_insert = {
-            'job_id': job_id,
-            'file_path': f'metadata_only/{job_id}_{int(__import__("time").time())}_{file_name or "no_file"}',
-            'file_url': None,
-            'duration_seconds': duration_seconds,
-            'volunteer_hours': volunteer_hours,
-            'status': 'approved'
+        # Move job to awaiting verification table
+        job = job_res.data
+        awaiting_row = {
+            'id': job['id'],
+            'opportunity_id': job.get('opportunity_id'),
+            'tutor_id': job.get('tutor_id'),
+            'tutee_id': job.get('tutee_id'),
+            'subject_name': job.get('subject_name'),
+            'subject_type': job.get('subject_type'),
+            'subject_grade': job.get('subject_grade'),
+            'tutee_availability': job.get('tutee_availability'),
+            'desired_duration_minutes': job.get('desired_duration_minutes'),
+            'scheduled_time': job.get('scheduled_time'),
+            'duration_minutes': job.get('duration_minutes'),
+            'opportunity_snapshot': job.get('opportunity_snapshot'),
+            'location': job.get('location'),
+            'status': 'awaiting_admin_verification'
         }
-        supabase.table('session_recordings').insert(rec_insert).execute()
+        ins = supabase.table('awaiting_verification_jobs').insert(awaiting_row).execute()
+        if not ins.data:
+            return jsonify({'error': 'failed_to_move_to_awaiting_verification'}), 500
 
-        # Update tutor hours
-        current_hours = float(tutor_res.data.get('volunteer_hours') or 0)
-        new_hours = current_hours + volunteer_hours
-        supabase.table('tutors').update({'volunteer_hours': new_hours}).eq('id', tutor_id).execute()
-
-        # Remove communications associated with this job (since it's completed)
+        # Remove communications and delete active job
         supabase.table('communications').delete().eq('job_id', job_id).execute()
-        
-        # In single-session flow, remove the job after completion
         supabase.table('tutoring_jobs').delete().eq('id', job_id).execute()
 
-        return jsonify({'message': 'Job completed and removed', 'volunteer_hours_added': volunteer_hours}), 200
+        return jsonify({'message': 'Job marked as completed and moved to awaiting verification'}), 200
     except Exception as e:
         return jsonify({'error': 'failed_to_complete_job', 'details': str(e)}), 500
 

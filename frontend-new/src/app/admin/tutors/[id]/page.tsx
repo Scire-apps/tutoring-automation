@@ -11,6 +11,7 @@ export default function ViewTutorPage() {
   const params = useParams();
   const tutorId = params.id as string;
   const [data, setData] = useState<any>(null);
+  const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +26,15 @@ export default function ViewTutorPage() {
         if (!resp.ok) throw new Error('Failed to load tutor');
         const json = await resp.json();
         setData(json);
+
+        // Load past jobs for this tutor
+        const hist = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/history`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (hist.ok) {
+          const hj = await hist.json();
+          setHistory(hj.jobs || []);
+        }
       } catch (e: any) {
         setError(e.message || 'Failed to load tutor');
       } finally {
@@ -92,6 +102,27 @@ export default function ViewTutorPage() {
               </ul>
             )}
           </div>
+        </div>
+
+        <div className="mt-6 bg-white shadow rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Past Jobs</h2>
+          {history.length === 0 ? (
+            <p className="text-sm text-gray-500">No past jobs.</p>
+          ) : (
+            <ul className="divide-y">
+              {history.map((j: any) => (
+                <li key={j.id} className="py-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{j.subject_name} • {j.subject_type} • Grade {j.subject_grade}</div>
+                      <div className="text-xs text-gray-500">{j.scheduled_time ? new Date(j.scheduled_time).toLocaleString() : ''} • {j.duration_minutes ? `${j.duration_minutes} minutes` : ''}</div>
+                    </div>
+                    <div className="text-xs text-gray-500">Awarded: {j.awarded_volunteer_hours || 0}h</div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </main>
     </div>

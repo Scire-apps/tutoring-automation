@@ -102,10 +102,10 @@ export async function middleware(request: NextRequest) {
   // Define protected routes
   const protectedRoutes = ["/opportunities", "/jobs", "/profile", "/dashboard", "/tutee"];
   const adminRoutes = ["/admin"];
+  // Auth routes where we redirect signed-in users away.
+  // IMPORTANT: Allow access to register routes even if signed in, so users can create a new account deliberately.
   const authRoutes = [
     "/auth/login",
-    "/auth/register",
-    "/auth/register/tutee",
     "/auth/forgot-password",
     "/auth/reset-password",
   ];

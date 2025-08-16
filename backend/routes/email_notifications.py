@@ -68,15 +68,11 @@ def send_session_confirmation():
     tutee_email = data.get('tutee_email')
     session_details = data['session_details']
     
-    # Validate session details - support classic (date/time) or weekly_schedule
-    required_basic_fields = ['subject', 'location', 'tutor_name', 'tutee_name']
+    # Validate session details - only support single session (date/time)
+    required_basic_fields = ['subject', 'location', 'tutor_name', 'tutee_name', 'date', 'time']
     for field in required_basic_fields:
         if field not in session_details:
             return jsonify({'error': f'Missing required session detail: {field}'}), 400
-    has_single = 'date' in session_details and 'time' in session_details
-    has_weekly = 'weekly_schedule' in session_details and isinstance(session_details.get('weekly_schedule'), dict)
-    if not (has_single or has_weekly):
-        return jsonify({'error': 'Provide either date/time or weekly_schedule'}), 400
     
     # Resolve missing/invalid recipient emails using job context when possible
     job_id = data.get('job_id')
@@ -101,44 +97,23 @@ def send_session_confirmation():
 
     # Send confirmation emails
     email_service = get_email_service()
-    # Build HTML/text bodies including weekly schedule when present
+    # Build HTML/text bodies for single session
     subj_text = session_details['subject']
     location = session_details['location']
     tutor_name = session_details['tutor_name']
     tutee_name = session_details['tutee_name']
-    if has_weekly:
-        weekly = session_details['weekly_schedule']
-        def format_weekly_html(w):
-            rows = []
-            for day, ranges in w.items():
-                if isinstance(ranges, list) and ranges:
-                    rows.append(f"<li><strong>{day}:</strong> {', '.join(ranges)}</li>")
-            return '\n'.join(rows) if rows else '<li>No times provided</li>'
-        schedule_html = format_weekly_html(weekly)
-        html = f"""
-        <html><body>
-        <h2>Session Confirmation</h2>
-        <p>Hello {tutor_name} and {tutee_name},</p>
-        <p>Your tutoring sessions have been scheduled for <strong>{subj_text}</strong> at <strong>{location}</strong> with the following weekly schedule:</p>
-        <ul>{schedule_html}</ul>
-        <p>Thank you!</p>
-        </body></html>
-        """
-        text = f"Session Confirmation for {subj_text} at {location}\n" + '\n'.join([
-            f"{day}: {', '.join(ranges)}" for day, ranges in weekly.items() if isinstance(ranges, list) and ranges
-        ])
-    else:
-        date = session_details['date']
-        time = session_details['time']
-        html = f"""
-        <html><body>
-        <h2>Session Confirmation</h2>
-        <p>Hello {tutor_name} and {tutee_name},</p>
-        <p>Your tutoring session has been scheduled for <strong>{subj_text}</strong> on <strong>{date}</strong> at <strong>{time}</strong> ({location}).</p>
-        <p>Thank you!</p>
-        </body></html>
-        """
-        text = f"Session Confirmation for {subj_text} on {date} at {time} ({location})"
+    date = session_details['date']
+    time = session_details['time']
+    
+    html = f"""
+    <html><body>
+    <h2>Session Confirmation</h2>
+    <p>Hello {tutor_name} and {tutee_name},</p>
+    <p>Your tutoring session has been scheduled for <strong>{subj_text}</strong> on <strong>{date}</strong> at <strong>{time}</strong> at <strong>{location}</strong>.</p>
+    <p>Thank you!</p>
+    </body></html>
+    """
+    text = f"Session Confirmation for {subj_text} on {date} at {time} ({location})"
 
     # Send emails to both parties
     email_service = get_email_service()
@@ -152,22 +127,10 @@ def send_session_confirmation():
             db = get_db_manager()
             job_id = data.get('job_id')
             if job_id:
-                # Build content safely for single or weekly schedule
-                if has_weekly:
-                    weekly = session_details.get('weekly_schedule', {})
-                    # Flatten weekly schedule into a readable string
-                    parts = []
-                    for day, ranges in weekly.items():
-                        if isinstance(ranges, list) and ranges:
-                            parts.append(f"{day}: {', '.join(ranges)}")
-                    content_text = (
-                        f"Session confirmation for {subj_text} at {location} with weekly schedule — "
-                        + ("; ".join(parts) if parts else "no times provided")
-                    )
-                else:
-                    date = session_details.get('date', '')
-                    time = session_details.get('time', '')
-                    content_text = f"Session confirmation for {subj_text} on {date} at {time} ({location})"
+                # Build content for single session
+                date = session_details.get('date', '')
+                time = session_details.get('time', '')
+                content_text = f"Session confirmation for {subj_text} on {date} at {time} ({location})"
 
                 # Log communication for tutor
                 db.insert_record("communications", {

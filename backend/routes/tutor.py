@@ -255,6 +255,9 @@ def schedule_job(job_id: str):
     payload = request.get_json() or {}
     scheduled_time = payload.get('scheduled_time')
     duration_minutes = payload.get('duration_minutes')
+    # Optional explicit local date/time fields from frontend to avoid timezone drift
+    explicit_date_key = payload.get('date') or payload.get('date_key')
+    explicit_start_hhmm = payload.get('start_time') or payload.get('start_hhmm')
     if not scheduled_time:
         return jsonify({'error': 'scheduled_time is required'}), 400
     try:
@@ -293,20 +296,29 @@ def schedule_job(job_id: str):
     if job_detail.data and isinstance(job_detail.data.get('tutee_availability'), dict):
         try:
             from datetime import datetime
-            chosen = datetime.fromisoformat(scheduled_time.replace('Z', '+00:00'))
-            date_key = chosen.date().isoformat()
-            ranges = job_detail.data['tutee_availability'].get(date_key)
+            availability = job_detail.data['tutee_availability']
+            # Prefer explicit local date/time from client to avoid timezone conversion issues
+            if isinstance(explicit_date_key, str) and isinstance(explicit_start_hhmm, str):
+                date_key = explicit_date_key
+                start_hhmm = explicit_start_hhmm
+            else:
+                chosen = datetime.fromisoformat(scheduled_time.replace('Z', '+00:00'))
+                date_key = chosen.date().isoformat()
+                start_hhmm = chosen.strftime('%H:%M')
+
+            ranges = availability.get(date_key)
             # Only enforce if availability exists for this exact date
             if isinstance(ranges, list) and len(ranges) > 0:
-                start_hhmm = chosen.strftime('%H:%M')
                 # Ensure the entire duration fits within one allowed range on that date
                 def fits(r: str) -> bool:
                     parts = r.split('-')
                     if len(parts) != 2:
                         return False
                     s, e = parts
-                    # Compute end time string from start + duration_minutes
-                    sh, sm = map(int, start_hhmm.split(':'))
+                    try:
+                        sh, sm = map(int, start_hhmm.split(':'))
+                    except Exception:
+                        return False
                     eh = sh
                     em = sm + int(duration_minutes)
                     eh += em // 60

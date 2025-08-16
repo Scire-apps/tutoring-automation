@@ -98,8 +98,14 @@ export default function SchedulingPage() {
       if (!pickedDate || !pickedRange) throw new Error('Please select a time slot');
       const [start, end] = pickedRange.split('-');
       const mins = diffMinutes(start, end);
-      if (mins < 60 || mins > 180) throw new Error('Session must be 1 to 3 hours');
-      if (mins < durationMinutes) throw new Error('Selected time block is shorter than the chosen duration');
+      // Enforce exact duration requested by tutee when provided
+      if (desiredMinutesFromTutee !== null && mins !== desiredMinutesFromTutee) {
+        throw new Error(`Session must be exactly ${desiredMinutesFromTutee} minutes long.`);
+      }
+      // Fallback guard if desired duration isn't provided
+      if (desiredMinutesFromTutee === null && (mins < 60 || mins > 180)) {
+        throw new Error('Session must be 1 to 3 hours');
+      }
 
       // Build ISO from date + start time in local timezone
       const [y,mn,d] = pickedDate.split('-').map(Number);
@@ -111,7 +117,8 @@ export default function SchedulingPage() {
       const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutor/jobs/${jobId}/schedule`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scheduled_time: iso, duration_minutes: durationMinutes })
+        // Send explicit local date/time to avoid backend timezone drift when matching availability
+        body: JSON.stringify({ scheduled_time: iso, duration_minutes: durationMinutes, date: pickedDate, start_time: start })
       });
       if (!r.ok) {
         const j = await r.json().catch(()=>({}));

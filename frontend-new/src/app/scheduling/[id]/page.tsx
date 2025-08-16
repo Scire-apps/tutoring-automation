@@ -159,30 +159,12 @@ export default function SchedulingPage() {
     try {
       setScheduling(true);
       
-      // 1. Update job status to cancelled
-      const { error: jobError } = await supabase
-        .from('tutoring_jobs')
-        .update({ status: 'cancelled' })
-        .eq('id', jobId);
-        
-      if (jobError) {
-        console.error('Error cancelling job:', jobError);
+      // 1. Call backend cancel endpoint to recreate opportunity and delete job
+      try {
+        await apiService.cancelJob(jobId);
+      } catch (cancelErr) {
+        console.error('Error cancelling via API:', cancelErr);
         setError('Failed to cancel job. Please try again.');
-        return;
-      }
-      
-      // 2. Update opportunity status back to open with normal priority
-      const { error: oppError } = await supabase
-        .from('tutoring_opportunities')
-        .update({ 
-          status: 'open'
-          // Keep the original priority, don't set to high
-        })
-        .eq('id', job.opportunity_id);
-        
-      if (oppError) {
-        console.error('Error updating opportunity:', oppError);
-        setError('Failed to update opportunity status. Please contact support.');
         return;
       }
       
@@ -198,9 +180,9 @@ export default function SchedulingPage() {
           
           await apiService.sendCancellationNotification(
             user.email || '',
-            job.tutoring_opportunity?.tutee?.email || '',
+            ((job as any)?.tutee?.email) || job.tutoring_opportunity?.tutee?.email || '',
             {
-              subject: job.tutoring_opportunity?.subject || '',
+              subject: `${job?.tutoring_opportunity?.subject_name || ''} • ${job?.tutoring_opportunity?.subject_type || ''} • Grade ${job?.tutoring_opportunity?.subject_grade || ''}`.trim(),
               tutor_name: tutorName,
               tutee_name: tuteeName,
               reason: 'Tutor cancelled before scheduling'

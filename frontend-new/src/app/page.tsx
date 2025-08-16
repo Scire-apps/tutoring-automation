@@ -1,29 +1,7 @@
 "use client";
 import Link from 'next/link';
-import { useEffect } from 'react';
-import { supabase } from '@/services/supabase';
-import api from '@/services/api';
-import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const router = useRouter();
-  useEffect(() => {
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      // Determine role and redirect from homepage
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/role`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          credentials: 'include',
-        });
-        const roleResp = await res.json();
-        if (roleResp.role === 'admin') return router.replace('/admin/dashboard');
-        if (roleResp.role === 'tutor') return router.replace('/dashboard');
-        if (roleResp.role === 'tutee') return router.replace('/tutee/dashboard');
-      } catch {}
-    })();
-  }, [router]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

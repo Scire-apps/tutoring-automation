@@ -106,7 +106,7 @@ export async function listOpenOpportunities() {
 
 export async function completeJob(
   jobId: string,
-  payload: { duration_seconds?: number; file_name?: string; file_type?: string; file_size?: number }
+  payload: {}
 ) {
   return apiRequest<{ message: string; volunteer_hours_added: number }>(
     `/api/tutor/jobs/${jobId}/complete`,
@@ -140,6 +140,48 @@ export async function cancelJob(jobId: string) {
   return apiRequest<{ message: string; opportunity: any }>(
     `/api/tutor/jobs/${jobId}/cancel`,
     { method: 'POST' }
+  );
+}
+
+export async function upsertRecordingLink(jobId: string, recordingUrl: string) {
+  return apiRequest<{ message: string; recording: any }>(
+    `/api/tutor/jobs/${jobId}/recording-link`,
+    { method: 'POST', body: JSON.stringify({ recording_url: recordingUrl }) }
+  );
+}
+
+export async function listAwaitingVerificationJobs() {
+  return apiRequest<{ jobs: any[] }>(
+    `/api/admin/awaiting-verification`,
+    { method: 'GET' }
+  );
+}
+
+export async function getRecordingLinkForJob(jobId: string) {
+  return apiRequest<{ recording_url?: string }>(
+    `/api/admin/awaiting-verification/${jobId}/recording`,
+    { method: 'GET' }
+  );
+}
+
+export async function verifyCompletedJob(jobId: string, awardedHours: number) {
+  return apiRequest<{ message: string }>(
+    `/api/admin/awaiting-verification/${jobId}/verify`,
+    { method: 'POST', body: JSON.stringify({ awarded_hours: awardedHours }) }
+  );
+}
+
+export async function listTutorPastJobs() {
+  return apiRequest<{ jobs: any[] }>(
+    `/api/tutor/past-jobs`,
+    { method: 'GET' }
+  );
+}
+
+export async function getTutorHistoryForAdmin(tutorId: string) {
+  return apiRequest<{ jobs: any[] }>(
+    `/api/admin/tutors/${tutorId}/history`,
+    { method: 'GET' }
   );
 }
 
@@ -349,9 +391,15 @@ const apiService = {
   setTuteeAvailability,
   scheduleJob,
   cancelJob,
+  upsertRecordingLink,
+  listAwaitingVerificationJobs,
+  getRecordingLinkForJob,
+  verifyCompletedJob,
   listOpenOpportunities,
   completeJob,
   listSchoolsPublic,
+  listTutorPastJobs,
+  getTutorHistoryForAdmin,
 };
 
 export default apiService;

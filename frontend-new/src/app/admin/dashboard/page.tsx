@@ -11,6 +11,7 @@ export default function AdminDashboardPage() {
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [opportunities, setOpportunities] = useState<any[]>([]);
+  const [awaitingJobs, setAwaitingJobs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = (href: string) => { if (typeof window !== 'undefined') window.location.href = href; };
   
@@ -85,6 +86,15 @@ export default function AdminDashboardPage() {
         if (oppResp.ok) {
           const oppJson = await oppResp.json();
           setOpportunities((oppJson.opportunities || []).slice(0, 10));
+        }
+
+        // Awaiting verification jobs list
+        const awResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/awaiting-verification`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (awResp.ok) {
+          const awJson = await awResp.json();
+          setAwaitingJobs(awJson.jobs || []);
         }
       } catch (err) {
         console.error('Error fetching admin data:', err);
@@ -179,6 +189,23 @@ export default function AdminDashboardPage() {
           </div>
         </div>
         
+        {/* Pending Verification Section */}
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+          <div className="px-4 py-5 sm:px-6">
+            <h2 className="text-lg leading-6 font-medium text-gray-900">Jobs Pending Verification</h2>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">Verify completed sessions and award volunteer hours.</p>
+          </div>
+          <ul className="divide-y divide-gray-200">
+            {awaitingJobs.length === 0 ? (
+              <li className="px-4 py-4 text-gray-500 text-center">No jobs awaiting verification</li>
+            ) : (
+              awaitingJobs.map((job: any) => (
+                <AwaitingJobRow key={job.id} job={job} />
+              ))
+            )}
+          </ul>
+        </div>
+
         {/* School/Opportunities Section (shows if admin has a school or we have opps) */}
         <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
           <div className="px-4 py-5 sm:px-6">
@@ -301,10 +328,10 @@ export default function AdminDashboardPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <a href={`/admin/tutors/${tutor.id}`} className="text-blue-600 hover:text-blue-900 mr-4">
-                        View
+                        View history
                       </a>
                       <a href={`/admin/tutors/${tutor.id}/edit`} className="text-blue-600 hover:text-blue-900">
-                        Edit
+                        Edit certifications
                       </a>
                     </td>
                   </tr>
@@ -322,5 +349,85 @@ export default function AdminDashboardPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+function AwaitingJobRow({ job }: { job: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
+  const [awarding, setAwarding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { supabase } = await import('@/services/supabase');
+        const { data: { session } } = await supabase.auth.getSession();
+        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/awaiting-verification/${job.id}/recording`, {
+          headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }
+        });
+        if (resp.ok) {
+          const j = await resp.json();
+          setRecordingUrl(j.recording_url || null);
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+  }, [job.id]);
+
+  const handleVerify = async () => {
+    try {
+      setAwarding(true);
+      const hoursStr = prompt('Enter volunteer hours to award to the tutor:');
+      if (hoursStr == null) return;
+      const hours = Number(hoursStr);
+      if (Number.isNaN(hours) || hours < 0) { setError('Invalid hours'); return; }
+      const { supabase } = await import('@/services/supabase');
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/awaiting-verification/${job.id}/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? ''}` },
+        body: JSON.stringify({ awarded_hours: hours })
+      });
+      if (!resp.ok) {
+        const j = await resp.json().catch(()=>({}));
+        throw new Error(j.error || 'Failed to verify job');
+      }
+      window.location.reload();
+    } catch (e: any) {
+      setError(e?.message || 'Failed to verify job');
+    } finally {
+      setAwarding(false);
+    }
+  };
+
+  return (
+    <li className="px-4 py-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-sm font-medium text-gray-900">
+            {job.subject_name} • {job.subject_type} • Grade {job.subject_grade}
+          </div>
+          <div className="text-xs text-gray-500">Scheduled: {job.scheduled_time ? new Date(job.scheduled_time).toLocaleString() : 'N/A'}</div>
+        </div>
+        <button className="text-gray-500" onClick={()=> setExpanded(v=>!v)}>
+          {expanded ? 'Hide' : 'View'}
+        </button>
+      </div>
+      {expanded && (
+        <div className="mt-3 border-t pt-3">
+          {error && <div className="mb-2 text-red-600 text-sm">{error}</div>}
+          <div className="text-sm text-gray-700 space-y-1">
+            <div><span className="font-medium">Recording:</span> {recordingUrl ? <a href={recordingUrl} target="_blank" className="text-blue-600 underline">View recording link</a> : 'No link found'}</div>
+            <div><span className="font-medium">Tutor ID:</span> {job.tutor_id}</div>
+            <div><span className="font-medium">Tutee ID:</span> {job.tutee_id}</div>
+          </div>
+          <div className="mt-3">
+            <button disabled={awarding} onClick={handleVerify} className="px-3 py-1.5 bg-green-600 text-white rounded">{awarding ? 'Verifying...' : 'Verify Session'}</button>
+          </div>
+        </div>
+      )}
+    </li>
   );
 }

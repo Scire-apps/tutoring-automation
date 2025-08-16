@@ -337,3 +337,15 @@ def schedule_job(job_id: str):
     return jsonify({'message': 'Scheduled', 'job': upd.data[0]}), 200
 
 
+@tutor_bp.route('/api/tutor/past-jobs', methods=['GET'])
+@require_auth
+def list_past_jobs_for_tutor():
+    """Return past (verified) jobs for the authenticated tutor from past_jobs."""
+    supabase = get_supabase_client()
+    tutor_res = supabase.table('tutors').select('id').eq('auth_id', request.user_id).single().execute()
+    if not tutor_res.data:
+        return jsonify({'jobs': []}), 200
+    tutor_id = tutor_res.data['id']
+    res = supabase.table('past_jobs').select('*').eq('tutor_id', tutor_id).order('created_at', desc=True).execute()
+    return jsonify({'jobs': res.data or []}), 200
+

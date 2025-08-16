@@ -129,7 +129,7 @@ export default function SchedulingPage() {
             subject: `${job?.tutoring_opportunity?.subject_name || ''} • ${job?.tutoring_opportunity?.subject_type || ''} • Grade ${job?.tutoring_opportunity?.subject_grade || ''}`.trim(),
             location: job?.tutoring_opportunity?.location_preference || '',
             tutor_name: (user?.user_metadata?.full_name || `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || user?.email?.split('@')[0] || 'Tutor'),
-            tutee_name: `${job?.tutoring_opportunity?.tutee_first_name ?? ''} ${job?.tutoring_opportunity?.tutee_last_name ?? ''}`.trim(),
+            tutee_name: `${(job as any)?.tutee?.first_name ?? ''} ${(job as any)?.tutee?.last_name ?? ''}`.trim() || `${job?.tutoring_opportunity?.tutee_first_name ?? ''} ${job?.tutoring_opportunity?.tutee_last_name ?? ''}`.trim(),
             date: pickedDate,
             time: start,
           } as any,
@@ -194,7 +194,7 @@ export default function SchedulingPage() {
                            `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() ||
                            user?.email?.split('@')[0] || 'Tutor';
           
-          const tuteeName = `${job.tutoring_opportunity?.tutee?.first_name ?? ''} ${job.tutoring_opportunity?.tutee?.last_name ?? ''}`.trim();
+          const tuteeName = `${(job as any)?.tutee?.first_name ?? ''} ${(job as any)?.tutee?.last_name ?? ''}`.trim() || `${job.tutoring_opportunity?.tutee_first_name ?? ''} ${job.tutoring_opportunity?.tutee_last_name ?? ''}`.trim();
           
           await apiService.sendCancellationNotification(
             user.email || '',

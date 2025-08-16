@@ -102,12 +102,13 @@ export async function middleware(request: NextRequest) {
   // Define protected routes
   const protectedRoutes = ["/opportunities", "/jobs", "/profile", "/dashboard", "/tutee"];
   const adminRoutes = ["/admin"];
-  // Auth routes where we redirect signed-in users away.
-  // IMPORTANT: Allow access to register routes even if signed in, so users can create a new account deliberately.
+  // Auth routes where we redirect signed-in users away immediately
   const authRoutes = [
     "/auth/login",
     "/auth/forgot-password",
     "/auth/reset-password",
+    "/auth/register",
+    "/auth/register/tutee",
   ];
 
   // Check if the route is protected and user is not authenticated
@@ -116,6 +117,27 @@ export async function middleware(request: NextRequest) {
     const redirectUrl = new URL("/auth/login", request.url);
     redirectUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(redirectUrl);
+  }
+
+  // Fast-path redirect for signed-in users hitting the root page
+  if (pathname === "/" && session && !sessionError) {
+    let userRole: string | null = null;
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL as string;
+      const resp = await fetch(`${apiBase}/api/auth/role`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        userRole = json.role ?? null;
+      }
+    } catch (error) {
+      console.log("Middleware: Error determining user role for root redirect:", error);
+    }
+    let target = "/dashboard";
+    if (userRole === "admin") target = "/admin/dashboard";
+    else if (userRole === "tutee") target = "/tutee/dashboard";
+    return NextResponse.redirect(new URL(target, request.url));
   }
 
   // Check if the route is admin-only
@@ -172,7 +194,7 @@ export async function middleware(request: NextRequest) {
   // Only redirect away from auth routes if we're confident about the session
   // This prevents redirect loops when session detection is inconsistent
   if (
-    authRoutes.some((route) => pathname === route) &&
+    authRoutes.some((route) => pathname.startsWith(route)) &&
     session &&
     !sessionError
   ) {
@@ -214,6 +236,7 @@ export async function middleware(request: NextRequest) {
 // Configure the middleware to run on specific paths
 export const config = {
   matcher: [
+    "/",
     "/dashboard/:path*",
     "/opportunities/:path*",
     "/jobs/:path*",

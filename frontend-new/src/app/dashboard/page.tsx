@@ -817,8 +817,7 @@ export default function TutorDashboard() {
             </div>
         </div>
       </div>
-    </TutorLayout>
-    {showRecordingModalFor && (
+      {showRecordingModalFor && (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         <div className="absolute inset-0 bg-black/40" onClick={() => setShowRecordingModalFor(null)}></div>
         <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
@@ -856,6 +855,7 @@ export default function TutorDashboard() {
           </div>
         </div>
       </div>
-    )}
+      )}
+    </TutorLayout>
   );
 }

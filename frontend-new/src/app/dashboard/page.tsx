@@ -632,6 +632,11 @@ export default function TutorDashboard() {
                                     Upload Recording Link
                                   </button>
                                 )}
+                                {job.status === 'awaiting_admin_verification' && (
+                                  <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
+                                    Pending Verification
+                                  </span>
+                                )}
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -643,6 +648,7 @@ export default function TutorDashboard() {
                                 >
                                   Contact Tutee
                                 </button>
+                                {job.status !== 'awaiting_admin_verification' && (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -655,6 +661,7 @@ export default function TutorDashboard() {
                                     ? "Cancelling..."
                                     : "Cancel Job"}
                                 </button>
+                                )}
                               </div>
                               {job.finalized_schedule && typeof job.finalized_schedule === 'object' && (
                                 <div className="mt-4">

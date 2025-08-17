@@ -37,6 +37,26 @@ def get_tutor_dashboard():
         if j.get('opportunity_snapshot'):
             j['tutoring_opportunity'] = j['opportunity_snapshot']
 
+    # Include jobs awaiting admin verification for this tutor
+    try:
+        awaiting_res = (
+            supabase
+            .table('awaiting_verification_jobs')
+            .select('*')
+            .eq('tutor_id', tutor['id'])
+            .order('created_at', desc=True)
+            .execute()
+        )
+        for aw in (awaiting_res.data or []):
+            aw_copy = dict(aw)
+            # Normalize fields to look like tutoring_jobs items in UI
+            aw_copy['status'] = 'awaiting_admin_verification'
+            if aw_copy.get('opportunity_snapshot'):
+                aw_copy['tutoring_opportunity'] = aw_copy['opportunity_snapshot']
+            jobs.append(aw_copy)
+    except Exception:
+        pass
+
     return jsonify({
         'tutor': tutor,
         'approved_subject_ids': approved_subject_ids,

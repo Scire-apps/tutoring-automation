@@ -14,6 +14,10 @@ export default function TuteeDashboardPage() {
   const [data, setData] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
+  const [editingSubjects, setEditingSubjects] = useState(false);
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [allSubjects, setAllSubjects] = useState<string[]>([]);
+  const [savingSubjects, setSavingSubjects] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -25,6 +29,15 @@ export default function TuteeDashboardPage() {
       try {
         const d = await api.getTuteeDashboard();
         setData(d);
+        // preload subjects
+        try {
+          const apiBase = process.env.NEXT_PUBLIC_API_URL as string;
+          const { data: { session } } = await (await import('@/services/supabase')).supabase.auth.getSession();
+          const resp = await fetch(`${apiBase}/api/tutee/subjects`, { headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }});
+          const j = await resp.json();
+          setSubjects(Array.isArray(j.subjects) ? j.subjects : []);
+          setAllSubjects(Array.isArray(j.all_subjects) ? j.all_subjects : []);
+        } catch {}
       } catch (e: any) {
         setError(e?.message || 'Failed to load');
       }
@@ -114,6 +127,11 @@ export default function TuteeDashboardPage() {
             <Link href="/tutee/request" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
               Request Tutoring
             </Link>
+          </div>
+          <div className="mt-3">
+            <button onClick={()=> setEditingSubjects(true)} className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+              Edit My Subjects
+            </button>
           </div>
         </div>
 
@@ -232,6 +250,51 @@ export default function TuteeDashboardPage() {
           )}
         </div>
       </div>
+      {editingSubjects && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={()=> setEditingSubjects(false)}></div>
+          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold mb-2">Edit My Subjects</h3>
+            <div className="space-y-2 mb-3">
+              {subjects.map((s, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <select className="flex-1 border rounded px-3 py-2" value={s} onChange={(e)=>{
+                    const next = subjects.slice(); next[idx] = e.target.value; setSubjects(next);
+                  }}>
+                    <option value="">Select...</option>
+                    {allSubjects.map(n => (<option key={n} value={n}>{n}</option>))}
+                  </select>
+                  <button type="button" onClick={()=>{ const next = subjects.slice(); next.splice(idx,1); setSubjects(next); }} className="px-3 py-2 border rounded">Remove</button>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between">
+              <button type="button" onClick={()=> subjects.length<10 && setSubjects([...subjects, ''])} className="px-3 py-2 border rounded">Add course</button>
+              <div className="flex gap-2">
+                <button className="px-3 py-2 border rounded" onClick={()=> setEditingSubjects(false)}>Cancel</button>
+                <button className="px-3 py-2 bg-blue-600 text-white rounded" disabled={savingSubjects} onClick={async ()=>{
+                  try {
+                    setSavingSubjects(true);
+                    const apiBase = process.env.NEXT_PUBLIC_API_URL as string;
+                    const { data: { session } } = await (await import('@/services/supabase')).supabase.auth.getSession();
+                    const resp = await fetch(`${apiBase}/api/tutee/subjects`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? ''}` },
+                      body: JSON.stringify({ subjects: subjects.filter(Boolean) })
+                    });
+                    if (!resp.ok) { const j = await resp.json().catch(()=>({})); throw new Error(j.error || 'Failed to update'); }
+                    setEditingSubjects(false);
+                  } catch (e) {
+                    // Could show toast
+                  } finally {
+                    setSavingSubjects(false);
+                  }
+                }}>{savingSubjects? 'Saving...' : 'Save'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </TuteeLayout>
   );
 }

@@ -12,7 +12,7 @@ interface TutorLayoutProps {
 const navigation = [
   {
     name: "Dashboard",
-    href: "/dashboard",
+    href: "/tutor/dashboard",
     icon: (
       <svg
         className="w-5 h-5"
@@ -37,7 +37,7 @@ const navigation = [
   },
   {
     name: "Opportunities",
-    href: "/opportunities",
+    href: "/tutor/opportunities",
     icon: (
       <svg
         className="w-5 h-5"

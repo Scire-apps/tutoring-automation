@@ -37,8 +37,8 @@ export default function AdminDashboardPage() {
       
       // Check if user is actually an admin
       if (!isAdmin()) {
-        console.log('Admin dashboard: User is not an admin, redirecting to dashboard');
-        navigate('/dashboard');
+        console.log('Admin dashboard: User is not an admin, redirecting to tutor dashboard');
+        navigate('/tutor/dashboard');
         return;
       }
       

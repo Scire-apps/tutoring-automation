@@ -64,7 +64,7 @@ export default function LoginPage() {
           const json = await resp.json();
           const role = json.role;
           if (role === 'admin') return router.push('/admin/dashboard');
-          if (role === 'tutor') return router.push('/dashboard');
+          if (role === 'tutor') return router.push('/tutor/dashboard');
           if (role === 'tutee') return router.push('/tutee/dashboard');
           window.location.reload();
         } catch (error) {

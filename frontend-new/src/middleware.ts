@@ -100,7 +100,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Define protected routes
-  const protectedRoutes = ["/opportunities", "/jobs", "/profile", "/dashboard", "/tutee"];
+  const protectedRoutes = ["/tutor", "/jobs", "/profile", "/tutee"];
   const adminRoutes = ["/admin"];
   // Auth routes where we redirect signed-in users away immediately
   const authRoutes = [
@@ -134,7 +134,7 @@ export async function middleware(request: NextRequest) {
     } catch (error) {
       console.log("Middleware: Error determining user role for root redirect:", error);
     }
-    let target = "/dashboard";
+    let target = "/tutor/dashboard";
     if (userRole === "admin") target = "/admin/dashboard";
     else if (userRole === "tutee") target = "/tutee/dashboard";
     return NextResponse.redirect(new URL(target, request.url));
@@ -219,7 +219,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Determine redirect target based on role
-    let target = "/dashboard"; // default for tutors
+    let target = "/tutor/dashboard"; // default for tutors
     if (userRole === "admin") {
       target = "/admin/dashboard";
     } else if (userRole === "tutee") {
@@ -237,8 +237,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/",
-    "/dashboard/:path*",
-    "/opportunities/:path*",
+    "/tutor/:path*",
     "/jobs/:path*",
     "/profile/:path*",
     "/auth/:path*",

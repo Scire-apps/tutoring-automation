@@ -144,7 +144,7 @@ export default function SchedulingPage() {
         );
       } catch (e) { /* non-fatal */ }
 
-      router.push('/dashboard?scheduled=success');
+      router.push('/tutor/dashboard?scheduled=success');
       
     } catch (err: any) {
       console.error('Error scheduling session:', err);
@@ -204,7 +204,7 @@ export default function SchedulingPage() {
       }
       
       // 4. Redirect to dashboard with cancellation message
-      router.push('/dashboard?cancelled=true');
+      router.push('/tutor/dashboard?cancelled=true');
       
     } catch (err) {
       console.error('Error in handleCancelJob:', err);
@@ -294,7 +294,7 @@ export default function SchedulingPage() {
         <div className="text-center max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
           <div className="text-red-500 text-xl mb-4">⚠️ {error}</div>
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/tutor/dashboard')}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Return to Dashboard
@@ -310,7 +310,7 @@ export default function SchedulingPage() {
         <div className="text-center max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
           <div className="text-red-500 text-xl mb-4">Job not found</div>
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/tutor/dashboard')}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Return to Dashboard
@@ -429,7 +429,7 @@ export default function SchedulingPage() {
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => router.push('/tutor/dashboard')}
                   className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Back to Dashboard

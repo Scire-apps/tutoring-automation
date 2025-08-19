@@ -57,7 +57,7 @@ export default function SupabaseListener() {
               const json = await resp.json();
               const role = json.role;
               if (role === 'admin') return router.replace('/admin/dashboard');
-              if (role === 'tutor') return router.replace('/dashboard');
+              if (role === 'tutor') return router.replace('/tutor/dashboard');
               if (role === 'tutee') return router.replace('/tutee/dashboard');
             } catch (e) {
               console.error('SupabaseListener: role redirect error', e);

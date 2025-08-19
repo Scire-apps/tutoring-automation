@@ -135,3 +135,28 @@ def list_schools_public():
     supabase = get_supabase_client()
     result = supabase.table('schools').select('id, name, domain').order('name').execute()
     return jsonify({'schools': result.data or []})
+
+
+@api_bp.route('/public/subjects', methods=['GET'])
+def list_subjects_public():
+    """Public list of subjects loaded from subjects.txt; types/grades remain hardcoded."""
+    try:
+        names = []
+        try:
+            with open('subjects.txt', 'r') as f:
+                raw = f.read()
+                if ',' in raw:
+                    names = [s.strip() for s in raw.split(',') if s.strip()]
+                else:
+                    names = [s.strip() for s in raw.splitlines() if s.strip()]
+        except Exception:
+            names = ['math','english','history']
+        # Capitalize for display
+        subjects = [{'name': (n[0].upper() + n[1:]) if n else n} for n in names]
+        return jsonify({
+            'subjects': subjects,
+            'types': ['Academic','ALP','IB'],
+            'grades': ['9','10','11','12']
+        })
+    except Exception as e:
+        return jsonify({'subjects': [], 'types': ['Academic','ALP','IB'], 'grades': ['9','10','11','12']}), 200

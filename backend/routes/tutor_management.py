@@ -439,16 +439,28 @@ def update_subject_approvals(tutor_id):
 @tutor_management_bp.route('/api/admin/subjects', methods=['GET'])
 @require_admin
 def get_all_subjects():
-    """Return hardcoded subject options per spec (no subjects table)."""
-    return jsonify({
-        'subjects': [
-            {'name': 'Math'},
-            {'name': 'English'},
-            {'name': 'Science'},
-        ],
-        'types': ['Academic','ALP','IB'],
-        'grades': ['9','10','11','12']
-    }), 200
+    """Return subject options; names loaded from subjects.txt (repo root)."""
+    try:
+        names: list[str] = []
+        try:
+            with open('subjects.txt', 'r') as f:
+                raw = f.read()
+                # Support comma or newline-separated values
+                if ',' in raw:
+                    names = [s.strip() for s in raw.split(',') if s.strip()]
+                else:
+                    names = [s.strip() for s in raw.splitlines() if s.strip()]
+        except Exception:
+            # Fallback
+            names = ['math','english','history']
+        names_payload = [{'name': n[0].upper() + n[1:] if n else n} for n in names]
+        return jsonify({
+            'subjects': names_payload,
+            'types': ['Academic','ALP','IB'],
+            'grades': ['9','10','11','12']
+        }), 200
+    except Exception as e:
+        return jsonify({'subjects': [], 'types': ['Academic','ALP','IB'], 'grades': ['9','10','11','12']}), 200
 
 @tutor_management_bp.route('/api/admin/tutors/<tutor_id>/status', methods=['PUT'])
 @require_admin

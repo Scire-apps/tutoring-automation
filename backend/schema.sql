@@ -39,6 +39,9 @@ create table public.tutees (
   first_name text not null,
   last_name text not null,
   school_id uuid references public.schools(id),
+  graduation_year int,
+  subjects jsonb, -- array of subject names
+  pronouns text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

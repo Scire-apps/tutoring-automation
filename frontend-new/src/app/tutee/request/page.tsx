@@ -12,7 +12,7 @@ export default function TuteeRequestPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   // Embedded subject fields
-  const SUBJECT_NAMES = ['Math', 'English', 'Science'];
+  const [subjectNames, setSubjectNames] = useState<string[]>([]);
   const SUBJECT_TYPES = ['Academic', 'ALP', 'IB'];
   const SUBJECT_GRADES = ['9', '10', '11', '12'];
   const [subjectName, setSubjectName] = useState('');
@@ -30,7 +30,18 @@ export default function TuteeRequestPage() {
       router.push('/auth/login');
       return;
     }
-    // No subjects API; choices are hardcoded as per new spec
+    (async () => {
+      try {
+        // Load tutee profile to get their subjects
+        const apiBase = process.env.NEXT_PUBLIC_API_URL as string;
+        const { data: { session } } = await (await import('@/services/supabase')).supabase.auth.getSession();
+        const resp = await fetch(`${apiBase}/api/tutee/subjects`, { headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }});
+        const j = await resp.json();
+        const mySubjects = Array.isArray(j.subjects) ? j.subjects : [];
+        setSubjectNames(mySubjects);
+        // Prefill grade based on graduation year if backend sent it in separate endpoint; for now, keep manual grade select
+      } catch {}
+    })();
   }, [isLoading, user, router]);
 
   const submit = async (e: React.FormEvent) => {
@@ -63,7 +74,7 @@ export default function TuteeRequestPage() {
             <label className="block text-sm font-medium">Subject</label>
             <select className="mt-1 border rounded px-3 py-2 w-full" value={subjectName} onChange={e=>setSubjectName(e.target.value)} required>
               <option value="">Select...</option>
-              {SUBJECT_NAMES.map(s => (<option key={s} value={s}>{s}</option>))}
+              {subjectNames.map(s => (<option key={s} value={s}>{s}</option>))}
             </select>
           </div>
           <div>

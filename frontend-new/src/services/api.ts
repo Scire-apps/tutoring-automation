@@ -69,7 +69,7 @@ export async function getTuteeDashboard() {
 }
 
 export async function createTuteeOpportunity(payload: {
-  subject_name: 'Math'|'English'|'Science';
+  subject_name: string;
   subject_type: 'Academic'|'ALP'|'IB';
   subject_grade: '9'|'10'|'11'|'12';
   location_preference?: string;

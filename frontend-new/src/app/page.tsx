@@ -13,14 +13,14 @@ export default function Home() {
           </p>
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Link
-              href="/auth/register?t=mentor"
+              href="/auth/register/tutor"
               className="group rounded-lg border border-gray-200 px-6 py-5 hover:bg-gray-50 transition"
             >
               <h2 className="text-xl font-semibold text-gray-900">Sign up as Tutor</h2>
               <p className="mt-1 text-sm text-gray-600">Browse opportunities and start tutoring.</p>
             </Link>
             <Link
-              href="/auth/register?t=mentee"
+              href="/auth/register/tutee"
               className="group rounded-lg border border-gray-200 px-6 py-5 hover:bg-gray-50 transition"
             >
               <h2 className="text-xl font-semibold text-gray-900">Sign up as Tutee</h2>

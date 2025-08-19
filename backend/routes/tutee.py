@@ -24,10 +24,24 @@ def get_tutee_dashboard():
     # Load own jobs (embedded subject fields)
     jobs = supabase.table('tutoring_jobs').select('*').eq('tutee_id', tutee['id']).order('created_at', desc=True).execute()
 
+    # Compute grade suggestion from graduation_year if present
+    grade_suggestion = None
+    try:
+        gy = tutee.get('graduation_year')
+        if gy:
+            from datetime import datetime
+            year_now = datetime.utcnow().year
+            years_left = int(gy) - year_now
+            # Map: years_left=3 -> grade 10, 4->9, 2->11, 1->12, <=0 -> 12
+            mapping = {4: '9', 3: '10', 2: '11', 1: '12'}
+            grade_suggestion = mapping.get(years_left, '12')
+    except Exception:
+        pass
     return jsonify({
         'tutee': tutee,
         'opportunities': opps.data or [],
-        'jobs': jobs.data or []
+        'jobs': jobs.data or [],
+        'grade_suggestion': grade_suggestion
     })
 
 
@@ -72,6 +86,44 @@ def create_tutoring_opportunity():
         return jsonify({'error': 'Failed to create opportunity'}), 500
 
     return jsonify({'message': 'Opportunity created', 'opportunity': result.data[0]}), 201
+
+
+@tutee_bp.route('/api/tutee/subjects', methods=['GET'])
+@require_auth
+def get_tutee_subjects():
+    """Return tutee profile subjects and the master subjects list from subjects.txt"""
+    supabase = get_supabase_client()
+    tutee_res = supabase.table('tutees').select('id, subjects').eq('auth_id', request.user_id).single().execute()
+    subjects = (tutee_res.data or {}).get('subjects') if (tutee_res and tutee_res.data) else []
+    # load master list from subjects.txt
+    try:
+        with open('subjects.txt', 'r') as f:
+            raw = f.read()
+            if ',' in raw:
+                master = [s.strip() for s in raw.split(',') if s.strip()]
+            else:
+                master = [s.strip() for s in raw.splitlines() if s.strip()]
+    except Exception:
+        master = ['math','english','history']
+    return jsonify({'subjects': subjects or [], 'all_subjects': master}), 200
+
+
+@tutee_bp.route('/api/tutee/subjects', methods=['PUT'])
+@require_auth
+def update_tutee_subjects():
+    """Update tutee.subjects (array). Body: { subjects: string[] }"""
+    supabase = get_supabase_client()
+    body = request.get_json() or {}
+    subs = body.get('subjects')
+    if not isinstance(subs, list):
+        return jsonify({'error': 'subjects must be an array'}), 400
+    tutee_res = supabase.table('tutees').select('id').eq('auth_id', request.user_id).single().execute()
+    if not tutee_res.data:
+        return jsonify({'error': 'Tutee not found'}), 404
+    upd = supabase.table('tutees').update({'subjects': subs}).eq('id', tutee_res.data['id']).execute()
+    if not upd.data:
+        return jsonify({'error': 'Failed to update subjects'}), 500
+    return jsonify({'message': 'Subjects updated', 'tutee': upd.data[0]}), 200
 
 
 @tutee_bp.route('/api/tutee/jobs/<job_id>/availability', methods=['POST'])

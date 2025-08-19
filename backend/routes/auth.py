@@ -119,6 +119,11 @@ def ensure_account():
     }
     if effective_type == 'tutor':
         data.update({ 'status': 'pending', 'volunteer_hours': 0 })
+    else:
+        # tutee defaults for new columns
+        # graduation_year, subjects (jsonb array), pronouns
+        if 'graduation_year' not in data:
+            data.update({})
 
     # Try insert, on conflict perform update
     try:

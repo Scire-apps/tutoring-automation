@@ -108,7 +108,6 @@ export async function middleware(request: NextRequest) {
     "/auth/forgot-password",
     "/auth/reset-password",
     "/auth/register",
-    "/auth/register/tutee",
   ];
 
   // Check if the route is protected and user is not authenticated

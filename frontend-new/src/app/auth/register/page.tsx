@@ -29,7 +29,15 @@ function RegisterForm() {
   const router = useRouter();
   const { signUp } = useAuth();
   const searchParams = useSearchParams();
-  const accountTypeParam = (searchParams.get('t') || 'mentor').toLowerCase();
+  const tParam = (searchParams.get('t') || '').toLowerCase();
+  // Enforce query-param usage: if missing, redirect away
+  useEffect(() => {
+    if (!tParam) {
+      router.replace('/');
+    }
+  }, [tParam, router]);
+
+  const accountTypeParam = tParam || 'mentor';
   const accountType: 'tutor' | 'tutee' = accountTypeParam === 'mentee' ? 'tutee' : 'tutor';
   
   // Fetch schools on component mount (via backend)
@@ -71,7 +79,7 @@ function RegisterForm() {
     (async () => {
       if (accountType !== 'tutee') return;
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/subjects`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/public/subjects`);
         const j = await res.json();
         const names = (j.subjects || []).map((s: any) => s.name).filter(Boolean);
         setAllSubjects(names);

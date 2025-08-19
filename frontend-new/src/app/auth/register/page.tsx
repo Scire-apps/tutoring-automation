@@ -18,6 +18,13 @@ function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSchools, setIsLoadingSchools] = useState(true);
   const [registrationComplete, setRegistrationComplete] = useState(false);
+  // Tutee-only fields
+  const currentYear = new Date().getFullYear();
+  const gradYears = [0,1,2,3,4].map(off => String(currentYear + off));
+  const [graduationYear, setGraduationYear] = useState('');
+  const [pronouns, setPronouns] = useState('');
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [allSubjects, setAllSubjects] = useState<string[]>([]);
   
   const router = useRouter();
   const { signUp } = useAuth();
@@ -60,6 +67,16 @@ function RegisterForm() {
     };
     
     fetchSchools();
+    // Load master subjects for tutee selection
+    (async () => {
+      if (accountType !== 'tutee') return;
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/subjects`);
+        const j = await res.json();
+        const names = (j.subjects || []).map((s: any) => s.name).filter(Boolean);
+        setAllSubjects(names);
+      } catch {}
+    })();
   }, []);
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,6 +88,14 @@ function RegisterForm() {
     // This allows for schoolboard emails like @hdsb.ca
     
     try {
+      // Persist tutee extras for first-login ensure
+      try {
+        if (typeof window !== 'undefined' && accountType === 'tutee') {
+          localStorage.setItem('tutee_graduation_year', graduationYear || '');
+          localStorage.setItem('tutee_pronouns', pronouns || '');
+          localStorage.setItem('tutee_subjects', JSON.stringify(subjects.filter(Boolean)));
+        }
+      } catch {}
       const { error } = await signUp(email, password, firstName, lastName, schoolId, accountType);
       
       if (error) {
@@ -116,6 +141,49 @@ function RegisterForm() {
                 </p>
               </div>
             </div>
+
+            {accountType === 'tutee' && (
+              <>
+                {/* Graduation Year */}
+                <div className="mb-3">
+                  <label className="block text-sm font-medium mb-1">Graduation Year</label>
+                  <select className="w-full border rounded px-3 py-2" value={graduationYear} onChange={(e)=>setGraduationYear(e.target.value)} required>
+                    <option value="">Select...</option>
+                    {gradYears.map(y => (<option key={y} value={y}>{y}</option>))}
+                  </select>
+                </div>
+
+                {/* Pronouns */}
+                <div className="mb-3">
+                  <label className="block text-sm font-medium mb-1">Pronouns</label>
+                  <select className="w-full border rounded px-3 py-2" value={pronouns} onChange={(e)=>setPronouns(e.target.value)} required>
+                    <option value="">Select...</option>
+                    {['He/Him','She/Her','They/Them'].map(p => (<option key={p} value={p}>{p}</option>))}
+                  </select>
+                </div>
+
+                {/* Subjects */}
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium">Subjects (up to 10)</label>
+                    <button type="button" onClick={()=> subjects.length<10 && setSubjects([...subjects, ''])} className="text-blue-600 text-sm">Add course</button>
+                  </div>
+                  <div className="space-y-2">
+                    {subjects.map((s, idx) => (
+                      <div key={idx} className="flex gap-2">
+                        <select className="flex-1 border rounded px-3 py-2" value={s} onChange={(e)=>{
+                          const next = subjects.slice(); next[idx] = e.target.value; setSubjects(next);
+                        }}>
+                          <option value="">Select...</option>
+                          {allSubjects.map(n => (<option key={n} value={n}>{n}</option>))}
+                        </select>
+                        <button type="button" onClick={()=>{ const next = subjects.slice(); next.splice(idx,1); setSubjects(next); }} className="px-3 py-2 border rounded">Remove</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

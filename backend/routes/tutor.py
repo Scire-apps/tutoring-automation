@@ -77,11 +77,13 @@ def accept_opportunity(opportunity_id: str):
     """
     supabase = get_supabase_client()
 
-    # Get tutor
-    tutor_result = supabase.table('tutors').select('id, approved_subject_ids').eq('auth_id', request.user_id).single().execute()
+    # Get tutor and enforce active status
+    tutor_result = supabase.table('tutors').select('id, status, approved_subject_ids').eq('auth_id', request.user_id).single().execute()
     if not tutor_result.data:
         return jsonify({'error': 'Tutor profile not found'}), 404
     tutor = tutor_result.data
+    if (tutor.get('status') or '').lower() != 'active':
+        return jsonify({'error': 'tutor_not_active', 'message': 'Your account must be active to accept opportunities.'}), 403
 
     # Get opportunity
     opp_result = supabase.table('tutoring_opportunities').select('*').eq('id', opportunity_id).single().execute()
@@ -167,6 +169,8 @@ def tutor_approvals():
 def list_open_opportunities():
     supabase = get_supabase_client()
     try:
+        # Optional: include tutor profile so frontend can use status without extra call
+        tutor_res = supabase.table('tutors').select('status').eq('auth_id', request.user_id).single().execute()
         res = (
             supabase
             .table('tutoring_opportunities')
@@ -175,7 +179,7 @@ def list_open_opportunities():
             .order('created_at')
             .execute()
         )
-        return jsonify({'opportunities': res.data or []}), 200
+        return jsonify({'opportunities': res.data or [], 'tutor_status': (tutor_res.data or {}).get('status')}), 200
     except Exception as e:
         return jsonify({'error': 'failed_to_list_opportunities', 'details': str(e)}), 500
 
@@ -184,9 +188,12 @@ def list_open_opportunities():
 @require_auth
 def apply_to_opportunity(opportunity_id: str):
     supabase = get_supabase_client()
-    tutor_res = supabase.table('tutors').select('id').eq('auth_id', request.user_id).single().execute()
+    tutor_res = supabase.table('tutors').select('id, status').eq('auth_id', request.user_id).single().execute()
     if not tutor_res.data:
         return jsonify({'error': 'Tutor not found'}), 404
+    # Enforce active-only tutors can apply
+    if (tutor_res.data.get('status') or '').lower() != 'active':
+        return jsonify({'error': 'tutor_not_active', 'message': 'Your account must be active to apply for opportunities.'}), 403
     tutor_id = tutor_res.data['id']
 
     # Verify subject approval first using embedded fields

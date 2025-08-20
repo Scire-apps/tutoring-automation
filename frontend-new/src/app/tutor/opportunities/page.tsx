@@ -40,6 +40,7 @@ export default function OpportunitiesPage() {
   const [opportunities, setOpportunities] = useState<TutoringOpportunity[]>([]);
   const [tutorData, setTutorData] = useState<TutorData | null>(null);
   const [approvedSubjects, setApprovedSubjects] = useState<string[]>([]);
+  const [tutorStatus, setTutorStatus] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [applyingTo, setApplyingTo] = useState<string | null>(null);
@@ -130,6 +131,7 @@ export default function OpportunitiesPage() {
         if (!oppResp.ok) { setError('Failed to load opportunities'); }
         const oppJson = await oppResp.json();
         setOpportunities(oppJson.opportunities || []);
+        if (typeof oppJson.tutor_status === 'string') setTutorStatus(oppJson.tutor_status);
       } catch (err: any) {
         console.error("Error in fetchData:", err);
         setError("An unexpected error occurred");
@@ -498,12 +500,12 @@ export default function OpportunitiesPage() {
                                     e.stopPropagation();
                                     handleApply(opportunity.id);
                                   }}
-                                  disabled={applyingTo === opportunity.id}
+                                  disabled={applyingTo === opportunity.id || (tutorStatus && tutorStatus.toLowerCase() !== 'active')}
                                   className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
                                 >
                                   {applyingTo === opportunity.id
                                     ? "Applying..."
-                                    : "Apply"}
+                                    : (tutorStatus && tutorStatus.toLowerCase() !== 'active') ? 'Unavailable (Not Active)' : "Apply"}
                                 </button>
                               ) : (
                                 <button

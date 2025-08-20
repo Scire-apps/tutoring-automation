@@ -44,6 +44,17 @@ function TutorRegisterForm() {
     setIsLoading(true);
     try {
       const { error } = await signUp(email, password, firstName, lastName, schoolId, 'tutor');
+      // Proactively ensure if session exists
+      try {
+        const { data: { session } } = await (await import('@/services/supabase')).supabase.auth.getSession();
+        if (session?.access_token) {
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/ensure`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ account_type: 'tutor', first_name: firstName, last_name: lastName, school_id: schoolId })
+          });
+        }
+      } catch {}
       if (error) {
         setError(error.message);
         return;

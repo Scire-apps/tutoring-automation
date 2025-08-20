@@ -65,18 +65,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ) => {
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://tutoring-automation-sdt9.onrender.com";
+      // Build body with core fields
+      const body: any = {
+        account_type: accountType,
+        first_name: firstName,
+        last_name: lastName,
+        school_id: schoolId,
+      };
+      // For tutee, include extras from localStorage if present
+      if (typeof window !== 'undefined' && accountType === 'tutee') {
+        try {
+          const gy = window.localStorage.getItem('tutee_graduation_year');
+          const pr = window.localStorage.getItem('tutee_pronouns');
+          const subsRaw = window.localStorage.getItem('tutee_subjects');
+          if (gy && gy.trim()) body.graduation_year = Number(gy);
+          if (pr && pr.trim()) body.pronouns = pr;
+          if (subsRaw) {
+            try { const arr = JSON.parse(subsRaw); if (Array.isArray(arr)) body.subjects = arr; } catch {}
+          }
+        } catch {}
+      }
       await fetch(`${apiBase}/api/account/ensure`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          account_type: accountType,
-          first_name: firstName,
-          last_name: lastName,
-          school_id: schoolId,
-        }),
+        body: JSON.stringify(body),
         credentials: 'include',
       });
     } catch (e) {
@@ -152,6 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 localStorage.removeItem('signup_first_name');
                 localStorage.removeItem('signup_last_name');
                 localStorage.removeItem('signup_school_id');
+                // keep tutee extras keys for this ensure; they can be left or cleared later as needed
               }
               role = await determineUserRole(token);
             }

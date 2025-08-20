@@ -105,7 +105,9 @@ def get_tutee_subjects():
                 master = [s.strip() for s in raw.splitlines() if s.strip()]
     except Exception:
         master = ['math','english','history']
-    return jsonify({'subjects': subjects or [], 'all_subjects': master}), 200
+    # Capitalize master names to match display and stored values
+    master_cap = [(n[0].upper() + n[1:]) if n else n for n in master]
+    return jsonify({'subjects': subjects or [], 'all_subjects': master_cap}), 200
 
 
 @tutee_bp.route('/api/tutee/subjects', methods=['PUT'])

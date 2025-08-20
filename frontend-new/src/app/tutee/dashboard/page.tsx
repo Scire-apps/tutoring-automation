@@ -269,7 +269,7 @@ export default function TuteeDashboardPage() {
               ))}
             </div>
             <div className="flex justify-between">
-              <button type="button" onClick={()=> subjects.length<10 && setSubjects([...subjects, ''])} className="px-3 py-2 border rounded">Add course</button>
+              <button type="button" disabled={subjects.length>=10 || subjects.some(s=>!s)} onClick={()=> subjects.length<10 && !subjects.some(s=>!s) && setSubjects([...subjects, ''])} className="px-3 py-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed">Add course</button>
               <div className="flex gap-2">
                 <button className="px-3 py-2 border rounded" onClick={()=> setEditingSubjects(false)}>Cancel</button>
                 <button className="px-3 py-2 bg-blue-600 text-white rounded" disabled={savingSubjects} onClick={async ()=>{

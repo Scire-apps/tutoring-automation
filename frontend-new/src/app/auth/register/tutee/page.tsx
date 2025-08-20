@@ -188,7 +188,7 @@ function TuteeRegisterForm() {
             <div className="mb-3">
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-sm font-medium">Subjects (up to 10)</label>
-                <button type="button" onClick={()=> subjects.length<10 && setSubjects([...subjects, ''])} className="text-blue-600 text-sm">Add course</button>
+                <button type="button" disabled={subjects.length>=10 || subjects.some(s=>!s)} onClick={()=> subjects.length<10 && !subjects.some(s=>!s) && setSubjects([...subjects, ''])} className="text-blue-600 text-sm disabled:opacity-50 disabled:cursor-not-allowed">Add course</button>
               </div>
               <div className="space-y-2">
                 {subjects.map((s, idx) => (

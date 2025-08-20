@@ -48,6 +48,40 @@ def create_app():
         automatic_options=True,
         always_send=True,
     )
+
+    # Extra safeguard: explicitly add CORS headers on every /api/* response
+    def _origin_allowed(origin: str) -> bool:
+        if not origin:
+            return False
+        for o in allowed_origins:
+            try:
+                # Support regex origins
+                if hasattr(o, 'match'):
+                    if o.match(origin):
+                        return True
+                else:
+                    if o == origin:
+                        return True
+            except Exception:
+                continue
+        return False
+
+    @app.after_request
+    def add_api_cors_headers(resp):
+        try:
+            path = request.path or ''
+            origin = request.headers.get('Origin')
+            if path.startswith('/api/') and origin and _origin_allowed(origin):
+                # Minimal secure headers: mirror specific allowed origin and allow credentials
+                resp.headers['Access-Control-Allow-Origin'] = origin
+                resp.headers['Vary'] = 'Origin'
+                resp.headers['Access-Control-Allow-Credentials'] = 'true'
+                # For safety, include common headers/methods if preflight slips through
+                resp.headers.setdefault('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Requested-With, Accept, Origin')
+                resp.headers.setdefault('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        except Exception:
+            pass
+        return resp
     
     # Register blueprints
     app.register_blueprint(api_bp)

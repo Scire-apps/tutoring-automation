@@ -5,7 +5,7 @@ from utils.db import get_supabase_client
 auth_bp = Blueprint('auth', __name__)
 
 
-@auth_bp.route('/api/auth/role', methods=['GET'])
+@auth_bp.route('/api/auth/role', methods=['GET', 'OPTIONS'])
 @require_auth
 def get_role():
     """Return role of current user: superadmin|admin|tutor|tutee|null
@@ -43,7 +43,13 @@ def get_role():
         return jsonify({ 'role': None }), 200
     except Exception as e:
         # Final safety net: do not 500 on role checks
-        return jsonify({ 'role': None, 'error': 'role_check_failed' }), 200
+        resp = jsonify({ 'role': None, 'error': 'role_check_failed' })
+        origin = request.headers.get('Origin')
+        if origin:
+            resp.headers['Access-Control-Allow-Origin'] = origin
+            resp.headers['Vary'] = 'Origin'
+            resp.headers['Access-Control-Allow-Credentials'] = 'true'
+        return resp, 200
 
 
 @auth_bp.route('/api/account/ensure', methods=['POST'])

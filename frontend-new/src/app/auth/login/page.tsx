@@ -98,9 +98,9 @@ export default function LoginPage() {
             Sign in to your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            New tutor?{" "}
+            New?{" "}
             <Link
-              href="/auth/register"
+              href="/"
               className="font-medium text-blue-600 hover:text-blue-500"
             >
               Register here

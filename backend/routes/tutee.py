@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
+import os
 from utils.auth import require_auth
 from utils.db import get_supabase_client
 
@@ -95,14 +96,18 @@ def get_tutee_subjects():
     supabase = get_supabase_client()
     tutee_res = supabase.table('tutees').select('id, subjects').eq('auth_id', request.user_id).single().execute()
     subjects = (tutee_res.data or {}).get('subjects') if (tutee_res and tutee_res.data) else []
-    # load master list from subjects.txt
+    # load master list from subjects.txt (repo root)
     try:
-        with open('subjects.txt', 'r') as f:
-            raw = f.read()
-            if ',' in raw:
-                master = [s.strip() for s in raw.split(',') if s.strip()]
-            else:
-                master = [s.strip() for s in raw.splitlines() if s.strip()]
+        subjects_file_path = os.path.abspath(os.path.join(current_app.root_path, '..', 'subjects.txt'))
+        if os.path.exists(subjects_file_path):
+            with open(subjects_file_path, 'r') as f:
+                raw = f.read()
+                if ',' in raw:
+                    master = [s.strip() for s in raw.split(',') if s.strip()]
+                else:
+                    master = [s.strip() for s in raw.splitlines() if s.strip()]
+        else:
+            master = ['math','english','history']
     except Exception:
         master = ['math','english','history']
     # Capitalize master names to match display and stored values

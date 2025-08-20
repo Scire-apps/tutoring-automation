@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, current_app
+import os
 import logging
 from utils.db import get_db_manager
 from utils.db import get_supabase_client
@@ -150,12 +151,16 @@ def list_subjects_public():
     try:
         names = []
         try:
-            with open('subjects.txt', 'r') as f:
-                raw = f.read()
-                if ',' in raw:
-                    names = [s.strip() for s in raw.split(',') if s.strip()]
-                else:
-                    names = [s.strip() for s in raw.splitlines() if s.strip()]
+            subjects_file_path = os.path.abspath(os.path.join(current_app.root_path, '..', 'subjects.txt'))
+            if os.path.exists(subjects_file_path):
+                with open(subjects_file_path, 'r') as f:
+                    raw = f.read()
+                    if ',' in raw:
+                        names = [s.strip() for s in raw.split(',') if s.strip()]
+                    else:
+                        names = [s.strip() for s in raw.splitlines() if s.strip()]
+            else:
+                names = ['math','english','history']
         except Exception:
             names = ['math','english','history']
         # Capitalize for display

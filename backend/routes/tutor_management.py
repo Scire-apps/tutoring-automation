@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
+import os
 from datetime import datetime, timezone
 from utils.db import get_supabase_client
 from utils.auth import require_admin
@@ -443,13 +444,17 @@ def get_all_subjects():
     try:
         names: list[str] = []
         try:
-            with open('subjects.txt', 'r') as f:
-                raw = f.read()
-                # Support comma or newline-separated values
-                if ',' in raw:
-                    names = [s.strip() for s in raw.split(',') if s.strip()]
-                else:
-                    names = [s.strip() for s in raw.splitlines() if s.strip()]
+            subjects_file_path = os.path.abspath(os.path.join(current_app.root_path, '..', 'subjects.txt'))
+            if os.path.exists(subjects_file_path):
+                with open(subjects_file_path, 'r') as f:
+                    raw = f.read()
+                    # Support comma or newline-separated values
+                    if ',' in raw:
+                        names = [s.strip() for s in raw.split(',') if s.strip()]
+                    else:
+                        names = [s.strip() for s in raw.splitlines() if s.strip()]
+            else:
+                names = ['math','english','history']
         except Exception:
             # Fallback
             names = ['math','english','history']

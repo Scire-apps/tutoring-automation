@@ -120,10 +120,23 @@ def ensure_account():
     if effective_type == 'tutor':
         data.update({ 'status': 'pending', 'volunteer_hours': 0 })
     else:
-        # tutee defaults for new columns
-        # graduation_year, subjects (jsonb array), pronouns
-        if 'graduation_year' not in data:
-            data.update({})
+        # Tutee-specific optional fields
+        try:
+            # Accept from payload when present
+            gy = payload.get('graduation_year')
+            pr = payload.get('pronouns')
+            subs = payload.get('subjects')
+            if gy is not None:
+                try:
+                    data['graduation_year'] = int(gy)
+                except Exception:
+                    pass
+            if isinstance(pr, str) and pr.strip():
+                data['pronouns'] = pr.strip()
+            if isinstance(subs, list):
+                data['subjects'] = subs
+        except Exception:
+            pass
 
     # Try insert, on conflict perform update
     try:

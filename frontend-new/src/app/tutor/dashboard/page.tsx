@@ -602,7 +602,7 @@ export default function TutorDashboard() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      router.push(`/scheduling/${job.id}`);
+                                      router.push(`/tutor/scheduling/${job.id}`);
                                     }}
                                     className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700"
                                   >

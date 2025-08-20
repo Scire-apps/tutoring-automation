@@ -134,7 +134,14 @@ def list_schools_public():
     """Public list of schools for registration forms"""
     supabase = get_supabase_client()
     result = supabase.table('schools').select('id, name, domain').order('name').execute()
-    return jsonify({'schools': result.data or []})
+    resp = jsonify({'schools': result.data or []})
+    # Ensure CORS headers are present even if CORS extension misses preflight
+    origin = request.headers.get('Origin')
+    if origin:
+        resp.headers['Access-Control-Allow-Origin'] = origin
+        resp.headers['Vary'] = 'Origin'
+        resp.headers['Access-Control-Allow-Credentials'] = 'true'
+    return resp
 
 
 @api_bp.route('/public/subjects', methods=['GET'])

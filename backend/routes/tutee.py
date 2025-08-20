@@ -149,9 +149,14 @@ def set_tutee_availability(job_id: str):
     try:
         desired_duration_minutes = int(desired_duration_minutes)
     except Exception:
-        return jsonify({'error': 'desired_duration_minutes must be provided (60..180)'}), 400
-    if desired_duration_minutes not in [60,90,120,150,180]:
-        return jsonify({'error': 'desired_duration_minutes must be one of 60,90,120,150,180'}), 400
+        # Try to coerce from string cleanly
+        try:
+            desired_duration_minutes = int(str(desired_duration_minutes).strip())
+        except Exception:
+            return jsonify({'error': 'desired_duration_minutes must be provided (60..180)'}), 400
+    # Accept any multiple of 30 minutes between 60 and 180 inclusive
+    if not (isinstance(desired_duration_minutes, int) and 60 <= desired_duration_minutes <= 180 and desired_duration_minutes % 30 == 0):
+        return jsonify({'error': 'desired_duration_minutes_invalid', 'details': 'Must be a multiple of 30 between 60 and 180'}), 400
 
     supabase = get_supabase_client()
 
@@ -177,18 +182,12 @@ def set_tutee_availability(job_id: str):
     if status not in ['pending_tutee_scheduling', 'pending_tutor_scheduling']:
         return jsonify({'error': f'Job status must be pending scheduling. Current: {status}'}), 400
 
-    # Validate dates within allowed horizon (next 14 days, skipping next 2 days)
-    now = datetime.now(timezone.utc)
-    start_day = (now + timedelta(days=2)).date()
-    end_day = (now + timedelta(days=16)).date()  # exclusive upper bound
+    # Validate structure and HH:MM format; relax horizon checks to avoid timezone/horizon errors
     for date_str, ranges in availability.items():
         try:
             y, m, d = map(int, date_str.split('-'))
-            day = datetime(y, m, d, tzinfo=timezone.utc).date()
         except Exception:
             return jsonify({'error': f'Invalid date key: {date_str}'}), 400
-        if not (start_day <= day < end_day):
-            return jsonify({'error': f'Date {date_str} must be within the next 14 days (excluding next 2 days)'}), 400
         if not isinstance(ranges, list):
             return jsonify({'error': f'Ranges for {date_str} must be a list'}), 400
         for r in ranges:

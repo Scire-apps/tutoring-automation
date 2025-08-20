@@ -1,1 +1,1 @@
-math, english, history, chemistry, physics, biology, geography, business, spanish, french, science
+math, english, history, chemistry, physics, biology, geography, business, french, science

@@ -256,17 +256,22 @@ export default function TuteeDashboardPage() {
           <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
             <h3 className="text-lg font-semibold mb-2">Edit My Subjects</h3>
             <div className="space-y-2 mb-3">
-              {subjects.map((s, idx) => (
-                <div key={idx} className="flex gap-2">
-                  <select className="flex-1 border rounded px-3 py-2" value={s} onChange={(e)=>{
-                    const next = subjects.slice(); next[idx] = e.target.value; setSubjects(next);
-                  }}>
-                    <option value="">Select...</option>
-                    {allSubjects.map(n => (<option key={n} value={n}>{n}</option>))}
-                  </select>
-                  <button type="button" onClick={()=>{ const next = subjects.slice(); next.splice(idx,1); setSubjects(next); }} className="px-3 py-2 border rounded">Remove</button>
-                </div>
-              ))}
+              {subjects.map((s, idx) => {
+                // compute options that exclude already chosen values (except current row)
+                const chosen = new Set(subjects.filter((_, i)=> i !== idx && !!subjects[i]));
+                const options = allSubjects.filter(n => !chosen.has(n));
+                return (
+                  <div key={idx} className="flex gap-2">
+                    <select className="flex-1 border rounded px-3 py-2" value={s} onChange={(e)=>{
+                      const next = subjects.slice(); next[idx] = e.target.value; setSubjects(next);
+                    }}>
+                      <option value="">Select...</option>
+                      {options.map(n => (<option key={n} value={n}>{n}</option>))}
+                    </select>
+                    <button type="button" onClick={()=>{ const next = subjects.slice(); next.splice(idx,1); setSubjects(next); }} className="px-3 py-2 border rounded">Remove</button>
+                  </div>
+                );
+              })}
             </div>
             <div className="flex justify-between">
               <button type="button" disabled={subjects.length>=10 || subjects.some(s=>!s)} onClick={()=> subjects.length<10 && !subjects.some(s=>!s) && setSubjects([...subjects, ''])} className="px-3 py-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed">Add course</button>

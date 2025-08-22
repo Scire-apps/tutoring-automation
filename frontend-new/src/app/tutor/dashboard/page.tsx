@@ -354,12 +354,50 @@ export default function TutorDashboard() {
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               Welcome back, {tutorData?.first_name}!
             </h2>
-            <p className="text-gray-600">
-              {tutorData?.school?.name} •{" "}
-              {tutorData?.status === "active"
-                ? "Active Tutor"
-                : "Pending Approval"}
-            </p>
+            <div className="flex items-center gap-4 mb-3">
+              <p className="text-gray-600">
+                {tutorData?.school?.name}
+              </p>
+              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                tutorData?.status === "active" 
+                  ? "bg-green-100 text-green-800" 
+                  : tutorData?.status === "pending"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : "bg-red-100 text-red-800"
+              }`}>
+                {tutorData?.status === "active" 
+                  ? "Active Tutor" 
+                  : tutorData?.status === "pending"
+                  ? "Pending Approval"
+                  : tutorData?.status === "suspended"
+                  ? "Account Suspended"
+                  : "Status Unknown"}
+              </div>
+            </div>
+            {tutorData?.status !== "active" && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-blue-800">
+                      Account Status Notice
+                    </h3>
+                    <div className="mt-2 text-sm text-blue-700">
+                      {tutorData?.status === "pending" && (
+                        <p>Your account is pending approval. You'll be able to apply for tutoring opportunities once your account is activated by an administrator.</p>
+                      )}
+                      {tutorData?.status === "suspended" && (
+                        <p>Your account has been suspended. Please contact your school administrator for more information.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Stats cards */}

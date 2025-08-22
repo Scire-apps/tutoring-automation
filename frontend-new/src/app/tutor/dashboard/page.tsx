@@ -358,20 +358,31 @@ export default function TutorDashboard() {
               <p className="text-gray-600">
                 {tutorData?.school?.name}
               </p>
-              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                tutorData?.status === "active" 
-                  ? "bg-green-100 text-green-800" 
-                  : tutorData?.status === "pending"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-red-100 text-red-800"
-              }`}>
-                {tutorData?.status === "active" 
-                  ? "Active Tutor" 
-                  : tutorData?.status === "pending"
-                  ? "Pending Approval"
-                  : tutorData?.status === "suspended"
-                  ? "Account Suspended"
-                  : "Status Unknown"}
+              <div className="flex items-center gap-2">
+                {/* Pulsating Status Orb */}
+                <div className={`w-3 h-3 rounded-full ${
+                  tutorData?.status === "active" 
+                    ? "bg-green-500 animate-pulse" 
+                    : tutorData?.status === "pending"
+                    ? "bg-yellow-500 animate-pulse"
+                    : "bg-red-500 animate-pulse"
+                }`}></div>
+                {/* Status Badge */}
+                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  tutorData?.status === "active" 
+                    ? "bg-green-100 text-green-800" 
+                    : tutorData?.status === "pending"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-red-100 text-red-800"
+                }`}>
+                  {tutorData?.status === "active" 
+                    ? "Active Tutor" 
+                    : tutorData?.status === "pending"
+                    ? "Pending Approval"
+                    : tutorData?.status === "suspended"
+                    ? "Account Suspended"
+                    : "Status Unknown"}
+                </div>
               </div>
             </div>
             {tutorData?.status !== "active" && (

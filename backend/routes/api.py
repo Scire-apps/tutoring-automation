@@ -4,7 +4,6 @@ import logging
 from utils.db import get_db_manager
 from utils.db import get_supabase_client
 from utils.auth import require_auth
-from utils.forms import GoogleFormsHandler
 from utils.email_service import get_email_service
 from utils.storage import get_storage_service
 
@@ -20,60 +19,6 @@ def status():
         "status": "operational",
         "version": "1.0.0"
     })
-
-@api_bp.route('/webhook/google-forms', methods=['POST'])
-def google_forms_webhook():
-    """Google Forms webhook endpoint"""
-    # Verify webhook signature
-    if not GoogleFormsHandler.verify_webhook_signature(request):
-        logger.warning("Invalid webhook signature")
-        return jsonify({"error": "Invalid signature"}), 401
-    
-    # Parse form data
-    form_data = GoogleFormsHandler.parse_form_data(request.json)
-    if not form_data:
-        logger.error("Failed to parse form data")
-        return jsonify({"error": "Invalid form data"}), 400
-    
-    # Log the actual form data for debugging
-    logger.info(f"Received form data: {form_data}")
-    logger.info(f"Form responses: {form_data.get('responses', {})}")
-    
-    # Extract tutoring request
-    tutoring_request = GoogleFormsHandler.extract_tutoring_request(form_data)
-    if not tutoring_request:
-        logger.error("Failed to extract tutoring request")
-        logger.error(f"Available form fields: {list(form_data.get('responses', {}).keys())}")
-        return jsonify({"error": "Invalid tutoring request"}), 400
-    
-    # Store tutoring opportunity in database
-    try:
-        db = get_db_manager()
-        opportunity = db.insert_record("tutoring_opportunities", {
-            "school": tutoring_request["school"],
-            "tutee_first_name": tutoring_request["tutee_first_name"],
-            "tutee_last_name": tutoring_request["tutee_last_name"],
-            "tutee_pronouns": tutoring_request["tutee_pronouns"],
-            "tutee_email": tutoring_request["tutee_email"],
-            "grade_level": tutoring_request["grade_level"],
-            "subject": tutoring_request["subject"],
-            "specific_topic": tutoring_request["specific_topic"],
-            "course_level": tutoring_request["course_level"],
-            "urgency_level": tutoring_request["urgency_level"],
-            "session_location": tutoring_request["session_location"],
-            "availability_date": tutoring_request["availability_date"],
-            "availability_start_time": tutoring_request["availability_start_time"],
-            "availability_end_time": tutoring_request["availability_end_time"],
-            "availability_formatted": tutoring_request["availability_formatted"],
-            "status": "open",
-            "priority": "normal"
-        })
-        
-        logger.info(f"Created tutoring opportunity: {opportunity}")
-        return jsonify({"success": True, "opportunity_id": opportunity.get("id")}), 201
-    except Exception as e:
-        logger.error(f"Error creating tutoring opportunity: {str(e)}")
-        return jsonify({"error": "Failed to create tutoring opportunity"}), 500
 
 @api_bp.route('/storage/upload-url', methods=['POST'])
 @require_auth
@@ -94,8 +39,7 @@ def services_status():
     services = {
         "database": {"status": "unknown"},
         "email": {"status": "unknown"},
-        "storage": {"status": "unknown"},
-        "forms": {"status": "unknown"}
+        "storage": {"status": "unknown"}
     }
     
     # Check database connection
@@ -120,9 +64,6 @@ def services_status():
         services["storage"]["status"] = "configured"
     else:
         services["storage"]["status"] = "not_configured"
-    
-    # Google Forms webhook is always available
-    services["forms"]["status"] = "operational"
     
     return jsonify(services)
 

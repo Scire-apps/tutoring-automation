@@ -52,6 +52,8 @@ export default function EditTutorPage() {
   const [selectedSubjectName, setSelectedSubjectName] = useState('');
   const [selectedSubjectType, setSelectedSubjectType] = useState('');
   const [selectedSubjectGrade, setSelectedSubjectGrade] = useState('');
+  // IB level (HL/SL) when admin selects IB type
+  const [selectedIbLevel, setSelectedIbLevel] = useState('');
   
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -210,7 +212,7 @@ export default function EditTutorPage() {
 
   const addCertification = async () => {
     try {
-      console.log('🔍 TUTOR EDIT DEBUG: Adding certification:', { selectedSubjectName, selectedSubjectType, selectedSubjectGrade });
+      console.log('🔍 TUTOR EDIT DEBUG: Adding certification:', { selectedSubjectName, selectedSubjectType, selectedSubjectGrade, selectedIbLevel });
       setUpdating('add-cert');
       
       if (!user) {
@@ -222,6 +224,11 @@ export default function EditTutorPage() {
         throw new Error('Please select subject, type, and grade');
       }
 
+      // Build final subject name; append IB level when applicable
+      const finalSubjectName = selectedSubjectType === 'IB' && selectedIbLevel
+        ? `${selectedSubjectName} ${selectedIbLevel}`
+        : selectedSubjectName;
+
       console.log('🔍 TUTOR EDIT DEBUG: Approving subject via backend by embedded fields');
       const { data: { session } } = await supabase.auth.getSession();
       const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/subjects`, {
@@ -229,7 +236,7 @@ export default function EditTutorPage() {
         headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'approve',
-          subject_name: selectedSubjectName,
+          subject_name: finalSubjectName,
           subject_type: selectedSubjectType,
           subject_grade: selectedSubjectGrade,
         })
@@ -245,6 +252,7 @@ export default function EditTutorPage() {
       setSelectedSubjectName('');
       setSelectedSubjectType('');
       setSelectedSubjectGrade('');
+      setSelectedIbLevel('');
 
       // Reload tutor data to reflect changes
       await loadTutorData();
@@ -424,7 +432,7 @@ export default function EditTutorPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
-                  <select value={selectedSubjectType} onChange={(e)=>setSelectedSubjectType(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 rounded-md">
+                  <select value={selectedSubjectType} onChange={(e)=>{ setSelectedSubjectType(e.target.value); if (e.target.value !== 'IB') setSelectedIbLevel(''); }} className="block w-full px-3 py-2 border border-gray-300 rounded-md">
                     <option value="">Select...</option>
                     {SUBJECT_TYPES.map(s=> <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -440,6 +448,18 @@ export default function EditTutorPage() {
                   <button onClick={addCertification} disabled={!selectedSubjectName || !selectedSubjectType || !selectedSubjectGrade || updating==='add-cert'} className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">{updating==='add-cert'?'Adding...':'Add Certification'}</button>
                 </div>
               </div>
+              {selectedSubjectType === 'IB' && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">IB Level</label>
+                    <select value={selectedIbLevel} onChange={(e)=>setSelectedIbLevel(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                      <option value="">Select...</option>
+                      {['SL','HL'].map(l=> <option key={l} value={l}>{l}</option>)}
+                    </select>
+                    <p className="mt-1 text-xs text-gray-500">Appends to subject name (e.g., "Math HL").</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

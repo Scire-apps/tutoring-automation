@@ -105,7 +105,10 @@ export default function EditTutorPage() {
       const structuredData = {
         tutor: tutorJson.tutor,
         subject_approvals: approvalsJson.subject_approvals || [],
-        available_subjects: [],
+        // Normalize available subjects to a simple array of names from backend; fallback handled in UI
+        available_subjects: Array.isArray(subjectsJson.subjects)
+          ? subjectsJson.subjects.map((s: any) => s?.name).filter(Boolean)
+          : [],
       };
       setTutorData(structuredData);
       
@@ -412,7 +415,11 @@ export default function EditTutorPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
                   <select value={selectedSubjectName} onChange={(e)=>setSelectedSubjectName(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 rounded-md">
                     <option value="">Select...</option>
-                    {SUBJECT_NAMES.map(s=> <option key={s} value={s}>{s}</option>)}
+                    {(tutorData?.available_subjects && tutorData.available_subjects.length
+                      ? tutorData.available_subjects
+                      : SUBJECT_NAMES).map((s: string) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
                   </select>
                 </div>
                 <div>

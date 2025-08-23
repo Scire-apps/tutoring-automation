@@ -359,14 +359,63 @@ export default function TutorDashboard() {
                 {tutorData?.school?.name}
               </p>
               <div className="flex items-center gap-2">
-                {/* Pulsating Status Orb */}
-                <div className={`w-3 h-3 rounded-full ${
-                  tutorData?.status === "active" 
-                    ? "bg-green-500 animate-pulse" 
-                    : tutorData?.status === "pending"
-                    ? "bg-yellow-500 animate-pulse"
-                    : "bg-red-500 animate-pulse"
-                }`}></div>
+                {/* Status Pill with Particle Effects */}
+                <div className="relative">
+                  {/* Particle Effects Container */}
+                  <div className="absolute inset-0 -m-2">
+                    {/* Particle 1 */}
+                    <div className={`absolute w-1 h-1 rounded-full animate-ping ${
+                      tutorData?.status === "active" 
+                        ? "bg-green-400" 
+                        : tutorData?.status === "pending"
+                        ? "bg-yellow-400"
+                        : "bg-red-400"
+                    }`} style={{ top: '25%', left: '25%', animationDelay: '0s' }}></div>
+                    {/* Particle 2 */}
+                    <div className={`absolute w-1 h-1 rounded-full animate-ping ${
+                      tutorData?.status === "active" 
+                        ? "bg-green-400" 
+                        : tutorData?.status === "pending"
+                        ? "bg-yellow-400"
+                        : "bg-red-400"
+                    }`} style={{ top: '75%', right: '25%', animationDelay: '0.5s' }}></div>
+                    {/* Particle 3 */}
+                    <div className={`absolute w-1 h-1 rounded-full animate-ping ${
+                      tutorData?.status === "active" 
+                        ? "bg-green-400" 
+                        : tutorData?.status === "pending"
+                        ? "bg-yellow-400"
+                        : "bg-red-400"
+                    }`} style={{ bottom: '25%', left: '50%', animationDelay: '1s' }}></div>
+                    {/* Particle 4 */}
+                    <div className={`absolute w-1 h-1 rounded-full animate-ping ${
+                      tutorData?.status === "active" 
+                        ? "bg-green-400" 
+                        : tutorData?.status === "pending"
+                        ? "bg-yellow-400"
+                        : "bg-red-400"
+                    }`} style={{ top: '50%', right: '10%', animationDelay: '1.5s' }}></div>
+                  </div>
+                  
+                  {/* Main Status Pill */}
+                  <div className={`relative w-4 h-6 rounded-full ${
+                    tutorData?.status === "active" 
+                      ? "bg-green-500 animate-pulse shadow-lg shadow-green-200" 
+                      : tutorData?.status === "pending"
+                      ? "bg-yellow-500 animate-pulse shadow-lg shadow-yellow-200"
+                      : "bg-red-500 animate-pulse shadow-lg shadow-red-200"
+                  }`}>
+                    {/* Inner glow effect */}
+                    <div className={`absolute inset-0 rounded-full ${
+                      tutorData?.status === "active" 
+                        ? "bg-green-400 opacity-50 animate-pulse" 
+                        : tutorData?.status === "pending"
+                        ? "bg-yellow-400 opacity-50 animate-pulse"
+                        : "bg-red-400 opacity-50 animate-pulse"
+                    }`} style={{ animationDelay: '0.3s' }}></div>
+                  </div>
+                </div>
+                
                 {/* Status Badge */}
                 <div className={`px-3 py-1 rounded-full text-sm font-medium ${
                   tutorData?.status === "active" 

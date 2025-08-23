@@ -18,6 +18,8 @@ export default function TuteeRequestPage() {
   const [subjectName, setSubjectName] = useState('');
   const [subjectType, setSubjectType] = useState('');
   const [subjectGrade, setSubjectGrade] = useState('');
+  // IB level (HL/SL) shown only when subjectType === 'IB'
+  const [ibLevel, setIbLevel] = useState('');
   // Single-session flow: no weekly availability at request time
   const [locationPreference, setLocationPreference] = useState('');
   const [notes, setNotes] = useState('');
@@ -49,8 +51,12 @@ export default function TuteeRequestPage() {
     setLoading(true);
     setError(null);
       try {
+        // Build final subject name; append IB level when applicable
+        const finalSubjectName = subjectType === 'IB' && ibLevel
+          ? `${subjectName} ${ibLevel}`
+          : subjectName;
         await api.createTuteeOpportunity({
-        subject_name: subjectName,
+        subject_name: finalSubjectName,
         subject_type: subjectType,
         subject_grade: subjectGrade,
         location_preference: locationPreference,
@@ -79,7 +85,7 @@ export default function TuteeRequestPage() {
           </div>
           <div>
             <label className="block text-sm font-medium">Type</label>
-            <select className="mt-1 border rounded px-3 py-2 w-full" value={subjectType} onChange={e=>setSubjectType(e.target.value)} required>
+            <select className="mt-1 border rounded px-3 py-2 w-full" value={subjectType} onChange={e=>{ setSubjectType(e.target.value); if (e.target.value !== 'IB') setIbLevel(''); }} required>
               <option value="">Select...</option>
               {SUBJECT_TYPES.map(s => (<option key={s} value={s}>{s}</option>))}
             </select>
@@ -92,6 +98,18 @@ export default function TuteeRequestPage() {
             </select>
           </div>
         </div>
+        {subjectType === 'IB' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium">IB Level</label>
+              <select className="mt-1 border rounded px-3 py-2 w-full" value={ibLevel} onChange={e=>setIbLevel(e.target.value)} required>
+                <option value="">Select...</option>
+                {['SL','HL'].map(l => (<option key={l} value={l}>{l}</option>))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">This will be appended to the subject name (e.g., "Math HL").</p>
+            </div>
+          </div>
+        )}
         {/* No availability selection at request time in single-session flow */}
         <div>
           <label className="block text-sm font-medium">Location Preference</label>

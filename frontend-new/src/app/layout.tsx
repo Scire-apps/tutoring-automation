@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description:
     "A platform for managing tutoring opportunities and volunteer hours",
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.ico",
   },
 };
 

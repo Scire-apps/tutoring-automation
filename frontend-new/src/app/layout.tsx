@@ -15,8 +15,8 @@ export const metadata: Metadata = {
     "A platform for managing tutoring opportunities and volunteer hours",
   icons: {
     icon: [
-      { url: "/favicon.ico", rel: "icon", type: "image/x-icon" },
-      { url: "/favicon.ico", rel: "shortcut icon", type: "image/x-icon" },
+      { url: "/favicon.png", rel: "icon", type: "image/png" },
+      { url: "/favicon.png", rel: "shortcut icon", type: "image/png" },
     ],
   },
 };

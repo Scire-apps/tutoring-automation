@@ -534,7 +534,23 @@ export default function TutorDashboard() {
           </div>
 
           {/* Quick Actions */}
-        
+          <div className="mb-8">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href={`/tutors/${tutorData?.id || 'me'}/requestcert`}
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                Request Certification
+              </Link>
+              <Link
+                href="/tutor/opportunities"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Browse Opportunities
+              </Link>
+            </div>
+          </div>
 
           {/* Active Jobs */}
           <div className="mb-8">

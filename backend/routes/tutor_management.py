@@ -505,3 +505,42 @@ def get_tutor_history(tutor_id: str):
     except Exception as e:
         print(f"Error fetching tutor history: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
+
+# ===============================
+# Certification Requests (Admin)
+# ===============================
+
+@tutor_management_bp.route('/api/admin/certification-requests', methods=['GET'])
+@require_admin
+def list_certification_requests_admin():
+    """Admin lists certification requests for tutors in their school."""
+    try:
+        supabase = get_supabase_client()
+
+        # Determine admin school
+        admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
+        school_id = (admin_res.data or {}).get('school_id') if admin_res.data else None
+
+        # If admin has a school, filter tutors by that school and pull their requests
+        if school_id:
+            tutors_res = supabase.table('tutors').select('id').eq('school_id', school_id).execute()
+            tutor_ids = [t['id'] for t in (tutors_res.data or [])]
+            if not tutor_ids:
+                return jsonify({'requests': []}), 200
+            reqs = (
+                supabase
+                .table('certification_requests')
+                .select('*')
+                .in_('tutor_id', tutor_ids)
+                .order('created_at', desc=True)
+                .execute()
+            )
+            return jsonify({'requests': reqs.data or []}), 200
+
+        # No school restriction: return all (super admin case)
+        reqs = supabase.table('certification_requests').select('*').order('created_at', desc=True).execute()
+        return jsonify({'requests': reqs.data or []}), 200
+    except Exception as e:
+        print(f"Error listing certification requests: {e}")
+        return jsonify({'error': 'Internal server error'}), 500

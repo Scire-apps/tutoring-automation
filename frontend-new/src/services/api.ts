@@ -185,6 +185,26 @@ export async function getTutorHistoryForAdmin(tutorId: string) {
   );
 }
 
+// Certification Requests (Tutor)
+export async function createCertificationRequest(payload: {
+  subject_name: string;
+  subject_type: 'Academic'|'ALP'|'IB';
+  subject_grade: '9'|'10'|'11'|'12';
+  tutor_mark?: string;
+}) {
+  return apiRequest<{ message: string; request: any }>(
+    `/api/tutor/certification-requests`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  );
+}
+
+export async function listOwnCertificationRequests() {
+  return apiRequest<{ requests: any[] }>(
+    `/api/tutor/certification-requests`,
+    { method: 'GET' }
+  );
+}
+
 // listSubjects removed (no subjects table)
 
 export async function listSchoolsPublic() {
@@ -400,6 +420,8 @@ const apiService = {
   listSchoolsPublic,
   listTutorPastJobs,
   getTutorHistoryForAdmin,
+  createCertificationRequest,
+  listOwnCertificationRequests,
 };
 
 export default apiService;

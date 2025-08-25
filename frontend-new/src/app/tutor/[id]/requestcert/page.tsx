@@ -41,13 +41,11 @@ export default function TutorRequestCertificationPage() {
     // Load master subjects list from backend (reads subjects.txt)
     (async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutee/subjects`, {
-          headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }
-        });
+        // Use public subjects endpoint (reads subjects.txt) — no auth required
+        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/public/subjects`);
         if (resp.ok) {
           const j = await resp.json();
-          const names = Array.isArray(j.all_subjects) ? j.all_subjects : [];
+          const names = Array.isArray(j.subjects) ? j.subjects.map((s: any) => s?.name).filter(Boolean) : [];
           if (names.length) setSubjectOptions(names);
         }
       } catch {}

@@ -376,3 +376,68 @@ def list_past_jobs_for_tutor():
     res = supabase.table('past_jobs').select('*').eq('tutor_id', tutor_id).order('created_at', desc=True).execute()
     return jsonify({'jobs': res.data or []}), 200
 
+
+# ===============================
+# Certification Requests (Tutor)
+# ===============================
+
+@tutor_bp.route('/api/tutor/certification-requests', methods=['POST'])
+@require_auth
+def create_certification_request():
+    """Tutor creates a certification request for a subject.
+
+    Body: { subject_name: string, subject_type: 'Academic'|'ALP'|'IB', subject_grade: '9'|'10'|'11'|'12' }
+    """
+    supabase = get_supabase_client()
+    payload = request.get_json() or {}
+
+    subject_name = (payload.get('subject_name') or '').strip()
+    subject_type = (payload.get('subject_type') or '').strip()
+    subject_grade = str(payload.get('subject_grade') or '').strip()
+    tutor_mark = (payload.get('tutor_mark') or '').strip()
+
+    if not subject_name or subject_type not in ['Academic','ALP','IB'] or subject_grade not in ['9','10','11','12']:
+        return jsonify({'error': 'invalid_input', 'details': 'Provide subject_name, valid subject_type, subject_grade'}), 400
+
+    # Identify tutor
+    tutor_res = supabase.table('tutors').select('id, first_name, last_name').eq('auth_id', request.user_id).single().execute()
+    if not tutor_res.data:
+        return jsonify({'error': 'Tutor profile not found'}), 404
+
+    tutor_id = tutor_res.data['id']
+    tutor_name = f"{tutor_res.data.get('first_name','').strip()} {tutor_res.data.get('last_name','').strip()}".strip()
+
+    ins = supabase.table('certification_requests').insert({
+        'tutor_id': tutor_id,
+        'tutor_name': tutor_name or None,
+        'subject_name': subject_name,
+        'subject_type': subject_type,
+        'subject_grade': subject_grade,
+        'tutor_mark': tutor_mark or None,
+    }).execute()
+
+    if not ins.data:
+        return jsonify({'error': 'failed_to_create'}), 500
+
+    return jsonify({'message': 'Certification request submitted', 'request': ins.data[0]}), 201
+
+
+@tutor_bp.route('/api/tutor/certification-requests', methods=['GET'])
+@require_auth
+def list_own_certification_requests():
+    """Tutor lists their own certification requests."""
+    supabase = get_supabase_client()
+    tutor_res = supabase.table('tutors').select('id').eq('auth_id', request.user_id).single().execute()
+    if not tutor_res.data:
+        return jsonify({'requests': []}), 200
+    tutor_id = tutor_res.data['id']
+    res = (
+        supabase
+        .table('certification_requests')
+        .select('*')
+        .eq('tutor_id', tutor_id)
+        .order('created_at', desc=True)
+        .execute()
+    )
+    return jsonify({'requests': res.data or []}), 200
+

@@ -544,3 +544,107 @@ def list_certification_requests_admin():
     except Exception as e:
         print(f"Error listing certification requests: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
+
+@tutor_management_bp.route('/api/admin/certification-requests/<request_id>', methods=['DELETE'])
+@require_admin
+def delete_certification_request(request_id: str):
+    """Admin rejects a certification request: delete the request row."""
+    try:
+        supabase = get_supabase_client()
+        # Ensure the request exists and, if admin has a school, is within scope
+        admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
+        school_id = (admin_res.data or {}).get('school_id') if admin_res.data else None
+
+        req_res = supabase.table('certification_requests').select('*').eq('id', request_id).single().execute()
+        if not req_res.data:
+            return jsonify({'error': 'Request not found'}), 404
+
+        if school_id:
+            tutor_res = supabase.table('tutors').select('school_id').eq('id', req_res.data.get('tutor_id')).single().execute()
+            if not tutor_res.data or tutor_res.data.get('school_id') != school_id:
+                return jsonify({'error': 'not_in_admin_school_scope'}), 403
+
+        supabase.table('certification_requests').delete().eq('id', request_id).execute()
+        return jsonify({'message': 'Certification request deleted'}), 200
+    except Exception as e:
+        print(f"Error deleting certification request: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@tutor_management_bp.route('/api/admin/certification-requests/<request_id>/approve', methods=['POST'])
+@require_admin
+def approve_certification_request(request_id: str):
+    """Admin approves a certification request: create subject_approval and delete the request.
+
+    This endpoint reads the certification request row (subject_name/type/grade and tutor_id),
+    writes an approved row into subject_approvals, and then removes the certification request.
+    """
+    try:
+        supabase = get_supabase_client()
+
+        # Identify admin for audit fields
+        admin_row = supabase.table('admins').select('id, school_id').eq('auth_id', request.user_id).single().execute()
+        if not admin_row.data:
+            return jsonify({'error': 'Admin record not found'}), 403
+        admin_id = admin_row.data['id']
+        admin_school_id = admin_row.data.get('school_id')
+
+        # Load request
+        req_res = supabase.table('certification_requests').select('*').eq('id', request_id).single().execute()
+        if not req_res.data:
+            return jsonify({'error': 'Request not found'}), 404
+        req_row = req_res.data
+
+        # Scope check: if admin has a school, tutor must belong to it
+        if admin_school_id:
+            tutor_res = supabase.table('tutors').select('school_id').eq('id', req_row.get('tutor_id')).single().execute()
+            if not tutor_res.data or tutor_res.data.get('school_id') != admin_school_id:
+                return jsonify({'error': 'not_in_admin_school_scope'}), 403
+
+        subject_name = (req_row.get('subject_name') or '').strip()
+        subject_type = (req_row.get('subject_type') or '').strip()
+        subject_grade = str(req_row.get('subject_grade') or '').strip()
+        tutor_id = req_row.get('tutor_id')
+
+        if not (tutor_id and subject_name and subject_type and subject_grade):
+            return jsonify({'error': 'invalid_request_row'}), 400
+
+        # Upsert approval as approved
+        from datetime import datetime, timezone
+        now_iso = datetime.now(timezone.utc).isoformat()
+        existing = (
+            supabase.table('subject_approvals')
+            .select('id')
+            .eq('tutor_id', tutor_id)
+            .eq('subject_name', subject_name)
+            .eq('subject_type', subject_type)
+            .eq('subject_grade', subject_grade)
+            .limit(1)
+            .execute()
+        )
+        if existing.data and len(existing.data) > 0:
+            supabase.table('subject_approvals').update({
+                'status': 'approved',
+                'approved_by': admin_id,
+                'approved_at': now_iso
+            }).eq('tutor_id', tutor_id).eq('subject_name', subject_name).eq('subject_type', subject_type).eq('subject_grade', subject_grade).execute()
+        else:
+            supabase.table('subject_approvals').insert({
+                'tutor_id': tutor_id,
+                'subject_name': subject_name,
+                'subject_type': subject_type,
+                'subject_grade': subject_grade,
+                'status': 'approved',
+                'approved_by': admin_id,
+                'approved_at': now_iso
+            }).execute()
+
+        # Delete certification request after approval
+        supabase.table('certification_requests').delete().eq('id', request_id).execute()
+
+        return jsonify({'message': 'Certification approved and request removed'}), 200
+    except Exception as e:
+        import traceback
+        print(f"Error approving certification request: {e}\n{traceback.format_exc()}")
+        return jsonify({'error': 'Internal server error'}), 500

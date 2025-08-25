@@ -12,6 +12,10 @@ export default function AdminDashboardPage() {
   const [schools, setSchools] = useState<School[]>([]);
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [awaitingJobs, setAwaitingJobs] = useState<any[]>([]);
+  const [certificationRequests, setCertificationRequests] = useState<any[]>([]);
+  const [selectedCertRequest, setSelectedCertRequest] = useState<any | null>(null);
+  const [acting, setActing] = useState<boolean>(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = (href: string) => { if (typeof window !== 'undefined') window.location.href = href; };
   
@@ -95,6 +99,15 @@ export default function AdminDashboardPage() {
         if (awResp.ok) {
           const awJson = await awResp.json();
           setAwaitingJobs(awJson.jobs || []);
+        }
+
+        // Certification requests (scoped by admin's school on backend)
+        const crResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/certification-requests`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (crResp.ok) {
+          const crJson = await crResp.json();
+          setCertificationRequests(crJson.requests || []);
         }
       } catch (err) {
         console.error('Error fetching admin data:', err);
@@ -205,6 +218,122 @@ export default function AdminDashboardPage() {
             )}
           </ul>
         </div>
+
+        {/* Certification Requests */}
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+          <div className="px-4 py-5 sm:px-6">
+            <h2 className="text-lg leading-6 font-medium text-gray-900">Certification Requests</h2>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">Tutor certification requests for your school.</p>
+          </div>
+          <ul className="divide-y divide-gray-200">
+            {certificationRequests.length === 0 ? (
+              <li className="px-4 py-4 text-gray-500 text-center">No certification requests</li>
+            ) : (
+              certificationRequests.map((req: any) => (
+                <li key={req.id} className="px-4 py-4 cursor-pointer hover:bg-gray-50" onClick={() => { setSelectedCertRequest(req); setActionError(null); }}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {req.tutor_name || 'Tutor'} — {req.subject_name} • {req.subject_type} • Grade {req.subject_grade}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Requested {req.created_at ? new Date(req.created_at).toLocaleString() : ''}
+                        {req.tutor_mark ? ` • Mark: ${req.tutor_mark}` : ''}
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-500">Click to review</div>
+                  </div>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+
+        {selectedCertRequest && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedCertRequest(null)}></div>
+            <div className="relative bg-white rounded-lg shadow-lg w-full max-w-lg p-6">
+              <h3 className="text-lg font-semibold mb-2">Review Certification Request</h3>
+              {actionError && <div className="mb-2 text-sm text-red-600">{actionError}</div>}
+              <div className="text-sm text-gray-800 space-y-1 mb-4">
+                <div><span className="font-medium">Tutor:</span> {selectedCertRequest.tutor_name || selectedCertRequest.tutor_id}</div>
+                <div><span className="font-medium">Subject:</span> {selectedCertRequest.subject_name} • {selectedCertRequest.subject_type} • Grade {selectedCertRequest.subject_grade}</div>
+                {selectedCertRequest.tutor_mark && (
+                  <div><span className="font-medium">Tutor Mark:</span> {selectedCertRequest.tutor_mark}</div>
+                )}
+                {selectedCertRequest.created_at && (
+                  <div className="text-xs text-gray-500">Requested {new Date(selectedCertRequest.created_at).toLocaleString()}</div>
+                )}
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-3 py-1.5 border rounded"
+                  onClick={() => setSelectedCertRequest(null)}
+                  disabled={acting}
+                >
+                  Close
+                </button>
+                <button
+                  className="px-3 py-1.5 bg-red-600 text-white rounded disabled:opacity-50"
+                  disabled={acting}
+                  onClick={async () => {
+                    try {
+                      setActing(true);
+                      setActionError(null);
+                      const { supabase } = await import('@/services/supabase');
+                      const { data: { session } } = await supabase.auth.getSession();
+                      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/certification-requests/${selectedCertRequest.id}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }
+                      });
+                      if (!resp.ok) {
+                        const j = await resp.json().catch(()=>({}));
+                        throw new Error(j.error || 'Failed to delete request');
+                      }
+                      setCertificationRequests(prev => prev.filter(r => r.id !== selectedCertRequest.id));
+                      setSelectedCertRequest(null);
+                    } catch (e: any) {
+                      setActionError(e?.message || 'Failed to reject request');
+                    } finally {
+                      setActing(false);
+                    }
+                  }}
+                >
+                  Reject
+                </button>
+                <button
+                  className="px-3 py-1.5 bg-green-600 text-white rounded disabled:opacity-50"
+                  disabled={acting}
+                  onClick={async () => {
+                    try {
+                      setActing(true);
+                      setActionError(null);
+                      const { supabase } = await import('@/services/supabase');
+                      const { data: { session } } = await supabase.auth.getSession();
+                      // Approve via backend (writes to subject_approvals and deletes request)
+                      const approveResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/certification-requests/${selectedCertRequest.id}/approve`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }
+                      });
+                      if (!approveResp.ok) {
+                        const j = await approveResp.json().catch(()=>({}));
+                        throw new Error(j.error || 'Failed to approve request');
+                      }
+                      setCertificationRequests(prev => prev.filter(r => r.id !== selectedCertRequest.id));
+                      setSelectedCertRequest(null);
+                    } catch (e: any) {
+                      setActionError(e?.message || 'Failed to certify request');
+                    } finally {
+                      setActing(false);
+                    }
+                  }}
+                >
+                  Certify
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* School/Opportunities Section (shows if admin has a school or we have opps) */}
         <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">

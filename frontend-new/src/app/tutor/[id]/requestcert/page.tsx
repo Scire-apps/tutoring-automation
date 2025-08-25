@@ -38,8 +38,20 @@ export default function TutorRequestCertificationPage() {
       router.push('/');
       return;
     }
-    // No subjects endpoint for tutors; keep simple suggestions list
-    setSubjectOptions(prev => prev);
+    // Load master subjects list from backend (reads subjects.txt)
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tutee/subjects`, {
+          headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }
+        });
+        if (resp.ok) {
+          const j = await resp.json();
+          const names = Array.isArray(j.all_subjects) ? j.all_subjects : [];
+          if (names.length) setSubjectOptions(names);
+        }
+      } catch {}
+    })();
   }, [isLoading, user, userRole, router]);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -74,10 +86,10 @@ export default function TutorRequestCertificationPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium">Subject</label>
-              <input list="subject-suggestions" className="mt-1 border rounded px-3 py-2 w-full" value={subjectName} onChange={e=>setSubjectName(e.target.value)} placeholder="e.g., Math, Physics, History" required />
-              <datalist id="subject-suggestions">
-                {subjectOptions.map(s => (<option key={s} value={s} />))}
-              </datalist>
+              <select className="mt-1 border rounded px-3 py-2 w-full" value={subjectName} onChange={e=>setSubjectName(e.target.value)} required>
+                <option value="">Select...</option>
+                {subjectOptions.map(s => (<option key={s} value={s}>{s}</option>))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium">Type</label>

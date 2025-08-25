@@ -218,11 +218,21 @@ export default function TutorDashboard() {
         // resp: { tutor, approved_subject_ids, opportunities, jobs }
         setTutorData(resp.tutor || null);
         setActiveJobs(resp.jobs || []);
-        // Map approvals to { id, subject, status, approved_at }
-        const approvals = (resp.approvals || resp.approved_subject_ids || []).map((a: any) => (
-          typeof a === 'string' ? { id: a, subject: a, status: 'approved' } : a
-        ));
-        setSubjectApprovals(approvals);
+        
+        // Load subject approvals via dedicated endpoint
+        try {
+          const approvalsResp = await apiService.getTutorApprovals();
+          const approvals = (approvalsResp.approvals || []).map((a: any) => ({
+            id: `${a.subject_name}-${a.subject_type}-${a.subject_grade}`,
+            subject: `${a.subject_name} • ${a.subject_type} • Grade ${a.subject_grade}`,
+            status: a.status,
+            approved_at: a.approved_at
+          }));
+          setSubjectApprovals(approvals);
+        } catch (e) {
+          console.error("Error loading approvals:", e);
+          setSubjectApprovals([]);
+        }
         // Load past jobs
         try {
           const pj = await apiService.listTutorPastJobs();

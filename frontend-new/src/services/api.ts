@@ -205,6 +205,13 @@ export async function listOwnCertificationRequests() {
   );
 }
 
+export async function getTutorApprovals() {
+  return apiRequest<{ approved_subjects: any[]; approvals: any[] }>(
+    `/api/tutor/approvals`,
+    { method: 'GET' }
+  );
+}
+
 // listSubjects removed (no subjects table)
 
 export async function listSchoolsPublic() {
@@ -422,6 +429,7 @@ const apiService = {
   getTutorHistoryForAdmin,
   createCertificationRequest,
   listOwnCertificationRequests,
+  getTutorApprovals,
 };
 
 export default apiService;

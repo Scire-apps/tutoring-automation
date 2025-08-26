@@ -94,7 +94,7 @@ export default function TuteeDashboardPage() {
       <div className="p-6 bg-white min-h-full">
         {/* Stats cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -115,7 +115,7 @@ export default function TuteeDashboardPage() {
               </div>
             </div>
           </div>
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -140,7 +140,7 @@ export default function TuteeDashboardPage() {
               </div>
             </div>
           </div>
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -224,7 +224,7 @@ export default function TuteeDashboardPage() {
             Your Requests
           </h3>
           {data.opportunities && data.opportunities.length > 0 ? (
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            <div className="bg-white border-2 border-gray-100 overflow-hidden sm:rounded-md">
               <ul className="divide-y divide-gray-200">
                 {data.opportunities.map((o: any) => (
                   <li key={o.id}>
@@ -259,7 +259,7 @@ export default function TuteeDashboardPage() {
               </ul>
             </div>
           ) : (
-            <div className="text-center py-8 bg-white rounded-lg shadow">
+            <div className="text-center py-8 bg-white rounded-lg border-2 border-gray-100">
               <h4 className="mt-2 text-sm font-medium text-gray-900">
                 No requests
               </h4>
@@ -291,7 +291,7 @@ export default function TuteeDashboardPage() {
             )}
           </div>
           {data.jobs && data.jobs.length > 0 ? (
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            <div className="bg-white border-2 border-gray-100 overflow-hidden sm:rounded-md">
               <ul className="divide-y divide-gray-200">
                 {data.jobs.map((j: any, index: number) => (
                   <li key={j.id}>
@@ -427,7 +427,7 @@ export default function TuteeDashboardPage() {
               </ul>
             </div>
           ) : (
-            <div className="text-center py-8 bg-white rounded-lg shadow">
+            <div className="text-center py-8 bg-white rounded-lg border-2 border-gray-100">
               <h4 className="mt-2 text-sm font-medium text-gray-900">
                 No sessions yet
               </h4>
@@ -445,7 +445,7 @@ export default function TuteeDashboardPage() {
             className="absolute inset-0 bg-black/40"
             onClick={() => setEditingSubjects(false)}
           ></div>
-          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+          <div className="relative bg-white rounded-lg border-2 border-gray-100 w-full max-w-md p-6">
             <h3 className="text-lg font-semibold mb-2">Edit My Subjects</h3>
             <div className="space-y-2 mb-3">
               {subjects.map((s, idx) => {

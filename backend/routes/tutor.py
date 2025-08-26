@@ -57,6 +57,20 @@ def get_tutor_dashboard():
     except Exception:
         pass
 
+    # Attach tutee basic info for each job to populate UI details
+    try:
+        tutee_ids = [j.get('tutee_id') for j in jobs if j.get('tutee_id')]
+        tutee_ids = list({tid for tid in tutee_ids if tid})
+        if tutee_ids:
+            tutees_res = supabase.table('tutees').select('id, email, first_name, last_name, graduation_year').in_('id', tutee_ids).execute()
+            by_id = {t['id']: t for t in (tutees_res.data or [])}
+            for j in jobs:
+                tid = j.get('tutee_id')
+                if tid and tid in by_id:
+                    j['tutee'] = by_id[tid]
+    except Exception:
+        pass
+
     return jsonify({
         'tutor': tutor,
         'approved_subject_ids': approved_subject_ids,
@@ -127,6 +141,7 @@ def accept_opportunity(opportunity_id: str):
         'subject_type': subj_type,
         'subject_grade': str(subj_grade),
         'language': opp.get('language') or 'English',
+        'location': opp.get('location_preference'),
         'opportunity_snapshot': opportunity_snapshot,
         'status': 'pending_tutee_scheduling'
     }
@@ -241,6 +256,7 @@ def apply_to_opportunity(opportunity_id: str):
         'subject_type': subj_type,
         'subject_grade': subj_grade,
         'language': opp_res.data.get('language') or 'English',
+        'location': opp_res.data.get('location_preference'),
         'opportunity_snapshot': opportunity_snapshot,
         'status': 'pending_tutee_scheduling'
     }).execute()

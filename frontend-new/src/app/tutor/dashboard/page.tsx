@@ -565,7 +565,7 @@ export default function TutorDashboard() {
 
           {/* Stats cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -587,7 +587,7 @@ export default function TutorDashboard() {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -609,7 +609,7 @@ export default function TutorDashboard() {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -639,20 +639,71 @@ export default function TutorDashboard() {
           {/* Quick Actions */}
           <div className="mb-8">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Quick Actions
+              Quick actions
             </h3>
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Request Certification Card */}
               <Link
                 href={`/tutor/${tutorData?.id || "me"}/requestcert`}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-lg hover:border-blue-200 hover:bg-blue-50 transition-colors group"
               >
-                Request Certification
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <svg
+                      className="w-6 h-6 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-4 text-left">
+                  <h4 className="text-lg font-medium text-gray-900 group-hover:text-blue-900">
+                    Request Certification
+                  </h4>
+                  <p className="text-sm text-gray-500 group-hover:text-blue-700">
+                    Get certified to teach subjects
+                  </p>
+                </div>
               </Link>
+
+              {/* Browse Opportunities Card */}
               <Link
                 href="/tutor/opportunities"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-lg hover:border-blue-200 hover:bg-blue-50 transition-colors group"
               >
-                Browse Opportunities
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <svg
+                      className="w-6 h-6 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-4 text-left">
+                  <h4 className="text-lg font-medium text-gray-900 group-hover:text-blue-900">
+                    Browse Opportunities
+                  </h4>
+                  <p className="text-sm text-gray-500 group-hover:text-blue-700">
+                    Find tutoring opportunities
+                  </p>
+                </div>
               </Link>
             </div>
           </div>
@@ -676,7 +727,7 @@ export default function TutorDashboard() {
               )}
             </div>
             {activeJobs.length > 0 ? (
-              <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <div className="bg-white border-2 border-gray-100 overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
                   {activeJobs.map((job) => (
                     <li key={job.id}>
@@ -829,7 +880,7 @@ export default function TutorDashboard() {
 
                         {/* Expanded details */}
                         {expandedJobs.has(job.id) && (
-                          <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="mt-4 pt-4 border-t border-gray-100">
                             <div className="grid grid-cols-1 gap-4">
                               <div>
                                 <h4 className="text-sm font-medium text-gray-700 mb-2">
@@ -971,7 +1022,7 @@ export default function TutorDashboard() {
                 </ul>
               </div>
             ) : (
-              <div className="text-center py-8 bg-white rounded-lg shadow">
+              <div className="text-center py-8 bg-white rounded-lg border-2 border-gray-100">
                 <svg
                   className="mx-auto h-12 w-12 text-gray-400"
                   fill="none"
@@ -994,7 +1045,7 @@ export default function TutorDashboard() {
                 <div className="mt-6">
                   <Link
                     href="/tutor/opportunities"
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                   >
                     Browse Opportunities
                   </Link>
@@ -1009,7 +1060,7 @@ export default function TutorDashboard() {
               Past Jobs
             </h3>
             {pastJobs.length > 0 ? (
-              <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <div className="bg-white border-2 border-gray-100 overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
                   {pastJobs.map((job) => (
                     <li key={job.id} className="px-4 py-4">
@@ -1035,7 +1086,7 @@ export default function TutorDashboard() {
                 </ul>
               </div>
             ) : (
-              <div className="text-center py-8 bg-white rounded-lg shadow">
+              <div className="text-center py-8 bg-white rounded-lg border-2 border-gray-100">
                 <h4 className="text-sm font-medium text-gray-900">
                   No past jobs
                 </h4>
@@ -1052,7 +1103,7 @@ export default function TutorDashboard() {
               Subject Approvals
             </h3>
             {subjectApprovals.length > 0 ? (
-              <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <div className="bg-white border-2 border-gray-100 overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
                   {subjectApprovals.map((approval) => (
                     <li key={approval.id}>
@@ -1098,7 +1149,7 @@ export default function TutorDashboard() {
                 </ul>
               </div>
             ) : (
-              <div className="text-center py-8 bg-white rounded-lg shadow">
+              <div className="text-center py-8 bg-white rounded-lg border-2 border-gray-200">
                 <svg
                   className="mx-auto h-12 w-12 text-gray-400"
                   fill="none"
@@ -1130,7 +1181,7 @@ export default function TutorDashboard() {
             className="absolute inset-0 bg-black/40"
             onClick={() => setShowRecordingModalFor(null)}
           ></div>
-          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+          <div className="relative bg-white rounded-lg border-2 border-gray-200 w-full max-w-md p-6">
             <h3 className="text-lg font-semibold mb-2">
               Upload Session Recording Link
             </h3>

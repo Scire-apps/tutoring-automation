@@ -150,6 +150,18 @@ export default function TutorDashboard() {
   const [pastJobs, setPastJobs] = useState<any[]>([]);
   const router = useRouter();
 
+  // Load extra job details securely on demand
+  const loadJobDetails = async (jobId: string) => {
+    try {
+      const details = await apiService.getJobDetails(jobId);
+      if (details?.job) {
+        setActiveJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, ...details.job } : j)));
+      }
+    } catch (e) {
+      // ignore; best effort enrichment
+    }
+  };
+
   // Check for URL parameters when component mounts
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -582,6 +594,10 @@ export default function TutorDashboard() {
                               newExpandedJobs.add(job.id);
                             }
                             setExpandedJobs(newExpandedJobs);
+                            if (!expandedJobs.has(job.id)) {
+                              // fetch details when expanding
+                              loadJobDetails(job.id);
+                            }
                           }}
                         >
                           <div className="flex items-center justify-between">
@@ -672,7 +688,7 @@ export default function TutorDashboard() {
                                   <div className="text-sm text-gray-600 space-y-1">
                                     <p><span className="font-medium">Name:</span> {job.tutoring_opportunity?.tutee_name || (job.tutee?.first_name && job.tutee?.last_name ? `${job.tutee.first_name} ${job.tutee.last_name}` : '—')}</p>
                                     <p><span className="font-medium">Email:</span> {job.tutoring_opportunity?.tutee_email || job.tutee?.email || '—'}</p>
-                                    <p><span className="font-medium">Grade:</span> {job.tutoring_opportunity?.tutee_grade || job.tutoring_opportunity?.grade_level || '—'}</p>
+                                    <p><span className="font-medium">Grade:</span> {job.tutoring_opportunity?.tutee_grade || job.tutoring_opportunity?.grade_level || job.tutee?.grade || '—'}</p>
                                   </div>
                                 </div>
                                 <div>

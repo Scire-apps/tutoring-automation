@@ -210,26 +210,41 @@ export default function TuteeDashboardPage() {
                       </div>
                       {expandedJobs.has(j.id) && (
                         <div className="mt-4 pl-2 border-l border-gray-200">
-                          {j.scheduled_time ? (
-                            <div className="text-sm text-gray-700">
-                              <span className="font-medium mr-2">Scheduled:</span>
-                              {new Date(j.scheduled_time).toLocaleString()}
-                            </div>
-                          ) : j.tutee_availability ? (
-                            <div className="text-sm text-gray-700">
-                              <div className="font-medium mb-1">Your availability</div>
+                          <div className="grid grid-cols-1 gap-3 text-sm text-gray-700">
+                            <div>
+                              <div className="font-medium mb-1">Tutor Details</div>
                               <div className="space-y-1">
-                                {Object.entries(j.tutee_availability).map(([date, ranges]: any) => (
-                                  <div key={date} className="text-sm text-gray-700">
-                                    <span className="font-medium mr-2">{new Date(date as string).toLocaleDateString()}</span>
-                                    {Array.isArray(ranges) && ranges.length ? ranges.join(', ') : <span className="text-gray-400">No time set</span>}
-                                  </div>
-                                ))}
+                                <div><span className="font-medium">Name:</span> {j.tutor?.first_name && j.tutor?.last_name ? `${j.tutor.first_name} ${j.tutor.last_name}` : '—'}</div>
+                                <div><span className="font-medium">Email:</span> {j.tutor?.email || '—'}</div>
                               </div>
                             </div>
-                          ) : (
-                            <div className="text-sm text-gray-500">No schedule yet.</div>
-                          )}
+                            <div>
+                              <div className="font-medium mb-1">Session Details</div>
+                              <div className="space-y-1">
+                                <div><span className="font-medium">Subject:</span> {j.subject_name} • {j.subject_type} • Grade {j.subject_grade}</div>
+                                <div><span className="font-medium">Language:</span> {j.language || 'English'}</div>
+                                {j.scheduled_time ? (
+                                  <div><span className="font-medium">Scheduled:</span> {new Date(j.scheduled_time).toLocaleString()}</div>
+                                ) : null}
+                                <div><span className="font-medium">Status:</span> {j.status}</div>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-medium mb-1">Your availability</div>
+                              {j.tutee_availability ? (
+                                <div className="space-y-1">
+                                  {Object.entries(j.tutee_availability).map(([date, ranges]: any) => (
+                                    <div key={date} className="text-sm text-gray-700">
+                                      <span className="font-medium mr-2">{new Date(date as string).toLocaleDateString()}</span>
+                                      {Array.isArray(ranges) && ranges.length ? ranges.join(', ') : <span className="text-gray-400">No time set</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-sm text-gray-500">No availability submitted.</div>
+                              )}
+                            </div>
+                          </div>
                           {j.status === 'pending_tutee_scheduling' && (
                             <div className="mt-4">
                               <Link href={`/tutee/schedule/${j.id}`} className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700">Set your availability</Link>

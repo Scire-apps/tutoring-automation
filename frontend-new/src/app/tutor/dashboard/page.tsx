@@ -670,16 +670,9 @@ export default function TutorDashboard() {
                                     Tutee Details
                                   </h4>
                                   <div className="text-sm text-gray-600 space-y-1">
-                                    <p>
-                                      <span className="font-medium">Name:</span>{" "}
-                                      {job.tutoring_opportunity.tutee_name}
-                                    </p>
-                                    <p>
-                                      <span className="font-medium">
-                                        Email:
-                                      </span>{" "}
-                                      {job.tutoring_opportunity.tutee_email}
-                                    </p>
+                                    <p><span className="font-medium">Name:</span> {job.tutoring_opportunity?.tutee_name || (job.tutee?.first_name && job.tutee?.last_name ? `${job.tutee.first_name} ${job.tutee.last_name}` : '—')}</p>
+                                    <p><span className="font-medium">Email:</span> {job.tutoring_opportunity?.tutee_email || job.tutee?.email || '—'}</p>
+                                    <p><span className="font-medium">Grade:</span> {job.tutoring_opportunity?.tutee_grade || job.tutoring_opportunity?.grade_level || '—'}</p>
                                   </div>
                                 </div>
                                 <div>
@@ -687,36 +680,13 @@ export default function TutorDashboard() {
                                     Session Details
                                   </h4>
                                   <div className="text-sm text-gray-600 space-y-1">
-                                    <p>
-                                      <span className="font-medium">Subject:</span>{" "}
-                                      {job.tutoring_opportunity?.subject_name ? `${job.tutoring_opportunity.subject_name} • ${job.tutoring_opportunity.subject_type} • Grade ${job.tutoring_opportunity.subject_grade}` : (job.tutoring_opportunity?.subject || '')}
-                                    </p>
-                                    <p>
-                                      <span className="font-medium">
-                                        Location:
-                                      </span>{" "}
-                                      {
-                                        job.tutoring_opportunity
-                                          .location_preference
-                                      }
-                                    </p>
+                                    <p><span className="font-medium">Subject:</span> {job.tutoring_opportunity?.subject_name ? `${job.tutoring_opportunity.subject_name} • ${job.tutoring_opportunity.subject_type} • Grade ${job.tutoring_opportunity.subject_grade}` : (job.subject_name ? `${job.subject_name} • ${job.subject_type} • Grade ${job.subject_grade}` : '')}</p>
+                                    <p><span className="font-medium">Language:</span> {job.language || job.tutoring_opportunity?.language || 'English'}</p>
+                                    <p><span className="font-medium">Location:</span> {job.tutoring_opportunity?.location_preference || job.location || '—'}</p>
                                     {job.scheduled_time ? (
-                                      <p>
-                                        <span className="font-medium">Scheduled Time:</span>{" "}
-                                        {formatTime(job.scheduled_time)}
-                                      </p>
-                                    ) : (
-                                      <p>
-                                        <span className="font-medium">Availability:</span>{" "}
-                                        {job.finalized_schedule ? 'Weekly schedule set' : 'No weekly schedule yet'}
-                                      </p>
-                                    )}
-                                    <p>
-                                      <span className="font-medium">
-                                        Status:
-                                      </span>{" "}
-                                      {job.status}
-                                    </p>
+                                      <p><span className="font-medium">Scheduled Time:</span> {formatTime(job.scheduled_time)}</p>
+                                    ) : null}
+                                    <p><span className="font-medium">Status:</span> {job.status}</p>
                                   </div>
                                 </div>
                               </div>
@@ -761,17 +731,7 @@ export default function TutorDashboard() {
                                     Pending Verification
                                   </span>
                                 )}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (job.tutoring_opportunity?.tutee?.email) {
-                                      window.location.href = `mailto:${job.tutoring_opportunity.tutee.email}`;
-                                    }
-                                  }}
-                                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                                >
-                                  Contact Tutee
-                                </button>
+                                {/* Contact Tutee button removed per requirements */}
                                 {job.status !== 'awaiting_admin_verification' && (
                                 <button
                                   onClick={(e) => {
@@ -787,19 +747,7 @@ export default function TutorDashboard() {
                                 </button>
                                 )}
                               </div>
-                              {job.finalized_schedule && typeof job.finalized_schedule === 'object' && (
-                                <div className="mt-4">
-                                  <h5 className="text-sm font-medium text-gray-700 mb-2">Weekly Schedule</h5>
-                                  <div className="space-y-1">
-                                    {Object.entries(job.finalized_schedule).map(([day, ranges]: any) => (
-                                      <div key={day} className="text-sm text-gray-700">
-                                        <span className="font-medium mr-2">{day}:</span>
-                                        {Array.isArray(ranges) && ranges.length ? ranges.join(', ') : <span className="text-gray-400">No time set</span>}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
+                              {/* Weekly schedule details removed per requirements */}
                             </div>
                           )}
                         </div>

@@ -208,7 +208,14 @@ def apply_to_opportunity(opportunity_id: str):
     tutor_id = tutor_res.data['id']
 
     # Verify subject approval first using embedded fields
-    opp_res = supabase.table('tutoring_opportunities').select('subject_name, subject_type, subject_grade, tutee_id, language').eq('id', opportunity_id).single().execute()
+    opp_res = (
+        supabase
+        .table('tutoring_opportunities')
+        .select('subject_name, subject_type, subject_grade, tutee_id, language, location_preference')
+        .eq('id', opportunity_id)
+        .single()
+        .execute()
+    )
     if not opp_res.data:
         return jsonify({'error': 'Opportunity not found'}), 404
     subj_name = opp_res.data.get('subject_name')

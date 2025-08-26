@@ -88,10 +88,50 @@ export default function TuteeSchedulePage() {
         </div>
 
         <div className="mt-4">
-          <label className="block text-sm font-medium mb-1">Desired session length (minutes)</label>
-          <select value={desiredDuration} onChange={e=> setDesiredDuration(Number(e.target.value))} className="border rounded px-3 py-2">
-            {[60,90,120,150,180].map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
+          <label className="block text-sm font-medium mb-3">Desired session length</label>
+          <div className="relative">
+            {/* Slider track */}
+            <div className="w-full h-2 bg-gray-200 rounded-full relative">
+              {/* Progress fill */}
+              <div 
+                className="h-2 bg-blue-600 rounded-full transition-all duration-200 ease-out"
+                style={{ width: `${((desiredDuration - 30) / (180 - 30)) * 100}%` }}
+              />
+              {/* Slider thumb */}
+              <div 
+                className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-white border-2 border-blue-600 rounded-full shadow-lg cursor-pointer hover:scale-110 transition-transform duration-150"
+                style={{ left: `calc(${((desiredDuration - 30) / (180 - 30)) * 100}% - 12px)` }}
+              />
+            </div>
+            
+            {/* Hidden range input for functionality */}
+            <input
+              type="range"
+              min="30"
+              max="180"
+              step="30"
+              value={desiredDuration}
+              onChange={(e) => setDesiredDuration(Number(e.target.value))}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+            
+            {/* Time markers */}
+            <div className="flex justify-between mt-2 text-xs text-gray-500">
+              <span>30 min</span>
+              <span>60 min</span>
+              <span>90 min</span>
+              <span>120 min</span>
+              <span>150 min</span>
+              <span>180 min</span>
+            </div>
+            
+            {/* Current value display */}
+            <div className="text-center mt-3">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                {desiredDuration} minutes
+              </span>
+            </div>
+          </div>
         </div>
 
         {error && <div className="mt-4 text-red-600 text-sm">{error}</div>}

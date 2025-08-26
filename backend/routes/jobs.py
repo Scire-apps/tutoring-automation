@@ -90,7 +90,7 @@ def cancel_job(job_id: str):
         'subject_grade': str(job.get('subject_grade') or snap.get('subject_grade') or ''),
         'language': job.get('language') or (snap.get('language') if isinstance(snap, dict) else None) or 'English',
         'availability': None,
-        'location_preference': snap.get('location_preference'),
+        'location_preference': job.get('location') or (snap.get('location_preference') if isinstance(snap, dict) else None),
         'additional_notes': snap.get('additional_notes'),
         'status': 'open',
         'priority': (snap.get('priority') if isinstance(snap, dict) else None) or 'normal'

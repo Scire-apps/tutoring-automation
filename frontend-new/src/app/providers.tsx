@@ -20,7 +20,7 @@ type AuthContextType = {
     firstName: string,
     lastName: string,
     schoolId?: string,
-    accountType?: 'tutor' | 'tutee'
+    accountType?: "tutor" | "tutee"
   ) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   isAdmin: () => boolean;
@@ -38,10 +38,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<UserRole>(null);
 
   // Function to determine user role via backend (avoids direct DB queries from frontend)
-  const determineUserRole = async (accessToken: string | null): Promise<UserRole> => {
+  const determineUserRole = async (
+    accessToken: string | null
+  ): Promise<UserRole> => {
     try {
       if (!accessToken) return null;
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://tutoring-automation-sdt9.onrender.com";
+      const apiBase =
+        process.env.NEXT_PUBLIC_API_URL ||
+        "https://tutoring-automation-sdt9.onrender.com";
       const resp = await fetch(`${apiBase}/api/auth/role`, {
         headers: { Authorization: `Bearer ${accessToken}` },
         credentials: "include",
@@ -50,7 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const json = await resp.json();
       return (json.role as UserRole) ?? null;
     } catch (error) {
-      console.error("Auth context: Error determining user role via backend:", error);
+      console.error(
+        "Auth context: Error determining user role via backend:",
+        error
+      );
       return null;
     }
   };
@@ -58,13 +65,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Ensure a tutor/tutee row exists after verification/login
   const ensureBackendAccount = async (
     accessToken: string,
-    accountType: 'tutor' | 'tutee',
+    accountType: "tutor" | "tutee",
     firstName?: string,
     lastName?: string,
     schoolId?: string
   ) => {
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://tutoring-automation-sdt9.onrender.com";
+      const apiBase =
+        process.env.NEXT_PUBLIC_API_URL ||
+        "https://tutoring-automation-sdt9.onrender.com";
       // Build body with core fields
       const body: any = {
         account_type: accountType,
@@ -73,29 +82,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         school_id: schoolId,
       };
       // For tutee, include extras from localStorage if present
-      if (typeof window !== 'undefined' && accountType === 'tutee') {
+      if (typeof window !== "undefined" && accountType === "tutee") {
         try {
-          const gy = window.localStorage.getItem('tutee_graduation_year');
-          const pr = window.localStorage.getItem('tutee_pronouns');
-          const subsRaw = window.localStorage.getItem('tutee_subjects');
+          const gy = window.localStorage.getItem("tutee_graduation_year");
+          const pr = window.localStorage.getItem("tutee_pronouns");
+          const subsRaw = window.localStorage.getItem("tutee_subjects");
           if (gy && gy.trim()) body.graduation_year = Number(gy);
           if (pr && pr.trim()) body.pronouns = pr;
           if (subsRaw) {
-            try { const arr = JSON.parse(subsRaw); if (Array.isArray(arr)) body.subjects = arr; } catch {}
+            try {
+              const arr = JSON.parse(subsRaw);
+              if (Array.isArray(arr)) body.subjects = arr;
+            } catch {}
           }
         } catch {}
       }
       await fetch(`${apiBase}/api/account/ensure`, {
-        method: 'POST',
+        method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
-        credentials: 'include',
+        credentials: "include",
       });
     } catch (e) {
-      console.error('Error ensuring account via backend:', e);
+      console.error("Error ensuring account via backend:", e);
     }
   };
 
@@ -106,24 +118,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         // Clean up any stale Supabase auth storage entries that can cause JSON parse errors
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           try {
-            const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+            const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
             const refMatch = url.match(/https?:\/\/([^.]+)\.supabase\.co/i);
             const projectRef = refMatch ? refMatch[1] : undefined;
             const candidateKeys = [
-              'supabase.auth.token',
+              "supabase.auth.token",
               projectRef ? `sb-${projectRef}-auth-token` : undefined,
             ].filter(Boolean) as string[];
             for (const key of candidateKeys) {
               const raw = window.localStorage.getItem(key);
               if (!raw) continue;
-              const looksJson = raw.trim().startsWith('{');
-              const looksBase64 = raw.startsWith('base64-');
+              const looksJson = raw.trim().startsWith("{");
+              const looksBase64 = raw.startsWith("base64-");
               if (!looksJson || looksBase64) {
                 window.localStorage.removeItem(key);
               } else {
-                try { JSON.parse(raw); } catch { window.localStorage.removeItem(key); }
+                try {
+                  JSON.parse(raw);
+                } catch {
+                  window.localStorage.removeItem(key);
+                }
               }
             }
           } catch {}
@@ -142,31 +158,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const token = currentSession?.access_token || null;
           let role = await determineUserRole(token);
           if (!role && token) {
-            let pendingType: 'tutor' | 'tutee' | null = null;
+            let pendingType: "tutor" | "tutee" | null = null;
             let firstName: string | undefined;
             let lastName: string | undefined;
             let schoolId: string | undefined;
-            if (typeof window !== 'undefined') {
-              pendingType = localStorage.getItem('signup_account_type') as 'tutor' | 'tutee' | null;
-              firstName = localStorage.getItem('signup_first_name') || undefined;
-              lastName = localStorage.getItem('signup_last_name') || undefined;
-              schoolId = localStorage.getItem('signup_school_id') || undefined;
+            if (typeof window !== "undefined") {
+              pendingType = localStorage.getItem("signup_account_type") as
+                | "tutor"
+                | "tutee"
+                | null;
+              firstName =
+                localStorage.getItem("signup_first_name") || undefined;
+              lastName = localStorage.getItem("signup_last_name") || undefined;
+              schoolId = localStorage.getItem("signup_school_id") || undefined;
             }
             // Fall back to metadata if local storage not present
             if (!pendingType && currentUser?.user_metadata?.account_type) {
               const metaType = String(currentUser.user_metadata.account_type);
-              if (metaType === 'tutor' || metaType === 'tutee') pendingType = metaType;
+              if (metaType === "tutor" || metaType === "tutee")
+                pendingType = metaType;
               firstName = firstName || currentUser.user_metadata.first_name;
               lastName = lastName || currentUser.user_metadata.last_name;
               schoolId = schoolId || currentUser.user_metadata.school_id;
             }
             if (pendingType) {
-              await ensureBackendAccount(token, pendingType, firstName, lastName, schoolId);
-              if (typeof window !== 'undefined') {
-                localStorage.removeItem('signup_account_type');
-                localStorage.removeItem('signup_first_name');
-                localStorage.removeItem('signup_last_name');
-                localStorage.removeItem('signup_school_id');
+              await ensureBackendAccount(
+                token,
+                pendingType,
+                firstName,
+                lastName,
+                schoolId
+              );
+              if (typeof window !== "undefined") {
+                localStorage.removeItem("signup_account_type");
+                localStorage.removeItem("signup_first_name");
+                localStorage.removeItem("signup_last_name");
+                localStorage.removeItem("signup_school_id");
                 // keep tutee extras keys for this ensure; they can be left or cleared later as needed
               }
               role = await determineUserRole(token);
@@ -212,17 +239,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log("Auth context: Determining user role...");
         try {
           const token = data.session?.access_token || null;
-          if (token && typeof window !== 'undefined') {
-            const pendingType = localStorage.getItem('signup_account_type') as 'tutor' | 'tutee' | null;
-            const firstName = localStorage.getItem('signup_first_name') || undefined;
-            const lastName = localStorage.getItem('signup_last_name') || undefined;
-            const schoolId = localStorage.getItem('signup_school_id') || undefined;
+          if (token && typeof window !== "undefined") {
+            const pendingType = localStorage.getItem("signup_account_type") as
+              | "tutor"
+              | "tutee"
+              | null;
+            const firstName =
+              localStorage.getItem("signup_first_name") || undefined;
+            const lastName =
+              localStorage.getItem("signup_last_name") || undefined;
+            const schoolId =
+              localStorage.getItem("signup_school_id") || undefined;
             if (pendingType) {
-              await ensureBackendAccount(token, pendingType, firstName, lastName, schoolId);
-              localStorage.removeItem('signup_account_type');
-              localStorage.removeItem('signup_first_name');
-              localStorage.removeItem('signup_last_name');
-              localStorage.removeItem('signup_school_id');
+              await ensureBackendAccount(
+                token,
+                pendingType,
+                firstName,
+                lastName,
+                schoolId
+              );
+              localStorage.removeItem("signup_account_type");
+              localStorage.removeItem("signup_first_name");
+              localStorage.removeItem("signup_last_name");
+              localStorage.removeItem("signup_school_id");
             }
             const role = await determineUserRole(token);
             console.log("Auth context: User role determined:", role);
@@ -250,15 +289,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     firstName: string,
     lastName: string,
     schoolId?: string,
-    accountType: 'tutor' | 'tutee' = 'tutor'
+    accountType: "tutor" | "tutee" = "tutor"
   ) => {
     // Persist intent for post-verification login flow
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('signup_account_type', accountType);
-        if (firstName) localStorage.setItem('signup_first_name', firstName);
-        if (lastName) localStorage.setItem('signup_last_name', lastName);
-        if (schoolId) localStorage.setItem('signup_school_id', String(schoolId));
+      if (typeof window !== "undefined") {
+        localStorage.setItem("signup_account_type", accountType);
+        if (firstName) localStorage.setItem("signup_first_name", firstName);
+        if (lastName) localStorage.setItem("signup_last_name", lastName);
+        if (schoolId)
+          localStorage.setItem("signup_school_id", String(schoolId));
       }
     } catch {}
 
@@ -283,18 +323,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const token = data.session?.access_token;
         if (token) {
           await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/ensure`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
             body: JSON.stringify({
               account_type: accountType,
               first_name: firstName,
               last_name: lastName,
               school_id: schoolId,
-            })
+            }),
           });
         }
       } catch (e) {
-        console.error('Error ensuring account via backend (signup path):', e);
+        console.error("Error ensuring account via backend (signup path):", e);
       }
 
       setUser(data.user);

@@ -19,6 +19,16 @@ export default function TuteeDashboardPage() {
   const [allSubjects, setAllSubjects] = useState<string[]>([]);
   const [savingSubjects, setSavingSubjects] = useState(false);
 
+  // Helper function to get count of sessions waiting for availability
+  const getPendingAvailabilityCount = () => {
+    return data?.jobs?.filter((j: any) => j.status === 'pending_tutee_scheduling').length || 0;
+  };
+
+  // Helper function to check if there are sessions waiting for availability
+  const hasPendingAvailability = () => {
+    return getPendingAvailabilityCount() > 0;
+  };
+
   // On-demand job details enrichment
   const loadJobDetails = async (jobId: string) => {
     try {
@@ -84,7 +94,7 @@ export default function TuteeDashboardPage() {
   }
 
   return (
-    <TuteeLayout>
+    <TuteeLayout pendingAvailabilityCount={getPendingAvailabilityCount()}>
       <div className="p-6 bg-white min-h-full">
         {/* Stats cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -257,9 +267,16 @@ export default function TuteeDashboardPage() {
 
         {/* Sessions */}
         <div className="mb-8">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Your Sessions
-          </h3>
+          <div className="flex items-center gap-3 mb-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Your Sessions
+            </h3>
+            {hasPendingAvailability() && (
+              <div className="bg-red-100 text-red-600 w-6 h-6 rounded-md text-xs font-medium flex items-center justify-center">
+                {getPendingAvailabilityCount()}
+              </div>
+            )}
+          </div>
           {data.jobs && data.jobs.length > 0 ? (
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
               <ul className="divide-y divide-gray-200">
@@ -289,28 +306,41 @@ export default function TuteeDashboardPage() {
                               {j.subject_name} • {j.subject_type} • Grade{" "}
                               {j.subject_grade}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              Tutor: {j.tutor?.first_name} {j.tutor?.last_name}
+                            <div className="text-sm text-gray-500 flex items-center gap-2">
+                              <span>
+                                Tutor: {j.tutor?.first_name} {j.tutor?.last_name}
+                              </span>
+                              <span
+                                className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                  j.status === "scheduled"
+                                    ? "bg-green-100 text-green-800"
+                                    : j.status === "pending_tutor_scheduling"
+                                    ? "bg-orange-100 text-orange-800"
+                                    : j.status === "pending_tutee_scheduling"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-yellow-100 text-yellow-800"
+                                }`}
+                              >
+                                {j.status === "pending_tutee_scheduling"
+                                  ? "Waiting for you to Set Availability"
+                                  : j.status === "pending_tutor_scheduling"
+                                  ? "Waiting for Tutor to Set Availability"
+                                  : j.status}
+                              </span>
                             </div>
                           </div>
                         </div>
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            j.status === "scheduled"
-                              ? "bg-green-100 text-green-800"
-                              : j.status === "pending_tutor_scheduling"
-                              ? "bg-orange-100 text-orange-800"
-                              : j.status === "pending_tutee_scheduling"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {j.status === "pending_tutee_scheduling"
-                            ? "awaiting your scheduling"
-                            : j.status === "pending_tutor_scheduling"
-                            ? "awaiting tutor scheduling"
-                            : j.status}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          {j.status === "pending_tutee_scheduling" && (
+                            <Link
+                              href={`/tutee/schedule/${j.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center px-4 py-1.5 border border-transparent text-xs font-medium rounded-full h-10 text-red-600 font-medium bg-red-100 hover:bg-red-200"
+                            >
+                              Set your availability
+                            </Link>
+                          )}
+                        </div>
                       </div>
                       {expandedJobs.has(j.id) && (
                         <div className="mt-4 pl-2 border-l border-gray-200">
@@ -375,16 +405,7 @@ export default function TuteeDashboardPage() {
                               )} */}
                             </div>
                           </div>
-                          {j.status === "pending_tutee_scheduling" && (
-                            <div className="mt-4">
-                              <Link
-                                href={`/tutee/schedule/${j.id}`}
-                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700"
-                              >
-                                Set your availability
-                              </Link>
-                            </div>
-                          )}
+                          {/* Set your availability button moved to main row */}
                         </div>
                       )}
                     </div>

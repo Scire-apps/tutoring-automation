@@ -46,6 +46,7 @@ export default function OpportunitiesPage() {
   const [applyingTo, setApplyingTo] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showApplyInfo, setShowApplyInfo] = useState(false);
   const router = useRouter();
 
   // Function to get a random shape image based on opportunity ID for consistency
@@ -168,7 +169,8 @@ export default function OpportunitiesPage() {
       );
 
       // Redirect back to tutor dashboard (tutee must set availability first)
-      router.push('/tutor/dashboard');
+      setShowApplyInfo(true);
+      // Give them context first; after they close, take them to dashboard
     } catch (err) {
       console.error("Error applying for opportunity:", err);
       setError("An error occurred while applying");
@@ -587,6 +589,50 @@ export default function OpportunitiesPage() {
           )}
         </div>
       </div>
+      {showApplyInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={()=>{ setShowApplyInfo(false); router.push('/tutor/dashboard'); }}></div>
+          <div className="relative w-[92%] max-w-lg">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl opacity-90 blur-sm"></div>
+            <div className="relative bg-white rounded-2xl shadow-xl p-6 sm:p-7">
+              <button
+                aria-label="Close"
+                className="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                onClick={()=>{ setShowApplyInfo(false); router.push('/tutor/dashboard'); }}
+              >
+                ✕
+              </button>
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shadow-inner">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
+                    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm9.75-6a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0v-6A.75.75 0 0 1 12 6Zm0 12a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold tracking-tight text-gray-900">Next steps</h3>
+                  <p className="mt-1 text-sm leading-6 text-gray-700">
+                    Once the student picks dates and times that work for them, you may select a working date and time to schedule the session.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+                  onClick={()=>{ setShowApplyInfo(false); router.push('/tutor/dashboard'); }}
+                >
+                  Close
+                </button>
+                <button
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow"
+                  onClick={()=>{ setShowApplyInfo(false); router.push('/tutor/dashboard'); }}
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </TutorLayout>
   );
 }

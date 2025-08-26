@@ -57,19 +57,7 @@ def get_tutor_dashboard():
     except Exception:
         pass
 
-    # Attach tutee basic info for each job to populate UI details
-    try:
-        tutee_ids = [j.get('tutee_id') for j in jobs if j.get('tutee_id')]
-        tutee_ids = list({tid for tid in tutee_ids if tid})
-        if tutee_ids:
-            tutees_res = supabase.table('tutees').select('id, email, first_name, last_name, graduation_year').in_('id', tutee_ids).execute()
-            by_id = {t['id']: t for t in (tutees_res.data or [])}
-            for j in jobs:
-                tid = j.get('tutee_id')
-                if tid and tid in by_id:
-                    j['tutee'] = by_id[tid]
-    except Exception:
-        pass
+    # For privacy, do not attach tutee PII in bulk; clients should fetch details per job when needed
 
     return jsonify({
         'tutor': tutor,

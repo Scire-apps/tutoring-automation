@@ -150,6 +150,13 @@ export async function getJobDetails(jobId: string) {
   );
 }
 
+export async function getTuteeJobDetails(jobId: string) {
+  return apiRequest<{ job: any }>(
+    `/api/tutee/jobs/${jobId}`,
+    { method: 'GET' }
+  );
+}
+
 export async function upsertRecordingLink(jobId: string, recordingUrl: string) {
   return apiRequest<{ message: string; recording: any }>(
     `/api/tutor/jobs/${jobId}/recording-link`,
@@ -438,6 +445,7 @@ const apiService = {
   createCertificationRequest,
   listOwnCertificationRequests,
   getTutorApprovals,
+  getTuteeJobDetails,
 };
 
 export default apiService;

@@ -18,6 +18,21 @@ export default function TuteeDashboardPage() {
   const [subjects, setSubjects] = useState<string[]>([]);
   const [allSubjects, setAllSubjects] = useState<string[]>([]);
   const [savingSubjects, setSavingSubjects] = useState(false);
+  
+  // On-demand job details enrichment
+  const loadJobDetails = async (jobId: string) => {
+    try {
+      const details = await api.getTuteeJobDetails(jobId);
+      if (details?.job) {
+        setData((prev: any) => {
+          if (!prev) return prev;
+          return { ...prev, jobs: (prev.jobs || []).map((j: any) => (j.id === jobId ? { ...j, ...details.job } : j)) };
+        });
+      }
+    } catch (e) {
+      // ignore enrichment errors
+    }
+  };
 
   useEffect(() => {
     if (isLoading) return;
@@ -193,6 +208,9 @@ export default function TuteeDashboardPage() {
                         const s = new Set(expandedJobs);
                         if (s.has(j.id)) s.delete(j.id); else s.add(j.id);
                         setExpandedJobs(s);
+                        if (!expandedJobs.has(j.id)) {
+                          loadJobDetails(j.id);
+                        }
                       }}
                     >
                       <div className="flex items-center justify-between">

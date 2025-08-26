@@ -238,4 +238,12 @@ def get_tutee_job(job_id: str):
     job = job_res.data
     if job.get('opportunity_snapshot'):
         job['tutoring_opportunity'] = job['opportunity_snapshot']
+    # Attach tutor basic info for display
+    try:
+        if job.get('tutor_id'):
+            tutor_res = supabase.table('tutors').select('id, email, first_name, last_name').eq('id', job['tutor_id']).single().execute()
+            if tutor_res.data:
+                job['tutor'] = tutor_res.data
+    except Exception:
+        pass
     return jsonify({'job': job}), 200

@@ -143,6 +143,13 @@ export async function cancelJob(jobId: string) {
   );
 }
 
+export async function getJobDetails(jobId: string) {
+  return apiRequest<{ job: any }>(
+    `/api/tutor/jobs/${jobId}`,
+    { method: 'GET' }
+  );
+}
+
 export async function upsertRecordingLink(jobId: string, recordingUrl: string) {
   return apiRequest<{ message: string; recording: any }>(
     `/api/tutor/jobs/${jobId}/recording-link`,
@@ -418,6 +425,7 @@ const apiService = {
   setTuteeAvailability,
   scheduleJob,
   cancelJob,
+  getJobDetails,
   upsertRecordingLink,
   listAwaitingVerificationJobs,
   getRecordingLinkForJob,

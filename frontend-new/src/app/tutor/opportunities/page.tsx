@@ -440,9 +440,9 @@ export default function OpportunitiesPage() {
                           </td>
                           <td className="px-3 py-4">
                              <div className="text-sm text-gray-900 truncate">
-                              {opportunity.tutee_first_name ?? ''} {opportunity.tutee_last_name ?? ''}
+                              {(opportunity.tutee?.first_name || opportunity.tutee_first_name || '')} {(opportunity.tutee?.last_name || opportunity.tutee_last_name || '')}
                              </div>
-                            {opportunity.tutee_pronouns && (
+                            {(opportunity.tutee_pronouns) && (
                               <div className="text-xs text-gray-500 truncate">
                                 ({opportunity.tutee_pronouns})
                               </div>
@@ -561,27 +561,12 @@ export default function OpportunitiesPage() {
                                       Student Details
                                     </h4>
                                     <div className="text-sm text-gray-600 space-y-1">
-                                      <p>
-                                        <span className="font-medium">
-                                          Name:
-                                        </span>{" "}
-                                        {opportunity.tutee_first_name}{" "}
-                                        {opportunity.tutee_last_name}
-                                      </p>
+                                      <p><span className="font-medium">Name:</span> {(opportunity.tutee?.first_name || opportunity.tutee_first_name || '')} {(opportunity.tutee?.last_name || opportunity.tutee_last_name || '')}</p>
                                       {opportunity.tutee_pronouns && (
-                                        <p>
-                                          <span className="font-medium">
-                                            Pronouns:
-                                          </span>{" "}
-                                          {opportunity.tutee_pronouns}
-                                        </p>
+                                        <p><span className="font-medium">Pronouns:</span> {opportunity.tutee_pronouns}</p>
                                       )}
-                                      <p>
-                                        <span className="font-medium">
-                                          Grade:
-                                        </span>{" "}
-                                        Grade {opportunity.grade_level}
-                                      </p>
+                                      <p><span className="font-medium">Email:</span> {opportunity.tutee?.email || '—'}</p>
+                                      <p><span className="font-medium">Grade:</span> {opportunity.subject_grade ? `Grade ${opportunity.subject_grade}` : (opportunity.grade_level ? `Grade ${opportunity.grade_level}` : '—')}</p>
                                     </div>
                                   </div>
                                   <div>
@@ -589,24 +574,8 @@ export default function OpportunitiesPage() {
                                       Session Details
                                     </h4>
                                     <div className="text-sm text-gray-600 space-y-1">
-                                      <p>
-                                        <span className="font-medium">
-                                          Subject:
-                                        </span>{" "}
-                                        {opportunity.subject}
-                                      </p>
-                                      <p>
-                                        <span className="font-medium">
-                                          Specific Topic:
-                                        </span>{" "}
-                                        {opportunity.specific_topic}
-                                      </p>
-                                      <p>
-                                        <span className="font-medium">
-                                          Course Level:
-                                        </span>{" "}
-                                        {opportunity.course_level}
-                                      </p>
+                                      <p><span className="font-medium">Subject:</span> {opportunity.subject_name ? `${opportunity.subject_name} • ${opportunity.subject_type} • Grade ${opportunity.subject_grade}` : (opportunity.subject || '')}</p>
+                                      {opportunity.language && (<p><span className="font-medium">Language:</span> {opportunity.language}</p>)}
                                     </div>
                                   </div>
                                   <div>

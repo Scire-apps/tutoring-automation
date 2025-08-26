@@ -688,7 +688,15 @@ export default function TutorDashboard() {
                                   <div className="text-sm text-gray-600 space-y-1">
                                     <p><span className="font-medium">Name:</span> {job.tutoring_opportunity?.tutee_name || (job.tutee?.first_name && job.tutee?.last_name ? `${job.tutee.first_name} ${job.tutee.last_name}` : '—')}</p>
                                     <p><span className="font-medium">Email:</span> {job.tutoring_opportunity?.tutee_email || job.tutee?.email || '—'}</p>
-                                    <p><span className="font-medium">Grade:</span> {job.tutoring_opportunity?.tutee_grade || job.tutoring_opportunity?.grade_level || job.tutee?.grade || '—'}</p>
+                                    <p><span className="font-medium">Grade:</span> {(() => {
+                                      const gy = job.tutoring_opportunity?.tutee_graduation_year || job.tutee?.graduation_year;
+                                      if (gy) {
+                                        const current = new Date().getFullYear();
+                                        const g = 12 - (Number(gy) - current);
+                                        return isFinite(g) ? g : '—';
+                                      }
+                                      return '—';
+                                    })()}</p>
                                   </div>
                                 </div>
                                 <div>

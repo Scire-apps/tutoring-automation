@@ -659,9 +659,22 @@ export default function TutorDashboard() {
 
           {/* Active Jobs */}
           <div className="mb-8">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Active Tutoring Jobs
-            </h3>
+            <div className="flex items-center gap-3 mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Active Tutoring Jobs
+              </h3>
+              {activeJobs.filter(
+                (j: any) => j.status === "pending_tutor_scheduling"
+              ).length > 0 && (
+                <div className="bg-red-100 text-red-600 w-6 h-6 rounded-md text-xs font-medium flex items-center justify-center">
+                  {
+                    activeJobs.filter(
+                      (j: any) => j.status === "pending_tutor_scheduling"
+                    ).length
+                  }
+                </div>
+              )}
+            </div>
             {activeJobs.length > 0 ? (
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">

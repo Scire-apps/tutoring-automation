@@ -212,6 +212,7 @@ def verify_completed_job(job_id: str):
             'subject_name': aw.data.get('subject_name'),
             'subject_type': aw.data.get('subject_type'),
             'subject_grade': aw.data.get('subject_grade'),
+            'language': aw.data.get('language') or ((aw.data.get('opportunity_snapshot') or {}) if isinstance(aw.data.get('opportunity_snapshot'), dict) else {}).get('language') or 'English',
             'tutee_availability': aw.data.get('tutee_availability'),
             'desired_duration_minutes': aw.data.get('desired_duration_minutes'),
             'scheduled_time': aw.data.get('scheduled_time'),

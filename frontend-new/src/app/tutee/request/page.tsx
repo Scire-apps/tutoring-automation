@@ -23,6 +23,8 @@ export default function TuteeRequestPage() {
   // Single-session flow: no weekly availability at request time
   const [locationPreference, setLocationPreference] = useState('');
   const [notes, setNotes] = useState('');
+  const [isELL, setIsELL] = useState(false);
+  const [ellLanguage, setEllLanguage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,13 +54,17 @@ export default function TuteeRequestPage() {
     setError(null);
       try {
         // Build final subject name; append IB level when applicable
-        const finalSubjectName = subjectType === 'IB' && ibLevel
+        let finalSubjectName = subjectType === 'IB' && ibLevel
           ? `${subjectName} ${ibLevel}`
           : subjectName;
+        if (isELL) {
+          finalSubjectName = `${finalSubjectName} (ELL)`;
+        }
         await api.createTuteeOpportunity({
         subject_name: finalSubjectName,
         subject_type: subjectType,
         subject_grade: subjectGrade,
+        language: isELL && ellLanguage ? ellLanguage : undefined,
         location_preference: locationPreference,
         additional_notes: notes,
       });
@@ -98,6 +104,20 @@ export default function TuteeRequestPage() {
             </select>
           </div>
         </div>
+        <div className="mt-2">
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={isELL} onChange={e=> setIsELL(e.target.checked)} />
+            Are you an ELL student?
+          </label>
+        </div>
+        {isELL && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium">Preferred Language</label>
+              <input className="mt-1 border rounded px-3 py-2 w-full" value={ellLanguage} onChange={e=> setEllLanguage(e.target.value)} placeholder="e.g., Spanish, French" />
+            </div>
+          </div>
+        )}
         {subjectType === 'IB' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>

@@ -119,6 +119,7 @@ def accept_opportunity(opportunity_id: str):
         'subject_name': subj_name,
         'subject_type': subj_type,
         'subject_grade': str(subj_grade),
+        'language': opp.get('language') or 'English',
         'opportunity_snapshot': opportunity_snapshot,
         'status': 'pending_tutee_scheduling'
     }
@@ -197,7 +198,7 @@ def apply_to_opportunity(opportunity_id: str):
     tutor_id = tutor_res.data['id']
 
     # Verify subject approval first using embedded fields
-    opp_res = supabase.table('tutoring_opportunities').select('subject_name, subject_type, subject_grade, tutee_id').eq('id', opportunity_id).single().execute()
+    opp_res = supabase.table('tutoring_opportunities').select('subject_name, subject_type, subject_grade, tutee_id, language').eq('id', opportunity_id).single().execute()
     if not opp_res.data:
         return jsonify({'error': 'Opportunity not found'}), 404
     subj_name = opp_res.data.get('subject_name')
@@ -226,6 +227,7 @@ def apply_to_opportunity(opportunity_id: str):
         'subject_name': subj_name,
         'subject_type': subj_type,
         'subject_grade': subj_grade,
+        'language': opp_res.data.get('language') or 'English',
         'opportunity_snapshot': opportunity_snapshot,
         'status': 'pending_tutee_scheduling'
     }).execute()

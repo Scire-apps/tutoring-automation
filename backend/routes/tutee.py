@@ -74,6 +74,7 @@ def create_tutoring_opportunity():
         'subject_name': data['subject_name'],
         'subject_type': data['subject_type'],
         'subject_grade': str(data['subject_grade']),
+        'language': (data.get('language') or 'English'),
         # Single-session flow: no availability at creation time
         'availability': None,
         'location_preference': data.get('location_preference'),

@@ -185,7 +185,7 @@ def list_open_opportunities():
         res = (
             supabase
             .table('tutoring_opportunities')
-            .select('*, tutee:tutees(id, first_name, last_name, email, school_id)')
+            .select('*, tutee:tutees(id, first_name, last_name, email, school_id, graduation_year)')
             .eq('status', 'open')
             .order('created_at')
             .execute()
@@ -281,7 +281,7 @@ def get_job(job_id: str):
     # Attach basic tutee info (email, name) for downstream uses like email
     try:
         if job.get('tutee_id'):
-            tutee_res = supabase.table('tutees').select('id, email, first_name, last_name').eq('id', job['tutee_id']).single().execute()
+            tutee_res = supabase.table('tutees').select('id, email, first_name, last_name, graduation_year').eq('id', job['tutee_id']).single().execute()
             if tutee_res.data:
                 job['tutee'] = tutee_res.data
     except Exception:

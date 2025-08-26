@@ -566,7 +566,15 @@ export default function OpportunitiesPage() {
                                         <p><span className="font-medium">Pronouns:</span> {opportunity.tutee_pronouns}</p>
                                       )}
                                       <p><span className="font-medium">Email:</span> {opportunity.tutee?.email || '—'}</p>
-                                      <p><span className="font-medium">Grade:</span> {opportunity.subject_grade ? `Grade ${opportunity.subject_grade}` : (opportunity.grade_level ? `Grade ${opportunity.grade_level}` : '—')}</p>
+                                      <p><span className="font-medium">Grade:</span> {(() => {
+                                        const gy = (opportunity.tutee?.graduation_year || opportunity.graduation_year);
+                                        if (gy) {
+                                          const current = new Date().getFullYear();
+                                          const g = 12 - (Number(gy) - current);
+                                          return isFinite(g) ? `Grade ${g}` : '—';
+                                        }
+                                        return '—';
+                                      })()}</p>
                                     </div>
                                   </div>
                                   <div>

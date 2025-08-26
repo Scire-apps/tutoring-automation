@@ -7,6 +7,7 @@ import { useAuth } from "@/app/providers";
 import api from "@/services/api";
 import Link from "next/link";
 import { TuteeLayout } from "@/components/tutee-layout";
+import { SubjectIcon } from "@/components/subject-icon";
 
 export default function TuteeDashboardPage() {
   const { user, isLoading } = useAuth();
@@ -231,11 +232,7 @@ export default function TuteeDashboardPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <div className="flex-shrink-0">
-                            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                              <span className="text-white font-medium">
-                                {(o.subject_name || "S").charAt(0)}
-                              </span>
-                            </div>
+                            <SubjectIcon subjectName={o.subject_name || "Subject"} size="md" />
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">

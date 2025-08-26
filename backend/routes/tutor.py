@@ -96,18 +96,25 @@ def accept_opportunity(opportunity_id: str):
     subj_name = opp.get('subject_name')
     subj_type = opp.get('subject_type')
     subj_grade = opp.get('subject_grade')
-    approval = (
+    # Approval: base subject name in approvals may be contained within opportunity subject_name (handles HL/SL, ELL suffixes)
+    approvals_res = (
         supabase
         .table('subject_approvals')
-        .select('id')
+        .select('*')
         .eq('tutor_id', tutor['id'])
-        .eq('subject_name', subj_name)
         .eq('subject_type', subj_type)
         .eq('subject_grade', str(subj_grade))
-        .single()
+        .eq('status', 'approved')
         .execute()
     )
-    if not approval.data:
+    opp_name_norm = (str(subj_name or '')).strip().lower()
+    approved = False
+    for a in (approvals_res.data or []):
+        base_name = (str((a or {}).get('subject_name') or '')).strip().lower()
+        if base_name and base_name in opp_name_norm:
+            approved = True
+            break
+    if not approved:
         return jsonify({'error': 'Not approved for this subject'}), 403
 
     # Create job (single-session, pending tutee scheduling)
@@ -204,17 +211,23 @@ def apply_to_opportunity(opportunity_id: str):
     subj_name = opp_res.data.get('subject_name')
     subj_type = opp_res.data.get('subject_type')
     subj_grade = str(opp_res.data.get('subject_grade'))
-    approval = (
+    approvals_res = (
         supabase.table('subject_approvals')
-        .select('id')
+        .select('*')
         .eq('tutor_id', tutor_id)
-        .eq('subject_name', subj_name)
         .eq('subject_type', subj_type)
         .eq('subject_grade', subj_grade)
-        .single()
+        .eq('status', 'approved')
         .execute()
     )
-    if not approval.data:
+    opp_name_norm = (str(subj_name or '')).strip().lower()
+    approved = False
+    for a in (approvals_res.data or []):
+        base_name = (str((a or {}).get('subject_name') or '')).strip().lower()
+        if base_name and base_name in opp_name_norm:
+            approved = True
+            break
+    if not approved:
         return jsonify({'error': 'Not approved for this subject'}), 403
 
     # Create job and move to pending tutee scheduling; snapshot the opportunity

@@ -39,7 +39,7 @@ export default function OpportunitiesPage() {
   const { user, userRole, signOut, isLoading: authLoading } = useAuth();
   const [opportunities, setOpportunities] = useState<TutoringOpportunity[]>([]);
   const [tutorData, setTutorData] = useState<TutorData | null>(null);
-  const [approvedSubjects, setApprovedSubjects] = useState<string[]>([]);
+  const [approvedSubjects, setApprovedSubjects] = useState<any[]>([]);
   const [tutorStatus, setTutorStatus] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,7 +117,7 @@ export default function OpportunitiesPage() {
           });
           if (!apprResp.ok) throw new Error('approvals failed');
           const apprJson = await apprResp.json();
-          const subjectTriples = apprJson.approved_subjects || [];
+          const subjectTriples = apprJson.approvals || [];
           setApprovedSubjects(subjectTriples);
         } catch (approvalErr) {
           console.error("Exception fetching subject approvals:", approvalErr);
@@ -494,7 +494,13 @@ export default function OpportunitiesPage() {
                           </td>
                           <td className="px-3 py-4 text-right text-sm font-medium">
                             <div className="flex items-center justify-end space-x-1">
-                              {approvedSubjects.some(a => a.subject_name === opportunity.subject_name && a.subject_type === opportunity.subject_type && String(a.subject_grade) === String(opportunity.subject_grade)) ? (
+                              {approvedSubjects.some(a => {
+                                const oppName = String(opportunity.subject_name || '').toLowerCase();
+                                const base = String(a.subject_name || '').toLowerCase();
+                                const typeOk = String(a.subject_type || '') === String(opportunity.subject_type || '');
+                                const gradeOk = String(a.subject_grade || '') === String(opportunity.subject_grade || '');
+                                return typeOk && gradeOk && base && oppName.includes(base);
+                              }) ? (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();

@@ -383,24 +383,9 @@ export default function OpportunitiesPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">
-                        Subject
-                      </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">
-                        Student
-                      </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0 hidden sm:table-cell">
-                        School
-                      </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0 hidden md:table-cell">
-                        Date
-                      </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0 hidden lg:table-cell">
-                        Time
-                      </th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">
-                        Actions
-                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">Subject</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">Student</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -448,50 +433,7 @@ export default function OpportunitiesPage() {
                               </div>
                             )}
                           </td>
-                          <td className="px-3 py-4 hidden sm:table-cell">
-                             <div className="text-sm text-gray-900 truncate">{tutorData?.school?.name || ""}</div>
-                          </td>
-                          <td className="px-3 py-4 hidden md:table-cell">
-                            <div className="text-sm text-gray-900">
-                              {opportunity.availability_date
-                                ? formatDate(opportunity.availability_date)
-                                : "Not specified"}
-                            </div>
-                          </td>
-                          <td className="px-3 py-4 hidden lg:table-cell">
-                            {opportunity.availability_start_time &&
-                            opportunity.availability_end_time ? (
-                              <div className="inline-flex items-center">
-                                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                  {formatTime(
-                                    opportunity.availability_start_time
-                                  )}
-                                </span>
-                                <svg
-                                  className="w-3 h-3 mx-1 text-gray-500"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M14 5l7 7m0 0l-7 7m7-7H3"
-                                  />
-                                </svg>
-                                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                  {formatTime(
-                                    opportunity.availability_end_time
-                                  )}
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="text-sm text-gray-500">
-                                Not specified
-                              </div>
-                            )}
-                          </td>
+                          
                           <td className="px-3 py-4 text-right text-sm font-medium">
                             <div className="flex items-center justify-end space-x-1">
                               {approvedSubjects.some(a => {
@@ -586,59 +528,7 @@ export default function OpportunitiesPage() {
                                       {opportunity.language && (<p><span className="font-medium">Language:</span> {opportunity.language}</p>)}
                                     </div>
                                   </div>
-                                  <div>
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">
-                                      Availability
-                                    </h4>
-                                    <div className="text-sm text-gray-600 space-y-1">
-                                      <p>
-                                        <span className="font-medium">
-                                          Date:
-                                        </span>{" "}
-                                        {opportunity.availability_date
-                                          ? formatDate(
-                                              opportunity.availability_date
-                                            )
-                                          : "Not specified"}
-                                      </p>
-                                      <p>
-                                        <span className="font-medium">
-                                          Time:
-                                        </span>
-                                      </p>
-                                      <div className="mt-2">
-                                        {opportunity.availability_formatted ? (
-                                          <span className="inline-flex items-center">
-                                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                              {formatTime(
-                                                opportunity.availability_start_time
-                                              )}
-                                            </span>
-                                            <svg
-                                              className="w-4 h-4 mx-1 text-gray-500"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                            >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth="2"
-                                                d="M14 5l7 7m0 0l-7 7m7-7H3"
-                                              />
-                                            </svg>
-                                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                              {formatTime(
-                                                opportunity.availability_end_time
-                                              )}
-                                            </span>
-                                          </span>
-                                        ) : (
-                                          "Not specified"
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
+                                  
                                 </div>
 
                                 <div className="pt-2 border-t border-gray-200">

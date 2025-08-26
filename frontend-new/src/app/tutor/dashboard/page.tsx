@@ -710,7 +710,7 @@ export default function TutorDashboard() {
                                     {job.scheduled_time ? (
                                       <p><span className="font-medium">Scheduled Time:</span> {formatTime(job.scheduled_time)}</p>
                                     ) : null}
-                                    <p><span className="font-medium">Status:</span> {job.status}</p>
+                                    {/* Status omitted here; shown in header badge */}
                                   </div>
                                 </div>
                               </div>

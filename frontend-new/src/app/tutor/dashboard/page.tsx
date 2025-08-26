@@ -707,6 +707,12 @@ export default function TutorDashboard() {
                                     <p><span className="font-medium">Subject:</span> {job.tutoring_opportunity?.subject_name ? `${job.tutoring_opportunity.subject_name} • ${job.tutoring_opportunity.subject_type} • Grade ${job.tutoring_opportunity.subject_grade}` : (job.subject_name ? `${job.subject_name} • ${job.subject_type} • Grade ${job.subject_grade}` : '')}</p>
                                     <p><span className="font-medium">Language:</span> {job.language || job.tutoring_opportunity?.language || 'English'}</p>
                                     <p><span className="font-medium">Location:</span> {job.tutoring_opportunity?.location_preference || job.location || '—'}</p>
+                                    {job.additional_notes || job.tutoring_opportunity?.additional_notes ? (
+                                      <p>
+                                        <span className="font-medium">Additional notes:</span>{' '}
+                                        <span className="whitespace-pre-wrap break-words">{job.additional_notes || job.tutoring_opportunity?.additional_notes}</span>
+                                      </p>
+                                    ) : null}
                                     {job.scheduled_time ? (
                                       <p><span className="font-medium">Scheduled Time:</span> {formatTime(job.scheduled_time)}</p>
                                     ) : null}

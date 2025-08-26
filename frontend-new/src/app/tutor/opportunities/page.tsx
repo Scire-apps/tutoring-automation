@@ -615,18 +615,20 @@ export default function OpportunitiesPage() {
                   </p>
                 </div>
               </div>
-              <div className="mt-5 flex justify-end gap-2">
+              <div className="mt-6 flex justify-end gap-3">
                 <button
-                  className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+                  className="group relative overflow-hidden px-4 py-2 rounded-lg border border-gray-200 text-gray-700 bg-white/60 backdrop-blur-sm transition-all duration-200 hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/40 active:translate-y-[1px]"
                   onClick={()=>{ setShowApplyInfo(false); router.push('/tutor/dashboard'); }}
                 >
-                  Close
+                  <span className="relative z-10">Close</span>
+                  <span className="absolute inset-0 -z-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-gray-50 via-white to-gray-50" />
                 </button>
                 <button
-                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow"
+                  className="group relative overflow-hidden px-4 py-2 rounded-lg bg-blue-600 text-white shadow transition-all duration-200 hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 active:translate-y-[1px]"
                   onClick={()=>{ setShowApplyInfo(false); router.push('/tutor/dashboard'); }}
                 >
-                  Got it
+                  <span className="relative z-10">Got it</span>
+                  <span className="absolute inset-0 -z-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-blue-500/20 via-white/10 to-blue-500/20" />
                 </button>
               </div>
             </div>

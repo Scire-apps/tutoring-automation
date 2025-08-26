@@ -784,6 +784,17 @@ export default function TutorDashboard() {
                                   : "Cancel"}
                               </button>
                             )}
+                            {job.status === "scheduled" && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowRecordingModalFor(job.id);
+                                }}
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-purple-600 bg-purple-100 hover:bg-purple-200 w-35 items-center justify-center h-10"
+                              >
+                                Upload Recording
+                              </button>
+                            )}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -928,17 +939,7 @@ export default function TutorDashboard() {
                                   Complete Session
                                 </button>
                               )}
-                              {job.status === "scheduled" && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowRecordingModalFor(job.id);
-                                  }}
-                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-purple-600 hover:bg-purple-700"
-                                >
-                                  Upload Recording Link
-                                </button>
-                              )}
+
                               {job.status === "awaiting_admin_verification" && (
                                 <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
                                   Pending Verification

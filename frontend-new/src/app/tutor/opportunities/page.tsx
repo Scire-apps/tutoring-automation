@@ -617,18 +617,24 @@ export default function OpportunitiesPage() {
               </div>
               <div className="mt-6 flex justify-end gap-3">
                 <button
-                  className="group relative overflow-hidden px-4 py-2 rounded-lg border border-gray-200 text-gray-700 bg-white/60 backdrop-blur-sm transition-all duration-200 hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/40 active:translate-y-[1px]"
+                  className="group relative overflow-hidden px-4 py-2 rounded-xl border border-gray-200 text-gray-700 bg-white/70 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500/40 active:translate-y-[1px]"
                   onClick={()=>{ setShowApplyInfo(false); router.push('/tutor/dashboard'); }}
                 >
-                  <span className="relative z-10">Close</span>
-                  <span className="absolute inset-0 -z-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-gray-50 via-white to-gray-50" />
+                  {/* dynamic glow border */}
+                  <span className="pointer-events-none absolute -inset-px rounded-[inherit] bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 opacity-60 group-hover:opacity-90"/>
+                  {/* shine sweep */}
+                  <span className="pointer-events-none absolute -left-1/2 top-0 h-full w-1/2 rotate-12 bg-white/50 blur-md transition-all duration-700 group-hover:left-[120%]"/>
+                  <span className="relative z-10 font-medium tracking-wide">Close</span>
                 </button>
                 <button
-                  className="group relative overflow-hidden px-4 py-2 rounded-lg bg-blue-600 text-white shadow transition-all duration-200 hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 active:translate-y-[1px]"
+                  className="group relative overflow-hidden px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-md transition-all duration-300 hover:shadow-xl hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/60 active:translate-y-[1px]"
                   onClick={()=>{ setShowApplyInfo(false); router.push('/tutor/dashboard'); }}
                 >
-                  <span className="relative z-10">Got it</span>
-                  <span className="absolute inset-0 -z-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-blue-500/20 via-white/10 to-blue-500/20" />
+                  {/* animated gradient aura */}
+                  <span className="pointer-events-none absolute -inset-px rounded-[inherit] bg-gradient-to-r from-blue-400/40 via-indigo-400/30 to-purple-400/40 blur opacity-60 group-hover:opacity-90"/>
+                  {/* sheen sweep */}
+                  <span className="pointer-events-none absolute -left-1/2 top-0 h-full w-1/2 rotate-12 bg-white/30 blur-md transition-all duration-700 group-hover:left-[120%]"/>
+                  <span className="relative z-10 font-semibold tracking-wide">Got it</span>
                 </button>
               </div>
             </div>

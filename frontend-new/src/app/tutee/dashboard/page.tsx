@@ -244,7 +244,7 @@ export default function TuteeDashboardPage() {
                                 {j.scheduled_time ? (
                                   <div><span className="font-medium">Scheduled:</span> {new Date(j.scheduled_time).toLocaleString()}</div>
                                 ) : null}
-                                <div><span className="font-medium">Status:</span> {j.status}</div>
+                                {/* Status omitted here; shown in header chip */}
                               </div>
                             </div>
                             <div>

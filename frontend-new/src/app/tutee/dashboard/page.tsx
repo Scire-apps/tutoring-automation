@@ -19,14 +19,9 @@ export default function TuteeDashboardPage() {
   const [allSubjects, setAllSubjects] = useState<string[]>([]);
   const [savingSubjects, setSavingSubjects] = useState(false);
 
-  // Helper function to get count of sessions waiting for availability
-  const getPendingAvailabilityCount = () => {
-    return data?.jobs?.filter((j: any) => j.status === 'pending_tutee_scheduling').length || 0;
-  };
-
   // Helper function to check if there are sessions waiting for availability
   const hasPendingAvailability = () => {
-    return getPendingAvailabilityCount() > 0;
+    return data?.jobs?.filter((j: any) => j.status === 'pending_tutee_scheduling').length > 0;
   };
 
   // On-demand job details enrichment
@@ -94,7 +89,7 @@ export default function TuteeDashboardPage() {
   }
 
   return (
-    <TuteeLayout pendingAvailabilityCount={getPendingAvailabilityCount()}>
+    <TuteeLayout>
       <div className="p-6 bg-white min-h-full">
         {/* Stats cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -273,7 +268,7 @@ export default function TuteeDashboardPage() {
             </h3>
             {hasPendingAvailability() && (
               <div className="bg-red-100 text-red-600 w-6 h-6 rounded-md text-xs font-medium flex items-center justify-center">
-                {getPendingAvailabilityCount()}
+                {data?.jobs?.filter((j: any) => j.status === 'pending_tutee_scheduling').length || 0}
               </div>
             )}
           </div>

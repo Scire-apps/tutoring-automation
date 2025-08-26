@@ -2,14 +2,14 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/app/providers";
+import api from "@/services/api";
 
 interface TuteeLayoutProps {
   children: React.ReactNode;
-  pendingAvailabilityCount?: number;
 }
 
 const navigation = [
@@ -59,13 +59,59 @@ const navigation = [
   },
 ];
 
-export function TuteeLayout({
-  children,
-  pendingAvailabilityCount = 0,
-}: TuteeLayoutProps) {
+export function TuteeLayout({ children }: TuteeLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingAvailabilityCount, setPendingAvailabilityCount] = useState(0);
+  const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
   const { user, signOut } = useAuth();
+
+  // Fix hydration mismatch by only showing notifications after client-side hydration
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Fetch notification data on component mount and periodically
+  useEffect(() => {
+    const fetchNotificationData = async () => {
+      if (!user) return;
+      
+      try {
+        const response = await api.getTuteeDashboard();
+        if (response?.jobs) {
+          const count = response.jobs.filter((j: any) => j.status === 'pending_tutee_scheduling').length;
+          setPendingAvailabilityCount(count);
+        }
+      } catch (error) {
+        console.error('Failed to fetch notification data:', error);
+      }
+    };
+
+    fetchNotificationData();
+    
+    // Refresh notifications every 30 seconds
+    const interval = setInterval(fetchNotificationData, 30000);
+    
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // Also refresh when pathname changes (user navigates)
+  useEffect(() => {
+    if (user) {
+      const fetchNotificationData = async () => {
+        try {
+          const response = await api.getTuteeDashboard();
+          if (response?.jobs) {
+            const count = response.jobs.filter((j: any) => j.status === 'pending_tutee_scheduling').length;
+            setPendingAvailabilityCount(count);
+          }
+        } catch (error) {
+          console.error('Failed to fetch notification data:', error);
+        }
+      };
+      fetchNotificationData();
+    }
+  }, [pathname, user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -137,6 +183,7 @@ export function TuteeLayout({
                     <span className="ml-3">{item.name}</span>
                   </div>
                   {item.name === "Dashboard" &&
+                    isClient &&
                     pendingAvailabilityCount > 0 && (
                       <div className="bg-red-600 text-white w-6 h-6 rounded-md text-xs font-bold flex items-center justify-center">
                         {pendingAvailabilityCount}

@@ -934,7 +934,7 @@ export default function TutorDashboard() {
                                     // disabled until a recording link is provided via modal
                                   }}
                                   disabled
-                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 opacity-50 cursor-not-allowed"
+                                  className="inline-flex items-center px-4 py-1.5 border border-transparent text-xs font-medium rounded-full h-10 text-green-600 bg-green-100  cursor-not-allowed"
                                 >
                                   Complete Session
                                 </button>
@@ -954,7 +954,7 @@ export default function TutorDashboard() {
                                     handleCancelJob(job.id, job.opportunity_id);
                                   }}
                                   disabled={cancellingJobId === job.id}
-                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 disabled:bg-red-300"
+                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-red-600 bg-red-100 hover:bg-red-700 disabled:bg-red-300"
                                 >
                                   {cancellingJobId === job.id
                                     ? "Cancelling..."

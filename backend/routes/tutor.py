@@ -130,6 +130,7 @@ def accept_opportunity(opportunity_id: str):
         'subject_grade': str(subj_grade),
         'language': opp.get('language') or 'English',
         'location': opp.get('location_preference'),
+        'additional_notes': opp.get('additional_notes'),
         'opportunity_snapshot': opportunity_snapshot,
         'status': 'pending_tutee_scheduling'
     }
@@ -211,7 +212,7 @@ def apply_to_opportunity(opportunity_id: str):
     opp_res = (
         supabase
         .table('tutoring_opportunities')
-        .select('subject_name, subject_type, subject_grade, tutee_id, language, location_preference')
+        .select('subject_name, subject_type, subject_grade, tutee_id, language, location_preference, additional_notes')
         .eq('id', opportunity_id)
         .single()
         .execute()
@@ -252,6 +253,7 @@ def apply_to_opportunity(opportunity_id: str):
         'subject_grade': subj_grade,
         'language': opp_res.data.get('language') or 'English',
         'location': opp_res.data.get('location_preference'),
+        'additional_notes': opp_res.data.get('additional_notes'),
         'opportunity_snapshot': opportunity_snapshot,
         'status': 'pending_tutee_scheduling'
     }).execute()

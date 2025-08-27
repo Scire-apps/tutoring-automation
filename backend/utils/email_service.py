@@ -216,7 +216,7 @@ class EmailService:
                 </a>
             </div>
             
-            <p><strong>Important:</strong> Please set your availability within 48 hours to keep your tutoring request active.</p>
+            <p><strong>Important:</strong> Please set your availability ASAP.</p>
             
             <p>If you have any questions or need assistance, please don't hesitate to contact us.</p>
             
@@ -244,7 +244,7 @@ class EmailService:
         
         Set Your Availability: {dashboard_url}
         
-        Important: Please set your availability within 48 hours to keep your tutoring request active.
+        Important: Please set your availability ASAP.
         
         If you have any questions or need assistance, please don't hesitate to contact us.
         
@@ -301,7 +301,7 @@ class EmailService:
                 </a>
             </div>
             
-            <p><strong>Important:</strong> Please schedule the session within 48 hours to keep the tutoring request active.</p>
+            <p><strong>Important:</strong> Please schedule the session ASAP.</p>
             
             <p>If you have any questions or need assistance, please don't hesitate to contact us.</p>
             
@@ -330,7 +330,7 @@ class EmailService:
         
         Schedule Session: {dashboard_url}
         
-        Important: Please schedule the session within 48 hours to keep the tutoring request active.
+        Important: Please schedule the session ASAP.
         
         If you have any questions or need assistance, please don't hesitate to contact us.
         

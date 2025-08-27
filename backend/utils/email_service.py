@@ -72,6 +72,8 @@ class EmailService:
         location = session_details.get("location", "")
         tutor_name = session_details.get("tutor_name", "")
         tutee_name = session_details.get("tutee_name", "")
+        tutee_grade = session_details.get("tutee_grade", "")
+        duration_minutes = session_details.get("duration_minutes", 60)
         
         # Create email subject
         email_subject = f"Tutoring Session Confirmation: {subject_name} on {date}"
@@ -87,8 +89,9 @@ class EmailService:
                 <li><strong>Subject:</strong> {subject_name}</li>
                 <li><strong>Date:</strong> {date}</li>
                 <li><strong>Time:</strong> {time}</li>
+                <li><strong>Duration:</strong> {duration_minutes} minutes</li>
                 <li><strong>Location:</strong> {location}</li>
-                <li><strong>Student:</strong> {tutee_name}</li>
+                <li><strong>Student:</strong> {tutee_name}{' (Grade ' + tutee_grade + ')' if tutee_grade else ''}</li>
                 <li><strong>Student Email:</strong> {tutee_email}</li>
             </ul>
             <p>Please remember to record your session and upload it to the platform to receive volunteer hours credit.</p>
@@ -109,8 +112,9 @@ class EmailService:
         Subject: {subject_name}
         Date: {date}
         Time: {time}
+        Duration: {duration_minutes} minutes
         Location: {location}
-        Student: {tutee_name}
+        Student: {tutee_name}{' (Grade ' + tutee_grade + ')' if tutee_grade else ''}
         Student Email: {tutee_email}
         
         Please remember to record your session and upload it to the platform to receive volunteer hours credit.
@@ -131,6 +135,7 @@ class EmailService:
                 <li><strong>Subject:</strong> {subject_name}</li>
                 <li><strong>Date:</strong> {date}</li>
                 <li><strong>Time:</strong> {time}</li>
+                <li><strong>Duration:</strong> {duration_minutes} minutes</li>
                 <li><strong>Location:</strong> {location}</li>
                 <li><strong>Tutor:</strong> {tutor_name}</li>
             </ul>
@@ -151,6 +156,7 @@ class EmailService:
         Subject: {subject_name}
         Date: {date}
         Time: {time}
+        Duration: {duration_minutes} minutes
         Location: {location}
         Tutor: {tutor_name}
         
@@ -164,6 +170,176 @@ class EmailService:
         tutee_success = self.send_email(tutee_email, email_subject, tutee_html, tutee_text)
         
         return tutor_success and tutee_success
+
+    def send_availability_notification(self, tutee_email: str, tutee_name: str, 
+                                     tutor_name: str, subject_name: str, 
+                                     dashboard_url: str) -> bool:
+        """
+        Send availability notification email to tutee when tutor applies for opportunity
+        
+        Args:
+            tutee_email: Tutee's email address
+            tutee_name: Tutee's full name
+            tutor_name: Tutor's full name
+            subject_name: Subject name for the tutoring session
+            dashboard_url: URL to the tutee dashboard
+            
+        Returns:
+            bool: True if email was sent successfully, False otherwise
+        """
+        # Create email subject
+        email_subject = f"Tutor Found for {subject_name} - Please Set Your Availability"
+        
+        # Create HTML content
+        html_content = f"""
+        <html>
+        <body>
+            <h2>Great News! A Tutor Has Applied for Your Request</h2>
+            <p>Hello {tutee_name},</p>
+            <p>We're excited to let you know that a tutor has applied for your tutoring request in <strong>{subject_name}</strong>!</p>
+            
+            <h3>Next Steps:</h3>
+            <p>To proceed with scheduling your tutoring session, please:</p>
+            <ol>
+                <li>Log into your tutoring dashboard</li>
+                <li>Set your availability for the upcoming week</li>
+                <li>The tutor will then finalize the schedule based on your preferences</li>
+            </ol>
+            
+            <p><strong>Tutor:</strong> {tutor_name}</p>
+            <p><strong>Subject:</strong> {subject_name}</p>
+            
+            <div style="margin: 30px 0; text-align: center;">
+                <a href="{dashboard_url}" 
+                   style="background-color: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                    Set Your Availability
+                </a>
+            </div>
+            
+            <p><strong>Important:</strong> Please set your availability within 48 hours to keep your tutoring request active.</p>
+            
+            <p>If you have any questions or need assistance, please don't hesitate to contact us.</p>
+            
+            <p>Best regards,<br>The Tutoring Team</p>
+        </body>
+        </html>
+        """
+        
+        # Create text content
+        text_content = f"""
+        Great News! A Tutor Has Applied for Your Request
+        
+        Hello {tutee_name},
+        
+        We're excited to let you know that a tutor has applied for your tutoring request in {subject_name}!
+        
+        Next Steps:
+        To proceed with scheduling your tutoring session, please:
+        1. Log into your tutoring dashboard
+        2. Set your availability for the upcoming week
+        3. The tutor will then finalize the schedule based on your preferences
+        
+        Tutor: {tutor_name}
+        Subject: {subject_name}
+        
+        Set Your Availability: {dashboard_url}
+        
+        Important: Please set your availability within 48 hours to keep your tutoring request active.
+        
+        If you have any questions or need assistance, please don't hesitate to contact us.
+        
+        Best regards,
+        The Tutoring Team
+        """
+        
+        # Send email
+        return self.send_email(tutee_email, email_subject, html_content, text_content)
+
+    def send_tutor_scheduling_notification(self, tutor_email: str, tutor_name: str, 
+                                         tutee_name: str, subject_name: str, 
+                                         dashboard_url: str) -> bool:
+        """
+        Send scheduling notification email to tutor when tutee sets availability
+        
+        Args:
+            tutor_email: Tutor's email address
+            tutor_name: Tutor's full name
+            tutee_name: Tutee's full name
+            subject_name: Subject name for the tutoring session
+            dashboard_url: URL to the tutor dashboard
+            
+        Returns:
+            bool: True if email was sent successfully, False otherwise
+        """
+        # Create email subject
+        email_subject = f"Student Has Set Availability for {subject_name} - Please Schedule Session"
+        
+        # Create HTML content
+        html_content = f"""
+        <html>
+        <body>
+            <h2>Great! Your Student Has Set Their Availability</h2>
+            <p>Hello {tutor_name},</p>
+            <p>Great news! Your student has set their availability for your tutoring session in <strong>{subject_name}</strong>.</p>
+            
+            <h3>Next Steps:</h3>
+            <p>To finalize the tutoring session, please:</p>
+            <ol>
+                <li>Log into your tutoring dashboard</li>
+                <li>Review the student's available time slots</li>
+                <li>Choose the best time that works for both of you</li>
+                <li>Confirm the session schedule</li>
+            </ol>
+            
+            <p><strong>Student:</strong> {tutee_name}</p>
+            <p><strong>Subject:</strong> {subject_name}</p>
+            
+            <div style="margin: 30px 0; text-align: center;">
+                <a href="{dashboard_url}" 
+                   style="background-color: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                    Schedule Session
+                </a>
+            </div>
+            
+            <p><strong>Important:</strong> Please schedule the session within 48 hours to keep the tutoring request active.</p>
+            
+            <p>If you have any questions or need assistance, please don't hesitate to contact us.</p>
+            
+            <p>Thank you for volunteering!<br>The Tutoring Team</p>
+        </body>
+        </html>
+        """
+        
+        # Create text content
+        text_content = f"""
+        Great! Your Student Has Set Their Availability
+        
+        Hello {tutor_name},
+        
+        Great news! Your student has set their availability for your tutoring session in {subject_name}.
+        
+        Next Steps:
+        To finalize the tutoring session, please:
+        1. Log into your tutoring dashboard
+        2. Review the student's available time slots
+        3. Choose the best time that works for both of you
+        4. Confirm the session schedule
+        
+        Student: {tutee_name}
+        Subject: {subject_name}
+        
+        Schedule Session: {dashboard_url}
+        
+        Important: Please schedule the session within 48 hours to keep the tutoring request active.
+        
+        If you have any questions or need assistance, please don't hesitate to contact us.
+        
+        Thank you for volunteering!
+        The Tutoring Team
+        """
+        
+        # Send email
+        return self.send_email(tutor_email, email_subject, html_content, text_content)
 
 
 class SMTPEmailService(EmailService):

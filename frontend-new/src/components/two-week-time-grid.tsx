@@ -170,8 +170,15 @@ export function TwoWeekTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30,
                         (selected
                           ? 'bg-blue-500/80'
                           : allowedHere
-                            ? 'bg-green-50 hover:bg-green-100'
+                            ? 'hover:bg-green-200'
                             : 'bg-gray-100 cursor-not-allowed')
+                      }
+                      style={
+                        selected
+                          ? {}
+                          : allowedHere
+                            ? { backgroundColor: '#00ff44' }
+                            : {}
                       }
                       title={`${date} ${t}`}
                     />

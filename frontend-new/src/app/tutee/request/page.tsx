@@ -32,6 +32,12 @@ export default function TuteeRequestPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Subject editing popup state
+  const [editingSubjects, setEditingSubjects] = useState(false);
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [allSubjects, setAllSubjects] = useState<string[]>([]);
+  const [savingSubjects, setSavingSubjects] = useState(false);
+
   useEffect(() => {
     if (isLoading) return;
     if (!user) {
@@ -53,6 +59,8 @@ export default function TuteeRequestPage() {
         const j = await resp.json();
         const mySubjects = Array.isArray(j.subjects) ? j.subjects : [];
         setSubjectNames(mySubjects);
+        setSubjects(mySubjects);
+        setAllSubjects(Array.isArray(j.all_subjects) ? j.all_subjects : []);
         // Prefill grade based on graduation year if backend sent it in separate endpoint; for now, keep manual grade select
       } catch {}
     })();
@@ -98,7 +106,13 @@ export default function TuteeRequestPage() {
               <select
                 className="mt-1 border rounded px-3 py-2 w-full"
                 value={subjectName}
-                onChange={(e) => setSubjectName(e.target.value)}
+                onChange={(e) => {
+                  if (e.target.value === "EDIT_COURSES") {
+                    setEditingSubjects(true);
+                  } else {
+                    setSubjectName(e.target.value);
+                  }
+                }}
                 required
               >
                 <option value="">Select...</option>
@@ -107,6 +121,12 @@ export default function TuteeRequestPage() {
                     {s}
                   </option>
                 ))}
+                <option
+                  value="EDIT_COURSES"
+                  className="text-blue-600 font-medium"
+                >
+                  Edit my courses
+                </option>
               </select>
             </div>
             <div>
@@ -229,6 +249,123 @@ export default function TuteeRequestPage() {
           </button>
         </form>
       </div>
+      {editingSubjects && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setEditingSubjects(false)}
+          ></div>
+          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold mb-2">Edit My Subjects</h3>
+            <div className="space-y-2 mb-3">
+              {subjects.map((s, idx) => {
+                // compute options that exclude already chosen values (except current row)
+                const chosen = new Set(
+                  subjects.filter((_, i) => i !== idx && !!subjects[i])
+                );
+                const options = allSubjects.filter((n) => !chosen.has(n));
+                return (
+                  <div key={idx} className="flex gap-2">
+                    <select
+                      className="flex-1 border rounded px-3 py-2"
+                      value={s}
+                      onChange={(e) => {
+                        const next = subjects.slice();
+                        next[idx] = e.target.value;
+                        setSubjects(next);
+                      }}
+                    >
+                      <option value="">Select...</option>
+                      {options.map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = subjects.slice();
+                        next.splice(idx, 1);
+                        setSubjects(next);
+                      }}
+                      className="px-3 py-2 border rounded"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex justify-between">
+              <button
+                type="button"
+                disabled={subjects.length >= 10 || subjects.some((s) => !s)}
+                onClick={() =>
+                  subjects.length < 10 &&
+                  !subjects.some((s) => !s) &&
+                  setSubjects([...subjects, ""])
+                }
+                className="px-3 py-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add course
+              </button>
+              <div className="flex gap-2">
+                <button
+                  className="px-3 py-2 border rounded"
+                  onClick={() => setEditingSubjects(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-3 py-2 bg-blue-600 text-white rounded"
+                  disabled={savingSubjects}
+                  onClick={async () => {
+                    try {
+                      setSavingSubjects(true);
+                      const apiBase = process.env.NEXT_PUBLIC_API_URL as string;
+                      const {
+                        data: { session },
+                      } = await (
+                        await import("@/services/supabase")
+                      ).supabase.auth.getSession();
+                      const resp = await fetch(
+                        `${apiBase}/api/tutee/subjects`,
+                        {
+                          method: "PUT",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${
+                              session?.access_token ?? ""
+                            }`,
+                          },
+                          body: JSON.stringify({
+                            subjects: subjects.filter(Boolean),
+                          }),
+                        }
+                      );
+                      if (!resp.ok) {
+                        const j = await resp.json().catch(() => ({}));
+                        throw new Error(j.error || "Failed to update");
+                      }
+                      // Update the subject names in the dropdown
+                      const updatedSubjects = subjects.filter(Boolean);
+                      setSubjectNames(updatedSubjects);
+                      setEditingSubjects(false);
+                    } catch (e) {
+                      // Could show toast
+                    } finally {
+                      setSavingSubjects(false);
+                    }
+                  }}
+                >
+                  {savingSubjects ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </TuteeLayout>
   );
 }

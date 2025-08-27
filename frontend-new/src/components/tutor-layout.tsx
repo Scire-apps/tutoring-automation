@@ -2,10 +2,11 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/app/providers";
+import apiService from "@/services/api";
 
 interface TutorLayoutProps {
   children: React.ReactNode;
@@ -60,8 +61,57 @@ const navigation = [
 
 export function TutorLayout({ children }: TutorLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingSchedulingCount, setPendingSchedulingCount] = useState(0);
+  const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
   const { user, signOut } = useAuth();
+
+  // Fix hydration mismatch by only showing notifications after client-side hydration
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Fetch notification data on component mount and periodically
+  useEffect(() => {
+    const fetchNotificationData = async () => {
+      if (!user) return;
+      
+      try {
+        const response = await apiService.getTutorDashboard();
+        if (response?.jobs) {
+          const count = response.jobs.filter((j: any) => j.status === 'pending_tutor_scheduling').length;
+          setPendingSchedulingCount(count);
+        }
+      } catch (error) {
+        console.error('Failed to fetch tutor notification data:', error);
+      }
+    };
+
+    fetchNotificationData();
+    
+    // Refresh notifications every 30 seconds
+    const interval = setInterval(fetchNotificationData, 30000);
+    
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // Also refresh when pathname changes (user navigates)
+  useEffect(() => {
+    if (user) {
+      const fetchNotificationData = async () => {
+        try {
+          const response = await apiService.getTutorDashboard();
+          if (response?.jobs) {
+            const count = response.jobs.filter((j: any) => j.status === 'pending_tutor_scheduling').length;
+            setPendingSchedulingCount(count);
+          }
+        } catch (error) {
+          console.error('Failed to fetch tutor notification data:', error);
+        }
+      };
+      fetchNotificationData();
+    }
+  }, [pathname, user]);
 
   const handleSignOut = async () => {
     console.log("Sidebar: Starting sign out...");
@@ -126,15 +176,24 @@ export function TutorLayout({ children }: TutorLayoutProps) {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  className={`flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     isActive
                       ? "bg-blue-100 text-blue-700"
                       : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  {item.icon}
-                  <span className="ml-3">{item.name}</span>
+                  <div className="flex items-center">
+                    {item.icon}
+                    <span className="ml-3">{item.name}</span>
+                  </div>
+                  {item.name === "Dashboard" &&
+                    isClient &&
+                    pendingSchedulingCount > 0 && (
+                      <div className="bg-red-600 text-white w-6 h-6 rounded-md text-xs font-bold flex items-center justify-center">
+                        {pendingSchedulingCount}
+                      </div>
+                    )}
                 </Link>
               );
             })}

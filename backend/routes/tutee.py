@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 import os
 from utils.auth import require_auth
 from utils.db import get_supabase_client
+from utils.email_service import get_email_service
 
 tutee_bp = Blueprint('tutee', __name__)
 
@@ -217,6 +218,32 @@ def set_tutee_availability(job_id: str):
     )
     if not upd.data:
         return jsonify({'error': 'Failed to save availability'}), 500
+
+    # Get tutor and tutee information for email notification
+    job_details = supabase.table('tutoring_jobs').select('tutor_id, subject_name').eq('id', job_id).single().execute()
+    if job_details.data:
+        tutor_info = supabase.table('tutors').select('email, first_name, last_name').eq('id', job_details.data.get('tutor_id')).single().execute()
+        tutee_info = supabase.table('tutees').select('first_name, last_name').eq('id', tutee_id).single().execute()
+        
+        # Send email notification to tutor
+        if tutor_info.data and tutee_info.data:
+            email_service = get_email_service()
+            tutor_name = f"{tutor_info.data.get('first_name', '')} {tutor_info.data.get('last_name', '')}".strip()
+            tutee_name = f"{tutee_info.data.get('first_name', '')} {tutee_info.data.get('last_name', '')}".strip()
+            tutor_email = tutor_info.data.get('email')
+            subject_name = job_details.data.get('subject_name')
+            
+            # Construct dashboard URL (you may need to adjust this based on your frontend URL)
+            dashboard_url = f"{os.environ.get('FRONTEND_URL', 'https://your-app.vercel.app')}/tutor/dashboard"
+            
+            # Send scheduling notification email
+            email_service.send_tutor_scheduling_notification(
+                tutor_email=tutor_email,
+                tutor_name=tutor_name,
+                tutee_name=tutee_name,
+                subject_name=subject_name,
+                dashboard_url=dashboard_url
+            )
 
     return jsonify({'message': 'Availability saved', 'job': upd.data[0]}), 200
 

@@ -166,40 +166,8 @@ export default function SchedulingPage() {
         throw new Error(j.error || j.details || "Failed to schedule");
       }
 
-      // Send session confirmation email with single date/time (best-effort)
-      try {
-        await apiService.sendSessionConfirmation(
-          // Tutor email
-          user?.email || "",
-          // Tutee email: prefer fetched job.tutee.email, fallback to snapshot
-          (job as any)?.tutee?.email || job?.tutoring_opportunity?.email || "",
-          {
-            subject: `${job?.tutoring_opportunity?.subject_name || ""} • ${
-              job?.tutoring_opportunity?.subject_type || ""
-            } • Grade ${job?.tutoring_opportunity?.subject_grade || ""}`.trim(),
-            location: job?.tutoring_opportunity?.location_preference || "",
-            tutor_name:
-              user?.user_metadata?.full_name ||
-              `${user?.user_metadata?.first_name || ""} ${
-                user?.user_metadata?.last_name || ""
-              }`.trim() ||
-              user?.email?.split("@")[0] ||
-              "Tutor",
-            tutee_name:
-              `${(job as any)?.tutee?.first_name ?? ""} ${
-                (job as any)?.tutee?.last_name ?? ""
-              }`.trim() ||
-              `${job?.tutoring_opportunity?.tutee_first_name ?? ""} ${
-                job?.tutoring_opportunity?.tutee_last_name ?? ""
-              }`.trim(),
-            date: pickedDate,
-            time: start,
-          } as any,
-          jobId
-        );
-      } catch (e) {
-        /* non-fatal */
-      }
+      // Session confirmation email is now automatically sent by the backend
+      // No need to manually send it from the frontend
 
       router.push("/tutor/dashboard?scheduled=success");
     } catch (err: any) {

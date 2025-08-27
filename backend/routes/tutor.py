@@ -317,49 +317,71 @@ def apply_to_opportunity(opportunity_id: str):
 @require_auth
 def get_job(job_id: str):
     """Get job details with opportunity for the authenticated tutor.
-    Falls back to awaiting_verification_jobs when not found in tutoring_jobs."""
+    Falls back to awaiting_verification_jobs when not found in tutoring_jobs,
+    and avoids raising on empty results from PostgREST."""
     supabase = get_supabase_client()
     tutor_res = supabase.table('tutors').select('id').eq('auth_id', request.user_id).single().execute()
     if not tutor_res.data:
         return jsonify({'error': 'Tutor not found'}), 404
     tutor_id = tutor_res.data['id']
 
-    # First, try active jobs table
-    job_res = supabase.table('tutoring_jobs').select('*').eq('id', job_id).eq('tutor_id', tutor_id).single().execute()
-    if job_res.data:
-        job = job_res.data
-        if job.get('opportunity_snapshot'):
-            job['tutoring_opportunity'] = job['opportunity_snapshot']
-        else:
-            job['tutoring_opportunity'] = None
-        # Attach tutee info
-        try:
-            if job.get('tutee_id'):
-                tutee_res = supabase.table('tutees').select('id, email, first_name, last_name, graduation_year').eq('id', job['tutee_id']).single().execute()
-                if tutee_res.data:
-                    job['tutee'] = tutee_res.data
-        except Exception:
-            pass
-        return jsonify({'job': job}), 200
+    job = None
 
-    # If not found, try awaiting verification jobs (post-completion pre-admin verification)
-    avj_res = supabase.table('awaiting_verification_jobs').select('*').eq('id', job_id).eq('tutor_id', tutor_id).single().execute()
-    if not avj_res.data:
+    # Try active jobs first; suppress PGRST116 on no rows
+    try:
+        job_res = (
+            supabase
+            .table('tutoring_jobs')
+            .select('*')
+            .eq('id', job_id)
+            .eq('tutor_id', tutor_id)
+            .single()
+            .execute()
+        )
+        if job_res and job_res.data:
+            job = job_res.data
+    except Exception:
+        job = None
+
+    # Fallback to awaiting_verification_jobs
+    if not job:
+        try:
+            avj_res = (
+                supabase
+                .table('awaiting_verification_jobs')
+                .select('*')
+                .eq('id', job_id)
+                .eq('tutor_id', tutor_id)
+                .single()
+                .execute()
+            )
+            if avj_res and avj_res.data:
+                job = dict(avj_res.data)
+                job['status'] = 'awaiting_admin_verification'
+        except Exception:
+            job = None
+
+    if not job:
         return jsonify({'error': 'Job not found'}), 404
 
-    job = dict(avj_res.data)
-    # Normalize fields to align with tutoring_jobs-based UI
-    job['status'] = 'awaiting_admin_verification'
+    # Provide a synthetic 'tutoring_opportunity' from snapshot if available
     if job.get('opportunity_snapshot'):
         job['tutoring_opportunity'] = job['opportunity_snapshot']
     else:
         job['tutoring_opportunity'] = None
 
-    # Attach tutee info
+    # Attach basic tutee info (email, name, graduation_year)
     try:
         if job.get('tutee_id'):
-            tutee_res = supabase.table('tutees').select('id, email, first_name, last_name, graduation_year').eq('id', job['tutee_id']).single().execute()
-            if tutee_res.data:
+            tutee_res = (
+                supabase
+                .table('tutees')
+                .select('id, email, first_name, last_name, graduation_year')
+                .eq('id', job['tutee_id'])
+                .single()
+                .execute()
+            )
+            if tutee_res and tutee_res.data:
                 job['tutee'] = tutee_res.data
     except Exception:
         pass

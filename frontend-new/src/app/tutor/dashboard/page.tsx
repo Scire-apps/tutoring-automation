@@ -272,7 +272,7 @@ export default function TutorDashboard() {
             status: a.status,
             approved_at: a.approved_at,
           }));
-          setSubjectApprovals(approvals);
+        setSubjectApprovals(approvals);
         } catch (e) {
           console.error("Error loading approvals:", e);
           setSubjectApprovals([]);
@@ -313,7 +313,7 @@ export default function TutorDashboard() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/tutor/jobs/${jobId}/cancel`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
         }
       );
 
@@ -512,8 +512,8 @@ export default function TutorDashboard() {
                       : "bg-red-100 text-red-800"
                   }`}
                 >
-                  {tutorData?.status === "active"
-                    ? "Active Tutor"
+              {tutorData?.status === "active"
+                ? "Active Tutor"
                     : tutorData?.status === "pending"
                     ? "Pending Approval"
                     : tutorData?.status === "suspended"
@@ -712,8 +712,8 @@ export default function TutorDashboard() {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
               <h3 className="text-lg font-medium text-gray-900">
-                Active Tutoring Jobs
-              </h3>
+              Active Tutoring Jobs
+            </h3>
               {activeJobs.filter(
                 (j: any) => j.status === "pending_tutor_scheduling"
               ).length > 0 && (
@@ -726,30 +726,30 @@ export default function TutorDashboard() {
                 </div>
               )}
             </div>
-            {activeJobs.length > 0 ? (
+              {activeJobs.length > 0 ? (
               <div className="bg-white border-2 border-gray-100 overflow-hidden sm:rounded-md">
-                <ul className="divide-y divide-gray-200">
-                  {activeJobs.map((job) => (
-                    <li key={job.id}>
-                      <div
-                        className="px-4 py-4 sm:px-6 cursor-pointer"
-                        onClick={() => {
-                          const newExpandedJobs = new Set(expandedJobs);
-                          if (newExpandedJobs.has(job.id)) {
-                            newExpandedJobs.delete(job.id);
-                          } else {
-                            newExpandedJobs.add(job.id);
-                          }
-                          setExpandedJobs(newExpandedJobs);
+                  <ul className="divide-y divide-gray-200">
+                    {activeJobs.map((job) => (
+                      <li key={job.id}>
+                        <div
+                          className="px-4 py-4 sm:px-6 cursor-pointer"
+                          onClick={() => {
+                            const newExpandedJobs = new Set(expandedJobs);
+                            if (newExpandedJobs.has(job.id)) {
+                              newExpandedJobs.delete(job.id);
+                            } else {
+                              newExpandedJobs.add(job.id);
+                            }
+                            setExpandedJobs(newExpandedJobs);
                           if (!expandedJobs.has(job.id)) {
                             // fetch details when expanding
                             loadJobDetails(job.id);
                           }
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0">
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0">
                               <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
                                 <Image
                                   src={`/${getRandomFlowerIcon(job.id)}`}
@@ -758,10 +758,10 @@ export default function TutorDashboard() {
                                   height={40}
                                   className="w-full h-full object-cover"
                                 />
+                                </div>
                               </div>
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">
                                 {job.tutoring_opportunity?.subject_name
                                   ? `${job.tutoring_opportunity.subject_name} • ${job.tutoring_opportunity.subject_type} • Grade ${job.tutoring_opportunity.subject_grade}`
                                   : job.tutoring_opportunity?.subject?.name ||
@@ -769,7 +769,7 @@ export default function TutorDashboard() {
                                 {job.tutoring_opportunity?.tutee
                                   ? ` - ${job.tutoring_opportunity.tutee.first_name} ${job.tutoring_opportunity.tutee.last_name}`
                                   : ""}
-                              </div>
+                                </div>
                               <div className="text-sm text-gray-500 flex items-center gap-2">
                                 <span>
                                   {job.tutoring_opportunity
@@ -788,27 +788,31 @@ export default function TutorDashboard() {
                                       : "bg-yellow-100 text-yellow-800"
                                   }`}
                                 >
-                                  {job.status === "pending_tutee_scheduling"
-                                    ? "Waiting for Tutee to Schedule"
-                                    : job.status === "pending_tutor_scheduling"
-                                    ? "Waiting for Tutor (You) To Schedule"
-                                    : job.status}
+                                  {
+                                    job.status === "pending_tutee_scheduling"
+                                      ? "Waiting for Tutee to Schedule"
+                                      : job.status === "pending_tutor_scheduling"
+                                      ? "Waiting for Tutor (You) To Schedule"
+                                      : job.status === "awaiting_admin_verification"
+                                      ? "Awaiting Verification. You will recieve your hours shortly"
+                                      : job.status
+                                  }
                                 </span>
-                              </div>
-                              {job.scheduled_time ? (
-                                <div className="text-xs text-gray-400 mt-1">
-                                  Scheduled: {formatTime(job.scheduled_time)}
                                 </div>
-                              ) : (
-                                <div className="text-xs text-gray-400 mt-1">
+                                {job.scheduled_time ? (
+                                  <div className="text-xs text-gray-400 mt-1">
+                                    Scheduled: {formatTime(job.scheduled_time)}
+                                  </div>
+                                ) : (
+                                  <div className="text-xs text-gray-400 mt-1">
                                   {job.finalized_schedule
                                     ? "Weekly schedule set"
                                     : "No weekly schedule yet"}
-                                </div>
-                              )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2">
                             {/* Action buttons moved from expanded section */}
                             {job.status === "pending_tutor_scheduling" && (
                               <button
@@ -846,56 +850,56 @@ export default function TutorDashboard() {
                                 Upload Recording
                               </button>
                             )}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const newExpandedJobs = new Set(expandedJobs);
-                                if (newExpandedJobs.has(job.id)) {
-                                  newExpandedJobs.delete(job.id);
-                                } else {
-                                  newExpandedJobs.add(job.id);
-                                }
-                                setExpandedJobs(newExpandedJobs);
-                              }}
-                              className="text-gray-400 hover:text-gray-600"
-                            >
-                              <svg
-                                className={`w-5 h-5 transform transition-transform ${
-                                  expandedJobs.has(job.id) ? "rotate-180" : ""
-                                }`}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newExpandedJobs = new Set(expandedJobs);
+                                  if (newExpandedJobs.has(job.id)) {
+                                    newExpandedJobs.delete(job.id);
+                                  } else {
+                                    newExpandedJobs.add(job.id);
+                                  }
+                                  setExpandedJobs(newExpandedJobs);
+                                }}
+                                className="text-gray-400 hover:text-gray-600"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M19 9l-7 7-7-7"
-                                />
-                              </svg>
-                            </button>
+                                <svg
+                                  className={`w-5 h-5 transform transition-transform ${
+                                    expandedJobs.has(job.id) ? "rotate-180" : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M19 9l-7 7-7-7"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Expanded details */}
-                        {expandedJobs.has(job.id) && (
+                          {/* Expanded details */}
+                          {expandedJobs.has(job.id) && (
                           <div className="mt-4 pt-4 border-t border-gray-100">
-                            <div className="grid grid-cols-1 gap-4">
-                              <div>
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">
-                                  Tutee Details
-                                </h4>
-                                <div className="text-sm text-gray-600 space-y-1">
-                                  <p>
-                                    <span className="font-medium">Name:</span>{" "}
+                              <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                  <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                    Tutee Details
+                                  </h4>
+                                  <div className="text-sm text-gray-600 space-y-1">
+                                    <p>
+                                      <span className="font-medium">Name:</span>{" "}
                                     {job.tutoring_opportunity?.tutee_name ||
                                       (job.tutee?.first_name &&
                                       job.tutee?.last_name
                                         ? `${job.tutee.first_name} ${job.tutee.last_name}`
                                         : "—")}
-                                  </p>
-                                  <p>
+                                    </p>
+                                    <p>
                                     <span className="font-medium">Email:</span>{" "}
                                     {job.tutoring_opportunity?.tutee_email ||
                                       job.tutee?.email ||
@@ -916,15 +920,15 @@ export default function TutorDashboard() {
                                       }
                                       return "—";
                                     })()}
-                                  </p>
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                              <div>
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">
-                                  Session Details
-                                </h4>
-                                <div className="text-sm text-gray-600 space-y-1">
-                                  <p>
+                                <div>
+                                  <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                    Session Details
+                                  </h4>
+                                  <div className="text-sm text-gray-600 space-y-1">
+                                    <p>
                                     <span className="font-medium">
                                       Subject:
                                     </span>{" "}
@@ -933,11 +937,11 @@ export default function TutorDashboard() {
                                       : job.subject_name
                                       ? `${job.subject_name} • ${job.subject_type} • Grade ${job.subject_grade}`
                                       : ""}
-                                  </p>
-                                  <p>
-                                    <span className="font-medium">
+                                    </p>
+                                    <p>
+                                      <span className="font-medium">
                                       Language:
-                                    </span>{" "}
+                                      </span>{" "}
                                     {job.language ||
                                       job.tutoring_opportunity?.language ||
                                       "English"}
@@ -973,29 +977,29 @@ export default function TutorDashboard() {
                                     </p>
                                   ) : null}
                                   {/* Status omitted here; shown in header badge */}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              {job.status === "scheduled" && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    // disabled until a recording link is provided via modal
-                                  }}
-                                  disabled
+                              <div className="mt-4 flex flex-wrap gap-2">
+                                {job.status === "scheduled" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // disabled until a recording link is provided via modal
+                                    }}
+                                    disabled
                                   className="inline-flex items-center px-4 py-1.5 border border-transparent text-xs font-medium rounded-full h-10 text-green-600 bg-green-100  cursor-not-allowed"
-                                >
-                                  Complete Session
-                                </button>
-                              )}
+                                  >
+                                    Complete Session
+                                  </button>
+                                )}
 
                               {job.status === "awaiting_admin_verification" && (
-                                <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
-                                  Pending Verification
-                                </span>
-                              )}
+                                  <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
+                                    Pending Verification
+                                  </span>
+                                )}
                               {/* Schedule and Cancel buttons moved to main row */}
                               {/* Contact Tutee button removed per requirements */}
                               {job.status === "scheduled" && (
@@ -1011,47 +1015,47 @@ export default function TutorDashboard() {
                                     ? "Cancelling..."
                                     : "Cancel Job"}
                                 </button>
-                              )}
-                            </div>
+                                )}
+                              </div>
                             {/* Weekly schedule details removed per requirements */}
-                          </div>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-white rounded-lg border-2 border-gray-100">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                  />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">
-                  No active jobs
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  You don't have any active tutoring jobs at the moment.
-                </p>
-                <div className="mt-6">
-                  <Link
-                    href="/tutor/opportunities"
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                  >
-                    Browse Opportunities
-                  </Link>
+                            </div>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-            )}
+              ) : (
+              <div className="text-center py-8 bg-white rounded-lg border-2 border-gray-100">
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    No active jobs
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    You don't have any active tutoring jobs at the moment.
+                  </p>
+                  <div className="mt-6">
+                    <Link
+                      href="/tutor/opportunities"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      Browse Opportunities
+                    </Link>
+                  </div>
+                </div>
+              )}
           </div>
 
           {/* Past Jobs */}
@@ -1097,86 +1101,86 @@ export default function TutorDashboard() {
             )}
           </div>
 
-          {/* Subject Approvals */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Subject Approvals
-            </h3>
-            {subjectApprovals.length > 0 ? (
+        {/* Subject Approvals */}
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+            Subject Approvals
+          </h3>
+              {subjectApprovals.length > 0 ? (
               <div className="bg-white border-2 border-gray-100 overflow-hidden sm:rounded-md">
-                <ul className="divide-y divide-gray-200">
-                  {subjectApprovals.map((approval) => (
-                    <li key={approval.id}>
-                      <div className="px-2 py-4 sm:px-4 flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 mr-3">
-                            <Image
-                              src={getSubjectIcon(approval.subject)}
-                              alt={`${approval.subject} icon`}
-                              width={35}
-                              height={24}
-                              className="object-contain pl-[-15]"
-                            />
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {approval.subject}
+                  <ul className="divide-y divide-gray-200">
+                    {subjectApprovals.map((approval) => (
+                      <li key={approval.id}>
+                        <div className="px-2 py-4 sm:px-4 flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 mr-3">
+                              <Image
+                                src={getSubjectIcon(approval.subject)}
+                                alt={`${approval.subject} icon`}
+                                width={35}
+                                height={24}
+                                className="object-contain pl-[-15]"
+                              />
                             </div>
-                            {approval.approved_at && (
-                              <div className="text-xs text-gray-500">
-                                Approved on{" "}
-                                {new Date(
-                                  approval.approved_at
-                                ).toLocaleDateString()}
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {approval.subject}
                               </div>
-                            )}
+                              {approval.approved_at && (
+                                <div className="text-xs text-gray-500">
+                                  Approved on{" "}
+                                  {new Date(
+                                    approval.approved_at
+                                  ).toLocaleDateString()}
+                                </div>
+                              )}
+                            </div>
                           </div>
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              approval.status === "approved"
+                                ? "bg-green-100 text-green-600"
+                                : approval.status === "pending"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {approval.status}
+                          </span>
                         </div>
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            approval.status === "approved"
-                              ? "bg-green-100 text-green-600"
-                              : approval.status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {approval.status}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
               <div className="text-center py-8 bg-white rounded-lg border-2 border-gray-200">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                  />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">
-                  No subject approvals
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                    />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    No subject approvals
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
                   Contact your school administrator to get approved for subjects
                   you can tutor.
-                </p>
-              </div>
-            )}
-          </div>
+                  </p>
+                </div>
+              )}
+            </div>
         </div>
       </div>
       {showRecordingModalFor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setShowRecordingModalFor(null)}
@@ -1189,34 +1193,34 @@ export default function TutorDashboard() {
               Paste the URL to your session recording. You can edit this until
               you mark the session as completed.
             </p>
-            <input
-              type="url"
-              placeholder="https://..."
-              value={recordingUrlInput}
-              onChange={(e) => setRecordingUrlInput(e.target.value)}
-              className="w-full border rounded px-3 py-2 mb-4"
-            />
-            <div className="flex justify-end gap-2">
+          <input
+            type="url"
+            placeholder="https://..."
+            value={recordingUrlInput}
+            onChange={(e) => setRecordingUrlInput(e.target.value)}
+            className="w-full border rounded px-3 py-2 mb-4"
+          />
+          <div className="flex justify-end gap-2">
               <button
                 className="px-3 py-1.5 border rounded"
                 onClick={() => setShowRecordingModalFor(null)}
               >
                 Cancel
               </button>
-              <button
-                className="px-3 py-1.5 bg-purple-600 text-white rounded"
-                onClick={async () => {
-                  try {
-                    if (!recordingUrlInput) return;
+            <button
+              className="px-3 py-1.5 bg-purple-600 text-white rounded"
+              onClick={async () => {
+                try {
+                  if (!recordingUrlInput) return;
                     await apiService.upsertRecordingLink(
                       showRecordingModalFor,
                       recordingUrlInput
                     );
-                    // After link saved, allow completion
-                    await apiService.completeJob(showRecordingModalFor, {});
-                    setShowRecordingModalFor(null);
-                    setRecordingUrlInput("");
-                    // Remove job from active list
+                  // After link saved, allow completion
+                  await apiService.completeJob(showRecordingModalFor, {});
+                  setShowRecordingModalFor(null);
+                  setRecordingUrlInput("");
+                  // Remove job from active list
                     setActiveJobs((prev) =>
                       prev.filter((j) => j.id !== showRecordingModalFor)
                     );
@@ -1228,14 +1232,14 @@ export default function TutorDashboard() {
                     setError(
                       e?.message || "Failed to save recording link or complete session."
                     );
-                  }
-                }}
-              >
-                Save & Complete Session
-              </button>
-            </div>
+                }
+              }}
+            >
+              Save & Complete Session
+            </button>
           </div>
         </div>
+      </div>
       )}
     </TutorLayout>
   );

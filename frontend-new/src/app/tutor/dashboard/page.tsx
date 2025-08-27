@@ -1223,9 +1223,10 @@ export default function TutorDashboard() {
                     setSuccessMessage(
                       "Recording link saved and session moved to awaiting verification."
                     );
-                  } catch (e) {
+                  } catch (e: any) {
+                    console.error("Complete job error:", e);
                     setError(
-                      "Failed to save recording link or complete session."
+                      e?.message || "Failed to save recording link or complete session."
                     );
                   }
                 }}

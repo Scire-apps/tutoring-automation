@@ -317,74 +317,84 @@ def apply_to_opportunity(opportunity_id: str):
 @require_auth
 def get_job(job_id: str):
     """Get job details with opportunity for the authenticated tutor.
-    Falls back to awaiting_verification_jobs when not found in tutoring_jobs,
-    and avoids raising on empty results from PostgREST."""
+    Reads from active jobs; if not found, reads from awaiting_verification_jobs.
+    Always attaches tutee info when possible.
+    """
     supabase = get_supabase_client()
-    tutor_res = supabase.table('tutors').select('id').eq('auth_id', request.user_id).single().execute()
-    if not tutor_res.data:
+
+    # Resolve tutor_id from auth
+    tutor_row = (
+        supabase
+        .table('tutors')
+        .select('id')
+        .eq('auth_id', request.user_id)
+        .limit(1)
+        .execute()
+    )
+    tutor_id = (tutor_row.data or [{}])[0].get('id') if tutor_row and tutor_row.data else None
+    if not tutor_id:
         return jsonify({'error': 'Tutor not found'}), 404
-    tutor_id = tutor_res.data['id']
 
     job = None
 
-    # Try active jobs first; suppress PGRST116 on no rows
-    try:
-        job_res = (
+    # Try active jobs without raising on empty
+    res_active = (
+        supabase
+        .table('tutoring_jobs')
+        .select('*')
+        .eq('id', job_id)
+        .eq('tutor_id', tutor_id)
+        .limit(1)
+        .execute()
+    )
+    if res_active and res_active.data:
+        job = dict(res_active.data[0])
+
+    # Fallback to awaiting verification
+    if not job:
+        res_wait = (
             supabase
-            .table('tutoring_jobs')
+            .table('awaiting_verification_jobs')
             .select('*')
             .eq('id', job_id)
             .eq('tutor_id', tutor_id)
-            .single()
+            .limit(1)
             .execute()
         )
-        if job_res and job_res.data:
-            job = job_res.data
-    except Exception:
-        job = None
-
-    # Fallback to awaiting_verification_jobs
-    if not job:
-        try:
-            avj_res = (
-                supabase
-                .table('awaiting_verification_jobs')
-                .select('*')
-                .eq('id', job_id)
-                .eq('tutor_id', tutor_id)
-                .single()
-                .execute()
-            )
-            if avj_res and avj_res.data:
-                job = dict(avj_res.data)
-                job['status'] = 'awaiting_admin_verification'
-        except Exception:
-            job = None
+        if res_wait and res_wait.data:
+            job = dict(res_wait.data[0])
+            # Normalize status for UI
+            job['status'] = 'awaiting_admin_verification'
 
     if not job:
         return jsonify({'error': 'Job not found'}), 404
 
-    # Provide a synthetic 'tutoring_opportunity' from snapshot if available
-    if job.get('opportunity_snapshot'):
-        job['tutoring_opportunity'] = job['opportunity_snapshot']
-    else:
-        job['tutoring_opportunity'] = None
+    # Provide a synthetic tutoring_opportunity from snapshot for consistent UI
+    snapshot = job.get('opportunity_snapshot') if isinstance(job.get('opportunity_snapshot'), dict) else None
+    job['tutoring_opportunity'] = snapshot or None
 
-    # Attach basic tutee info (email, name, graduation_year)
-    try:
-        if job.get('tutee_id'):
-            tutee_res = (
-                supabase
-                .table('tutees')
-                .select('id, email, first_name, last_name, graduation_year')
-                .eq('id', job['tutee_id'])
-                .single()
-                .execute()
-            )
-            if tutee_res and tutee_res.data:
-                job['tutee'] = tutee_res.data
-    except Exception:
-        pass
+    # Determine tutee_id (direct or from snapshot) and attach tutee record
+    tutee_id = job.get('tutee_id')
+    if not tutee_id and snapshot:
+        try:
+            possible = snapshot.get('tutee_id')
+            # Defensive cast for string uuid
+            if isinstance(possible, str) and len(possible) >= 8:
+                tutee_id = possible
+        except Exception:
+            tutee_id = None
+
+    if tutee_id:
+        tutee_row = (
+            supabase
+            .table('tutees')
+            .select('id, email, first_name, last_name, graduation_year')
+            .eq('id', tutee_id)
+            .limit(1)
+            .execute()
+        )
+        if tutee_row and tutee_row.data:
+            job['tutee'] = tutee_row.data[0]
 
     return jsonify({'job': job}), 200
 

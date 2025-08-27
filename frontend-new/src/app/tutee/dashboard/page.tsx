@@ -91,89 +91,118 @@ export default function TuteeDashboardPage() {
 
   return (
     <TuteeLayout>
+      
       <div className="p-6 bg-white min-h-full">
         {/* Stats cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold">R</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Requests
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {data.opportunities?.length || 0}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold">O</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Open Requests
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {
-                        (data.opportunities || []).filter(
-                          (o: any) => o.status === "open"
-                        ).length
-                      }
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold">S</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Scheduled Sessions
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {
-                        (data.jobs || []).filter(
-                          (j: any) => j.status === "scheduled"
-                        ).length
-                      }
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* Welcome section */}
-        <div className="mb-8">
+         {/* Welcome section */}
+         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome back!
           </h2>
           <p className="text-gray-600">
             Review your requests and upcoming sessions.
           </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 mr-4">
+                    <img 
+                      src="/total_requests.svg" 
+                      alt="Total Requests" 
+                      className="w-10 h-10"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-md font-semibold text-gray-900">
+                      Total Requests
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      All tutoring requests made
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FFD9FE' }}>
+                    <span className="text-2xl font-medium text-gray-900">
+                      {data.opportunities?.length || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 mr-4">
+                    <img 
+                      src="/open_requests.svg" 
+                      alt="Open Requests" 
+                      className="w-10 h-10"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-md font-semibold text-gray-900">
+                      Open Requests
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Requests awaiting tutors
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#C9ECFF' }}>
+                    <span className="text-2xl font-medium text-gray-900">
+                      {
+                        (data.opportunities || []).filter(
+                          (o: any) => o.status === "open"
+                        ).length
+                      }
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 mr-4">
+                    <img 
+                      src="/scheduled_sessions.svg" 
+                      alt="Scheduled Sessions" 
+                      className="w-10 h-10"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-md font-semibold text-gray-900">
+                      Scheduled Sessions
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Confirmed tutoring sessions
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#DBF9F5' }}>
+                    <span className="text-2xl font-medium text-gray-900">
+                      {
+                        (data.jobs || []).filter(
+                          (j: any) => j.status === "scheduled"
+                        ).length
+                      }
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Quick Actions */}

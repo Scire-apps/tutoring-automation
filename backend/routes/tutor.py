@@ -316,26 +316,46 @@ def apply_to_opportunity(opportunity_id: str):
 @tutor_bp.route('/api/tutor/jobs/<job_id>', methods=['GET'])
 @require_auth
 def get_job(job_id: str):
-    """Get job details with opportunity for the authenticated tutor"""
+    """Get job details with opportunity for the authenticated tutor.
+    Falls back to awaiting_verification_jobs when not found in tutoring_jobs."""
     supabase = get_supabase_client()
     tutor_res = supabase.table('tutors').select('id').eq('auth_id', request.user_id).single().execute()
     if not tutor_res.data:
         return jsonify({'error': 'Tutor not found'}), 404
     tutor_id = tutor_res.data['id']
 
+    # First, try active jobs table
     job_res = supabase.table('tutoring_jobs').select('*').eq('id', job_id).eq('tutor_id', tutor_id).single().execute()
-    if not job_res.data:
-        return jsonify({'error': 'Job not found'}), 404
-    job = job_res.data
+    if job_res.data:
+        job = job_res.data
+        if job.get('opportunity_snapshot'):
+            job['tutoring_opportunity'] = job['opportunity_snapshot']
+        else:
+            job['tutoring_opportunity'] = None
+        # Attach tutee info
+        try:
+            if job.get('tutee_id'):
+                tutee_res = supabase.table('tutees').select('id, email, first_name, last_name, graduation_year').eq('id', job['tutee_id']).single().execute()
+                if tutee_res.data:
+                    job['tutee'] = tutee_res.data
+        except Exception:
+            pass
+        return jsonify({'job': job}), 200
 
-    # Provide a synthetic 'tutoring_opportunity' object for UI compatibility,
-    # sourced from opportunity_snapshot (if present).
+    # If not found, try awaiting verification jobs (post-completion pre-admin verification)
+    avj_res = supabase.table('awaiting_verification_jobs').select('*').eq('id', job_id).eq('tutor_id', tutor_id).single().execute()
+    if not avj_res.data:
+        return jsonify({'error': 'Job not found'}), 404
+
+    job = dict(avj_res.data)
+    # Normalize fields to align with tutoring_jobs-based UI
+    job['status'] = 'awaiting_admin_verification'
     if job.get('opportunity_snapshot'):
         job['tutoring_opportunity'] = job['opportunity_snapshot']
     else:
         job['tutoring_opportunity'] = None
 
-    # Attach basic tutee info (email, name) for downstream uses like email
+    # Attach tutee info
     try:
         if job.get('tutee_id'):
             tutee_res = supabase.table('tutees').select('id, email, first_name, last_name, graduation_year').eq('id', job['tutee_id']).single().execute()
@@ -343,6 +363,7 @@ def get_job(job_id: str):
                 job['tutee'] = tutee_res.data
     except Exception:
         pass
+
     return jsonify({'job': job}), 200
 
 

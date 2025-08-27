@@ -659,9 +659,22 @@ export default function TutorDashboard() {
 
           {/* Active Jobs */}
           <div className="mb-8">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Active Tutoring Jobs
-            </h3>
+            <div className="flex items-center gap-3 mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Active Tutoring Jobs
+              </h3>
+              {activeJobs.filter(
+                (j: any) => j.status === "pending_tutor_scheduling"
+              ).length > 0 && (
+                <div className="bg-red-100 text-red-600 w-6 h-6 rounded-md text-xs font-medium flex items-center justify-center">
+                  {
+                    activeJobs.filter(
+                      (j: any) => j.status === "pending_tutor_scheduling"
+                    ).length
+                  }
+                </div>
+              )}
+            </div>
             {activeJobs.length > 0 ? (
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
@@ -769,6 +782,17 @@ export default function TutorDashboard() {
                                 {cancellingJobId === job.id
                                   ? "Cancelling..."
                                   : "Cancel"}
+                              </button>
+                            )}
+                            {job.status === "scheduled" && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowRecordingModalFor(job.id);
+                                }}
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-purple-600 bg-purple-100 hover:bg-purple-200 w-35 items-center justify-center h-10"
+                              >
+                                Upload Recording
                               </button>
                             )}
                             <button
@@ -910,22 +934,12 @@ export default function TutorDashboard() {
                                     // disabled until a recording link is provided via modal
                                   }}
                                   disabled
-                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 opacity-50 cursor-not-allowed"
+                                  className="inline-flex items-center px-4 py-1.5 border border-transparent text-xs font-medium rounded-full h-10 text-green-600 bg-green-100  cursor-not-allowed"
                                 >
                                   Complete Session
                                 </button>
                               )}
-                              {job.status === "scheduled" && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowRecordingModalFor(job.id);
-                                  }}
-                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-purple-600 hover:bg-purple-700"
-                                >
-                                  Upload Recording Link
-                                </button>
-                              )}
+
                               {job.status === "awaiting_admin_verification" && (
                                 <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
                                   Pending Verification
@@ -940,7 +954,7 @@ export default function TutorDashboard() {
                                     handleCancelJob(job.id, job.opportunity_id);
                                   }}
                                   disabled={cancellingJobId === job.id}
-                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 disabled:bg-red-300"
+                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-red-600 bg-red-100 hover:bg-red-700 disabled:bg-red-300"
                                 >
                                   {cancellingJobId === job.id
                                     ? "Cancelling..."

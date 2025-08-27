@@ -138,7 +138,7 @@ export function TuteeLayout({ children }: TuteeLayoutProps) {
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center">
                 <img
-                  src="/logo.png.png"
+                  src="/logo.png"
                   alt="Tutoring Logo"
                   className="w-8 h-8 object-contain"
                 />

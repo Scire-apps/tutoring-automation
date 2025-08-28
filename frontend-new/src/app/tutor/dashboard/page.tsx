@@ -567,21 +567,30 @@ export default function TutorDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
               <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold">H</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 mr-4">
+                      <img 
+                        src="/volunteer_hours.svg" 
+                        alt="Volunteer Hours" 
+                        className="w-10 h-10"
+                      />
                     </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
+                    <div>
+                      <h3 className="text-md font-semibold text-gray-900">
                         Volunteer Hours
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        Hours earned thus far
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FFD9FE' }}>
+                      <span className="text-2xl font-medium text-gray-900">
                         {tutorData?.volunteer_hours || 0}
-                      </dd>
-                    </dl>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -589,21 +598,30 @@ export default function TutorDashboard() {
 
             <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
               <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold">J</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 mr-4">
+                      <img 
+                        src="/active_jobs.svg" 
+                        alt="Active Jobs" 
+                        className="w-10 h-10"
+                      />
                     </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
+                    <div>
+                      <h3 className="text-md font-semibold text-gray-900">
                         Active Jobs
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        Scheduled Tutoring sessions
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#C9ECFF' }}>
+                      <span className="text-2xl font-medium text-gray-900">
                         {activeJobs.length}
-                      </dd>
-                    </dl>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -611,25 +629,34 @@ export default function TutorDashboard() {
 
             <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
               <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold">S</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 mr-4">
+                      <img 
+                        src="/approved_subjects.svg" 
+                        alt="Approved Subjects" 
+                        className="w-10 h-10"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-md font-semibold text-gray-900">
+                        Approved Subjects
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        Number of certifications
+                      </p>
                     </div>
                   </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Approved Subjects
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#DBF9F5' }}>
+                      <span className="text-2xl font-medium text-gray-900">
                         {
                           subjectApprovals.filter(
                             (s) => s.status === "approved"
                           ).length
                         }
-                      </dd>
-                    </dl>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -697,7 +724,7 @@ export default function TutorDashboard() {
                   </div>
                 </div>
                 <div className="ml-4 text-left">
-                  <h4 className="text-lg font-medium text-gray-900 group-hover:text-blue-900">
+                  <h4 className="text-lg font-mediumtext-gray-900 group-hover:text-blue-900">
                     Browse Opportunities
                   </h4>
                   <p className="text-sm text-gray-500 group-hover:text-blue-700">
@@ -1049,7 +1076,7 @@ export default function TutorDashboard() {
                   <div className="mt-6">
                     <Link
                       href="/tutor/opportunities"
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full h-10 text-blue-600 bg-blue-100 hover:bg-blue-200"
                     >
                       Browse Opportunities
                     </Link>

@@ -87,7 +87,7 @@ export default function LoginPage() {
         <div>
           <div className="flex justify-center mb-6">
             <Image
-              src="/logo.png.png"
+              src="/logo.png"
               alt="Tutoring Logo"
               width={64}
               height={64}

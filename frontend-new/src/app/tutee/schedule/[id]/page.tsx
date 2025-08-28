@@ -107,7 +107,7 @@ export default function TuteeSchedulePage() {
 
   return (
     <TuteeLayout>
-      <div className="p-6 bg-white max-w-4xl mx-auto">
+      <div className="p-6 bg-white max-w-[1500px] mx-auto">
         <h1 className="text-2xl font-bold">Set Your Availability</h1>
         <p className="text-sm text-gray-600 mt-1">
           Select all times you can meet over the next 14 days (excluding the
@@ -179,14 +179,14 @@ export default function TuteeSchedulePage() {
         <div className="mt-6 flex w-full gap-4 mb-20 mt-20">
           <button
             onClick={() => router.push("/tutee/dashboard")}
-            className="flex-1 px-4 py-3 text-gray-700 bg-gray-200 rounded-md font-medium"
+            className="flex-1 px-4 py-3 text-red-600 bg-red-100 rounded-md font-medium hover:cursor-pointer hover:bg-red-200"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 px-4 py-3 bg-blue-100 text-blue-600 rounded-md font-medium"
+            className="flex-1 px-4 py-3 bg-blue-100 text-blue-600 rounded-md font-medium hover:cursor-pointer hover:bg-blue-200"
           >
             {saving ? "Saving..." : "Save Availability"}
           </button>

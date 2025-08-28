@@ -138,13 +138,13 @@ export function TuteeLayout({ children }: TuteeLayoutProps) {
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center">
                 <img
-                  src="/logo.png.png"
+                  src="/sidebar_logo.png"
                   alt="Tutoring Logo"
                   className="w-8 h-8 object-contain"
                 />
               </div>
               <span className="ml-3 mt-1 text-lg font-semibold text-gray-900">
-                Tutoring
+                WOSS Tutoring
               </span>
             </div>
             <button className="lg:hidden" onClick={() => setSidebarOpen(false)}>
@@ -263,7 +263,7 @@ export function TuteeLayout({ children }: TuteeLayoutProps) {
         <div className="hidden lg:flex items-center justify-end bg-white border-b border-gray-200 px-4 py-3">
           <button
             onClick={handleSignOut}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-blue-600 bg-blue-100 hover:bg-blue-200"
           >
             Sign Out
           </button>

@@ -1,3 +1,23 @@
-# Tutoring Automation System
+# Welcome Developers. THIS IS EXTREMELY CRUCIAL INFORMATION TO READ.
 
-A comprehensive tutoring management platform that automates the process of matching tutees with tutors, scheduling sessions, and tracking volunteer hours.
+This is the official repository of the WOSS Tutoring Club's Tutoring App.
+
+It is composed of three main components: 
+1. The frontend, hosted on Vercel. 
+2. The backend, hosted on Render.
+3. The database, in Supabase.
+
+
+To access the Vercel and Render accounts, you will need to log in with Google,  
+using the Tutoring App development email account:
+Username: tutoringapp67@gmail.com
+Password: MoizParthAdham123@
+
+To access the Supabase, choose the option to log in with email, and enter  
+the following credentials:
+Username: tutoringapp67@gmail.com
+Password: MoizParthAdham123@
+
+
+_______________
+# MORE DOCUMENTATION COMING SOON.

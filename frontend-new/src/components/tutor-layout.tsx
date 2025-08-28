@@ -142,7 +142,7 @@ export function TutorLayout({ children }: TutorLayoutProps) {
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center">
                 <img
-                  src="/logo.png.png"
+                  src="/sidebar_logo.png"
                   alt="Tutoring Logo"
                   className="w-8 h-8 object-contain"
                 />

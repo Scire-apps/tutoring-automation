@@ -21,7 +21,7 @@ Password: MoizParthAdham123@
 
 The Admin account login information is:   
 Username: admin@tutoringapp.ca   
-Password: 5$im,8ZTq`7\/N:zF5S0PmkpzL9XP|Hv*>$=ptS|Qvu$J!3   
+Password: AyGQQrdJv3Gt0XSTk9809egKVlkYRP   
 
 Log in through the regular login page. 
 _______________

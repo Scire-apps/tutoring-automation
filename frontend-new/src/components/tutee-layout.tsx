@@ -57,6 +57,25 @@ const navigation = [
       </svg>
     ),
   },
+  {
+    name: "Tutorial",
+    href: "/tutee/tutorial",
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M12 6v6m0 0l-2-2m2 2l2-2m-7 8h10a2 2 0 002-2V8a2 2 0 00-2-2H7a2 2 0 00-2 2v8a2 2 0 002 2z"
+        />
+      </svg>
+    ),
+  },
 ];
 
 export function TuteeLayout({ children }: TuteeLayoutProps) {

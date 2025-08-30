@@ -15,6 +15,7 @@ function TuteeRegisterForm() {
   const [schoolId, setSchoolId] = useState('');
   const [schools, setSchools] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSchools, setIsLoadingSchools] = useState(true);
   const [registrationComplete, setRegistrationComplete] = useState(false);
@@ -54,11 +55,18 @@ function TuteeRegisterForm() {
     })();
   }, []);
 
+  const isHdsbEmail = (addr: string) => /^[^@\s]+@hdsb\.ca$/i.test((addr || '').trim());
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
     try {
+      if (!isHdsbEmail(email)) {
+        setEmailError('Please use your @hdsb.ca email address.');
+        setIsLoading(false);
+        return;
+      }
       // Persist extras for first-login ensure
       try {
         if (typeof window !== 'undefined') {
@@ -158,7 +166,26 @@ function TuteeRegisterForm() {
 
             <div className="mb-3">
               <label htmlFor="email-address" className="sr-only">Email address</label>
-              <input id="email-address" name="email" type="email" autoComplete="email" required className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} />
+              {emailError && (
+                <div className="text-red-600 text-sm mb-1">{emailError}</div>
+              )}
+              <input
+                id="email-address"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${emailError ? 'border-red-500' : 'border-gray-300'} placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setEmail(v);
+                  if (v && !isHdsbEmail(v)) setEmailError('Please use your @hdsb.ca email address.');
+                  else setEmailError(null);
+                }}
+                aria-invalid={!!emailError}
+              />
             </div>
 
             <div>

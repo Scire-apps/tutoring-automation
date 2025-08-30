@@ -73,12 +73,8 @@ export default function TutorTutorialPage() {
 
   const tips = [
     {
-      title: "Keep your status active",
-      desc: "Only active tutors can accept opportunities. Contact your admin if pending or suspended.",
-    },
-    {
       title: "Pick precise times",
-      desc: "Choose a time fully inside the tutee’s availability and match their requested duration.",
+      desc: "Choose a time fully inside the tutee's availability and match their requested duration.",
     },
     {
       title: "Be professional",

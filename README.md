@@ -9,14 +9,14 @@ It is composed of three main components:
 
 
 To access the Vercel and Render accounts, you will need to log in with Google,  
-using the Tutoring App development email account:
-Username: tutoringapp67@gmail.com
-Password: MoizParthAdham123@
+using the Tutoring App development email account:   
+Username: tutoringapp67@gmail.com   
+Password: MoizParthAdham123@   
 
 To access the Supabase, choose the option to log in with email, and enter  
-the following credentials:
-Username: tutoringapp67@gmail.com
-Password: MoizParthAdham123@
+the following credentials:   
+Username: tutoringapp67@gmail.com   
+Password: MoizParthAdham123@   
 
 
 _______________

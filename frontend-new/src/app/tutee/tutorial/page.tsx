@@ -9,17 +9,6 @@ import { TuteeLayout } from "@/components/tutee-layout";
 export default function TuteeTutorialPage() {
   const steps = [
     {
-      title: "Sign in and set up",
-      desc:
-        "Use your @hdsb.ca email to log in. Make sure your profile details are correct and keep your email accessible.",
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20a7 7 0 10-14 0" />
-        </svg>
-      ),
-    },
-    {
       title: "Create a tutoring request",
       desc:
         "From your dashboard, open Request Tutoring. Select the subject, type (Academic/ALP/IB), grade, and add notes if needed.",

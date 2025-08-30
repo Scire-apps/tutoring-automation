@@ -9,9 +9,9 @@ import { TutorLayout } from "@/components/tutor-layout";
 export default function TutorTutorialPage() {
   const steps = [
     {
-      title: "Sign in and verify your role",
+      title: "Account status: pending approval",
       desc:
-        "Use your @hdsb.ca email to log in. Your role is detected automatically. If you just signed up, your account may be pending.",
+        "If your account shows Pending, an admin must activate it before you can accept opportunities. You can still request certifications in the meantime.",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11z" />

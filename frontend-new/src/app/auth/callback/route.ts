@@ -65,3 +65,15 @@ export async function POST(request: NextRequest) {
 
   return response;
 }
+
+// When Supabase redirects the browser to this URL after email verification or OAuth,
+// handle GET by taking the user into the app where the client-side listener will
+// immediately redirect them to the appropriate dashboard based on their role.
+export async function GET(request: NextRequest) {
+  try {
+    const url = new URL('/', request.url);
+    return NextResponse.redirect(url);
+  } catch {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+}

@@ -4,8 +4,7 @@ import { useEffect } from "react";
 import { supabase } from "@/services/supabase";
 import { useRouter } from "next/navigation";
 
-// Global variable to track if we've already handled a sign-in
-let hasHandledSignIn = false;
+// Remove global gating; rely on path checks to avoid redirect loops
 
 export default function SupabaseListener() {
   const router = useRouter();
@@ -31,15 +30,13 @@ export default function SupabaseListener() {
         // Handle sign-out
         if (event === "SIGNED_OUT") {
           console.log("SupabaseListener: User signed out, redirecting to login");
-          hasHandledSignIn = false; // Reset for next sign-in
           router.push("/auth/login");
           return;
         }
 
         // Handle sign-in or session ready: redirect based on backend role
-        if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && !hasHandledSignIn) {
-          hasHandledSignIn = true;
-          console.log("SupabaseListener: New sign-in detected");
+        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+          console.log("SupabaseListener: Sign-in/session ready detected");
 
           const currentPath = window.location.pathname;
           // Only redirect from root or auth pages; avoid interrupting other pages

@@ -291,6 +291,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     schoolId?: string,
     accountType: "tutor" | "tutee" = "tutor"
   ) => {
+    // Enforce HDSB email domain on signup (frontend-only restriction)
+    try {
+      const isHdsb = /^[^@\s]+@hdsb\.ca$/i.test((email || '').trim());
+      if (!isHdsb) {
+        return { error: { message: 'Please use your @hdsb.ca email address' } };
+      }
+    } catch {}
     // Persist intent for post-verification login flow
     try {
       if (typeof window !== "undefined") {

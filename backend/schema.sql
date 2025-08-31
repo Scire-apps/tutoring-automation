@@ -312,7 +312,6 @@ $$;
 
 -- =========================================================
 -- 4) Row Level Security (RLS) policies
--- Note: Backend uses service_role and bypasses RLS. These policies
 -- keep data safe if any client accesses tables directly.
 -- =========================================================
 
@@ -350,14 +349,14 @@ drop policy if exists "admins read admins" on public.admins;
 create policy "admins read admins"
   on public.admins for select
   to authenticated
-  using (public.is_admin());
+  using (auth.uid() = auth_id);
 
 drop policy if exists "admins write admins" on public.admins;
 create policy "admins write admins"
   on public.admins for all
   to authenticated
-  using (public.is_admin())
-  with check (public.is_admin());
+  using (auth.uid() = auth_id)
+  with check (auth.uid() = auth_id);
 
 -- Tutors: self read/write; admins full
 drop policy if exists "tutors self select or admin" on public.tutors;

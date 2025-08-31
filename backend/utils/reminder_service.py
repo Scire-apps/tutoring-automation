@@ -5,19 +5,20 @@ This can be called by a scheduled job or cron task
 
 import logging
 from datetime import datetime, timedelta, timezone
-from utils.db import get_db_manager
+from typing import Optional
+from utils.db import DatabaseManager
 from utils.email_service import get_email_service
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-def send_session_reminders():
+def send_session_reminders(user_jwt: Optional[str] = None):
     """
     Send reminder emails for sessions scheduled for tomorrow
     This function should be called daily (e.g., via cron job)
     """
     try:
-        db = get_db_manager()
+        db = DatabaseManager(user_jwt=user_jwt)
         email_service = get_email_service()
         
         # Calculate tomorrow's date range
@@ -26,22 +27,15 @@ def send_session_reminders():
         tomorrow_end = tomorrow.replace(hour=23, minute=59, second=59, microsecond=999999)
         
         # Get all scheduled sessions for tomorrow
-        sessions_result = db.client.table('tutoring_jobs').select('''
-            id,
-            scheduled_time,
-            tutoring_opportunity:tutoring_opportunities(
-                tutee_first_name,
-                tutee_last_name,
-                tutee_email,
-                subject,
-                session_location
-            ),
-            tutor:tutors(
-                first_name,
-                last_name,
-                email
-            )
-        ''').eq('status', 'scheduled').gte('scheduled_time', tomorrow_start.isoformat()).lte('scheduled_time', tomorrow_end.isoformat()).execute()
+        sessions_result = (
+            db.client
+            .table('tutoring_jobs')
+            .select('*')
+            .eq('status', 'scheduled')
+            .gte('scheduled_time', tomorrow_start.isoformat())
+            .lte('scheduled_time', tomorrow_end.isoformat())
+            .execute()
+        )
         
         if not sessions_result.data:
             logger.info("No sessions scheduled for tomorrow")
@@ -52,8 +46,20 @@ def send_session_reminders():
         for session in sessions_result.data:
             try:
                 # Extract session details
-                tutor = session.get('tutor', {})
-                opportunity = session.get('tutoring_opportunity', {})
+                tutor = {}
+                opportunity = {}
+                # Best-effort fetch related entities under RLS
+                try:
+                    trow = db.client.table('tutors').select('first_name,last_name,email').eq('id', session.get('tutor_id')).single().execute()
+                    tutor = trow.data or {}
+                except Exception:
+                    tutor = {}
+                try:
+                    # We snapshot some details on the job; if not present, leave blank
+                    if isinstance(session.get('opportunity_snapshot'), dict):
+                        opportunity = session.get('opportunity_snapshot') or {}
+                except Exception:
+                    opportunity = {}
                 scheduled_time = datetime.fromisoformat(session['scheduled_time'].replace('Z', '+00:00'))
                 
                 # Convert UTC time to local time for proper date formatting

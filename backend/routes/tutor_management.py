@@ -91,7 +91,7 @@ def list_jobs_for_admin():
         admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
         school_id = admin_res.data.get('school_id') if admin_res.data else None
 
-        # Build base query with related entities
+        # Build base query (related entity embedding removed under RLS constraints)
         query = supabase.table('tutoring_jobs').select('*').order('created_at', desc=True)
 
         # If admin has school, limit using IDs for reliability
@@ -112,12 +112,7 @@ def list_jobs_for_admin():
             jobs_by_tutors = (
                 supabase
                 .table('tutoring_jobs')
-                .select('''
-                    *,
-                    tutor:tutors(id, first_name, last_name, email, school_id, school:schools(name,domain)),
-                    tutee:tutees(id, first_name, last_name, email, school_id),
-                    subject:subjects(id, name, category, grade_level)
-                ''')
+                .select('*')
                 .in_('tutor_id', tutor_ids or ['00000000-0000-0000-0000-000000000000'])
                 .order('created_at', desc=True)
                 .execute()
@@ -125,12 +120,7 @@ def list_jobs_for_admin():
             jobs_by_tutees = (
                 supabase
                 .table('tutoring_jobs')
-                .select('''
-                    *,
-                    tutor:tutors(id, first_name, last_name, email, school_id, school:schools(name,domain)),
-                    tutee:tutees(id, first_name, last_name, email, school_id),
-                    subject:subjects(id, name, category, grade_level)
-                ''')
+                .select('*')
                 .in_('tutee_id', tutee_ids or ['00000000-0000-0000-0000-000000000000'])
                 .order('created_at', desc=True)
                 .execute()

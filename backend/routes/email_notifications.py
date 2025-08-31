@@ -553,8 +553,10 @@ def trigger_session_reminders():
     """
     try:
         from utils.reminder_service import send_session_reminders
-        
-        reminder_count = send_session_reminders()
+        # Forward the user's JWT so RLS applies to the reminder query context
+        auth_header = request.headers.get('Authorization', '')
+        token = auth_header.split(' ')[1] if ' ' in auth_header else None
+        reminder_count = send_session_reminders(user_jwt=token)
         
         return jsonify({
             'message': f'Successfully sent {reminder_count} session reminders',

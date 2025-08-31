@@ -7,128 +7,66 @@ from typing import Dict, List, Any, Optional
 logger = logging.getLogger(__name__)
 
 class DatabaseManager:
-    """Database manager for Supabase operations"""
-    
-    _instance = None
-    _client = None
-    
-    def __new__(cls):
-        """Singleton pattern to ensure only one database connection"""
-        if cls._instance is None:
-            cls._instance = super(DatabaseManager, cls).__new__(cls)
-            cls._instance._initialize_client()
-        return cls._instance
-    
-    def _initialize_client(self) -> None:
-        """Initialize the Supabase client
-        Prefer the service role key when available to avoid RLS permission errors on the backend.
-        """
+    """Ephemeral Supabase client manager using anon key and optional user JWT."""
+
+    def __init__(self, user_jwt: Optional[str] = None):
         url = os.environ.get("SUPABASE_URL")
-        # Prefer service role key; fall back to generic key only if explicitly needed
-        key = (
-            os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-            or os.environ.get("SUPABASE_KEY")
-            or os.environ.get("SUPABASE_ANON_KEY")
-        )
-        
-        if not url or not key:
-            raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_KEY) must be set")
-        
+        anon_key = os.environ.get("SUPABASE_ANON_KEY")
+        if not url or not anon_key:
+            raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set")
         try:
-            self._client = create_client(url, key)
-            logger.info("Supabase client initialized successfully")
+            self._client: Client = create_client(url, anon_key)
+            # Attach user JWT when provided so RLS is enforced by Supabase
+            if user_jwt:
+                try:
+                    self._client.postgrest.auth(user_jwt)
+                except Exception:
+                    # If token is invalid, queries will fail under RLS in subsequent calls
+                    pass
         except Exception as e:
             logger.error(f"Failed to initialize Supabase client: {str(e)}")
             raise
-    
+
     @property
     def client(self) -> Client:
-        """Get the Supabase client instance"""
-        if self._client is None:
-            self._initialize_client()
         return self._client
-    
+
+    # Convenience helpers (optional; used by a few call sites)
     def query_table(self, table_name: str, query_params: Optional[Dict] = None) -> List[Dict]:
-        """
-        Query a table with optional parameters
-        
-        Args:
-            table_name: Name of the table to query
-            query_params: Optional query parameters
-            
-        Returns:
-            List of records matching the query
-        """
         try:
             query = self.client.table(table_name).select("*")
-            
             if query_params:
                 if 'filter' in query_params:
-                    for filter_item in query_params['filter']:
-                        column, operator, value = filter_item
+                    for column, operator, value in query_params['filter']:
                         query = query.filter(column, operator, value)
-                
                 if 'order' in query_params:
                     column, direction = query_params['order']
                     query = query.order(column, ascending=(direction.lower() == 'asc'))
-                
                 if 'limit' in query_params:
                     query = query.limit(query_params['limit'])
-            
             response = query.execute()
             return response.data
         except Exception as e:
             logger.error(f"Error querying table {table_name}: {str(e)}")
             raise
-    
+
     def insert_record(self, table_name: str, record_data: Dict) -> Dict:
-        """
-        Insert a record into a table
-        
-        Args:
-            table_name: Name of the table
-            record_data: Data to insert
-            
-        Returns:
-            The inserted record
-        """
         try:
             response = self.client.table(table_name).insert(record_data).execute()
             return response.data[0] if response.data else {}
         except Exception as e:
             logger.error(f"Error inserting into table {table_name}: {str(e)}")
             raise
-    
+
     def update_record(self, table_name: str, record_id: str, record_data: Dict) -> Dict:
-        """
-        Update a record in a table
-        
-        Args:
-            table_name: Name of the table
-            record_id: ID of the record to update
-            record_data: Data to update
-            
-        Returns:
-            The updated record
-        """
         try:
             response = self.client.table(table_name).update(record_data).eq("id", record_id).execute()
             return response.data[0] if response.data else {}
         except Exception as e:
             logger.error(f"Error updating record in table {table_name}: {str(e)}")
             raise
-    
+
     def delete_record(self, table_name: str, record_id: str) -> Dict:
-        """
-        Delete a record from a table
-        
-        Args:
-            table_name: Name of the table
-            record_id: ID of the record to delete
-            
-        Returns:
-            The deleted record
-        """
         try:
             response = self.client.table(table_name).delete().eq("id", record_id).execute()
             return response.data[0] if response.data else {}
@@ -136,20 +74,28 @@ class DatabaseManager:
             logger.error(f"Error deleting record from table {table_name}: {str(e)}")
             raise
 
+
+def _extract_bearer_token_from_request() -> Optional[str]:
+    try:
+        from flask import request
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return None
+        parts = auth_header.split()
+        if len(parts) == 2 and parts[0].lower() == 'bearer':
+            return parts[1]
+        return None
+    except Exception:
+        return None
+
+
 def get_supabase_client() -> Client:
-    """
-    Get the Supabase client instance
-    
-    Returns:
-        Client: Supabase client instance
-    """
-    return DatabaseManager().client
+    """Return a new Supabase client using the anon key, bound to the current user's JWT if present."""
+    token = _extract_bearer_token_from_request()
+    return DatabaseManager(user_jwt=token).client
+
 
 def get_db_manager() -> DatabaseManager:
-    """
-    Get the database manager instance
-    
-    Returns:
-        DatabaseManager: Database manager instance
-    """
-    return DatabaseManager()
+    """Return an ephemeral DatabaseManager bound to the current user's JWT if present."""
+    token = _extract_bearer_token_from_request()
+    return DatabaseManager(user_jwt=token)

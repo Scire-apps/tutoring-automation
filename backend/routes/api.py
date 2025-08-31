@@ -42,10 +42,10 @@ def services_status():
         "storage": {"status": "unknown"}
     }
     
-    # Check database connection
+    # Check database connection with a table readable under RLS (schools)
     try:
         db = get_db_manager()
-        db.client.table("_dummy").select("*").limit(1).execute()
+        db.client.table("schools").select("id").limit(1).execute()
         services["database"]["status"] = "operational"
     except Exception as e:
         services["database"]["status"] = "error"

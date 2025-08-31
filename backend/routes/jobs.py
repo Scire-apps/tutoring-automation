@@ -105,7 +105,11 @@ def cancel_job(job_id: str):
         return jsonify({'error': 'failed_to_recreate_opportunity'}), 500
 
     # Remove communications associated with this job (since the pairing is cancelled)
-    supabase.table('communications').delete().eq('job_id', job_id).execute()
+    # Under RLS, tutor may not be allowed to delete communications (admin-owned). Skip silently.
+    try:
+        supabase.table('communications').delete().eq('job_id', job_id).execute()
+    except Exception:
+        pass
     
     # Remove the job row entirely
     supabase.table('tutoring_jobs').delete().eq('id', job_id).execute()

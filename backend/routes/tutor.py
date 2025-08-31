@@ -164,8 +164,9 @@ def accept_opportunity(opportunity_id: str):
             dashboard_url=dashboard_url
         )
 
-    # Remove opportunity now that it has been accepted
-    supabase.table('tutoring_opportunities').delete().eq('id', opportunity_id).execute()
+    # Under RLS, tutors cannot delete or update opportunities; leave the row as-is.
+    # The job creation above reserves this opportunity in practice. Admin workflows can
+    # later mark the opportunity as assigned or remove it if desired.
 
     return jsonify({'message': 'Job created', 'job': job_res.data[0]}), 201
 
@@ -308,8 +309,8 @@ def apply_to_opportunity(opportunity_id: str):
             dashboard_url=dashboard_url
         )
 
-    # Remove the opportunity since it's been accepted/applied
-    supabase.table('tutoring_opportunities').delete().eq('id', opportunity_id).execute()
+    # Under RLS, tutors cannot delete or update opportunities; leave the row as-is.
+    # The created job serves as the reservation for this opportunity.
     return jsonify({'job': job_ins.data[0]}), 201
 
 

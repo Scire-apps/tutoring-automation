@@ -175,7 +175,7 @@ function TuteeRegisterForm() {
                 type="email"
                 autoComplete="email"
                 required
-                pattern="^[^@\\s]+@hdsb\\.ca$"
+                pattern="^[^@\\s]+@[hH][dD][sS][bB]\\.[cC][aA]$"
                 className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${emailError ? 'border-red-500' : 'border-gray-300'} placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                 placeholder="Email address"
                 value={email}

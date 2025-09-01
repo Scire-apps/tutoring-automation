@@ -20,8 +20,15 @@ def get_tutor_dashboard():
     tutor = tutor_result.data
     approved_subject_ids = tutor.get('approved_subject_ids') or []
 
-    # Opportunities visible to tutors: all open (embedded subject fields)
-    opps = supabase.table('tutoring_opportunities').select('*').eq('status', 'open').order('created_at', desc=True).execute()
+    # Opportunities visible to tutors: all open (include tutee embed; RLS will filter)
+    opps = (
+        supabase
+        .table('tutoring_opportunities')
+        .select('*, tutee:tutees(id, first_name, last_name, email, school_id, graduation_year)')
+        .eq('status', 'open')
+        .order('created_at', desc=True)
+        .execute()
+    )
 
     # Jobs belonging to this tutor
     jobs_res = (
@@ -216,7 +223,7 @@ def list_open_opportunities():
         res = (
             supabase
             .table('tutoring_opportunities')
-            .select('*')
+            .select('*, tutee:tutees(id, first_name, last_name, email, school_id, graduation_year)')
             .eq('status', 'open')
             .order('created_at')
             .execute()

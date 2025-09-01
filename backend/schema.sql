@@ -386,10 +386,20 @@ create policy "tutors delete admin only"
 
 -- Tutees: self read/write; admins full
 drop policy if exists "tutees self select or admin" on public.tutees;
-create policy "tutees self select or admin"
+create policy "tutees select self admin or same school tutor"
   on public.tutees for select
   to authenticated
-  using (public.is_admin() or auth.uid() = auth_id);
+  using (
+    public.is_admin()
+    or auth.uid() = auth_id
+    or exists (
+      select 1
+      from public.tutors tu
+      where tu.auth_id = auth.uid()
+        and tu.school_id is not null
+        and tu.school_id = tutees.school_id
+    )
+  );
 
 drop policy if exists "tutees self upsert" on public.tutees;
 create policy "tutees self upsert"

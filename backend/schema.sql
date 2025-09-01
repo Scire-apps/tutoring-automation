@@ -294,6 +294,8 @@ begin
     create trigger trg_set_updated_at_session_recordings before update on public.session_recordings
     for each row execute function public.set_updated_at();
   end if;
+  
+  -- Help questions updated_at trigger will be created after table definition
 end$$;
 
 -- Helper: check if current user is an admin
@@ -329,6 +331,7 @@ alter table public.awaiting_verification_jobs enable row level security;
 alter table public.past_jobs enable row level security;
 alter table public.communications enable row level security;
 alter table public.session_recordings enable row level security;
+-- New table help_questions will be enabled after creation
 
 -- Schools: public read, writes by admins
 drop policy if exists "public can read schools" on public.schools;
@@ -698,3 +701,92 @@ create policy "recordings delete admin only"
   using (public.is_admin());
 
 -- (No storage bucket setup required: session_recordings.recording_url stores external links)
+
+-- =========================================================
+-- 5) Help Questions (support requests)
+-- =========================================================
+
+create table if not exists public.help_questions (
+  id uuid primary key default gen_random_uuid(),
+  auth_id uuid not null,
+  role text not null check (role in ('tutor','tutee')),
+  tutor_id uuid references public.tutors(id) on delete set null,
+  tutee_id uuid references public.tutees(id) on delete set null,
+  school_id uuid references public.schools(id) on delete set null,
+  user_first_name text not null,
+  user_last_name text not null,
+  user_email text not null,
+  user_grade text,
+  submitted_at timestamptz not null default now(),
+  urgency text not null default 'normal' check (urgency in ('low','normal','high')),
+  description text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Indexes for help_questions
+create index if not exists idx_help_questions_auth_id on public.help_questions(auth_id);
+create index if not exists idx_help_questions_school_id on public.help_questions(school_id);
+create index if not exists idx_help_questions_submitted_at on public.help_questions(submitted_at desc);
+
+-- updated_at trigger for help_questions
+do $$
+begin
+  if not exists (select 1 from pg_trigger where tgname = 'trg_set_updated_at_help_questions') then
+    create trigger trg_set_updated_at_help_questions before update on public.help_questions
+    for each row execute function public.set_updated_at();
+  end if;
+end$$;
+
+-- Enable RLS
+alter table public.help_questions enable row level security;
+
+-- RLS policies for help_questions
+-- Tutors/tutees: may insert their own request; may read only their own rows.
+-- Admins: may read/update/delete requests from users within the same school.
+
+drop policy if exists "hq select self or admin same school" on public.help_questions;
+create policy "hq select self or admin same school"
+  on public.help_questions for select
+  to authenticated
+  using (
+    auth.uid() = auth_id
+    or exists (
+      select 1 from public.admins a
+      where a.auth_id = auth.uid() and a.school_id = help_questions.school_id
+    )
+  );
+
+drop policy if exists "hq insert self only" on public.help_questions;
+create policy "hq insert self only"
+  on public.help_questions for insert
+  to authenticated
+  with check (auth.uid() = auth_id);
+
+drop policy if exists "hq update admin same school" on public.help_questions;
+create policy "hq update admin same school"
+  on public.help_questions for update
+  to authenticated
+  using (
+    exists (
+      select 1 from public.admins a
+      where a.auth_id = auth.uid() and a.school_id = help_questions.school_id
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.admins a
+      where a.auth_id = auth.uid() and a.school_id = help_questions.school_id
+    )
+  );
+
+drop policy if exists "hq delete admin same school" on public.help_questions;
+create policy "hq delete admin same school"
+  on public.help_questions for delete
+  to authenticated
+  using (
+    exists (
+      select 1 from public.admins a
+      where a.auth_id = auth.uid() and a.school_id = help_questions.school_id
+    )
+  );

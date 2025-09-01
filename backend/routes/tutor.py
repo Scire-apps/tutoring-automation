@@ -141,21 +141,25 @@ def accept_opportunity(opportunity_id: str):
     if not job_res.data:
         return jsonify({'error': 'Failed to create job'}), 500
 
-    # Get tutor and tutee information for email notification
-    tutor_info = supabase.table('tutors').select('first_name, last_name').eq('id', tutor['id']).single().execute()
-    tutee_info = supabase.table('tutees').select('email, first_name, last_name').eq('id', opp.get('tutee_id')).single().execute()
-    
-    # Send email notification to tutee
-    if tutor_info.data and tutee_info.data:
+    # Get tutor and (if permitted) tutee information for email notification
+    try:
+        tutor_info = supabase.table('tutors').select('first_name, last_name').eq('id', tutor['id']).single().execute()
+    except Exception:
+        tutor_info = None
+    try:
+        tutee_info = supabase.table('tutees').select('email, first_name, last_name').eq('id', opp.get('tutee_id')).single().execute()
+    except Exception:
+        tutee_info = None
+
+    # Send email notification to tutee when possible
+    if tutor_info and tutor_info.data and tutee_info and tutee_info.data:
         email_service = get_email_service()
         tutor_name = f"{tutor_info.data.get('first_name', '')} {tutor_info.data.get('last_name', '')}".strip()
         tutee_name = f"{tutee_info.data.get('first_name', '')} {tutee_info.data.get('last_name', '')}".strip()
         tutee_email = tutee_info.data.get('email')
         
-        # Construct dashboard URL (you may need to adjust this based on your frontend URL)
         dashboard_url = f"{os.environ.get('FRONTEND_URL', 'https://your-app.vercel.app')}/tutee/dashboard"
         
-        # Send availability notification email
         email_service.send_availability_notification(
             tutee_email=tutee_email,
             tutee_name=tutee_name,
@@ -212,7 +216,7 @@ def list_open_opportunities():
         res = (
             supabase
             .table('tutoring_opportunities')
-            .select('*, tutee:tutees(id, first_name, last_name, email, school_id, graduation_year)')
+            .select('*')
             .eq('status', 'open')
             .order('created_at')
             .execute()
@@ -286,21 +290,24 @@ def apply_to_opportunity(opportunity_id: str):
     if not job_ins.data:
         return jsonify({'error': 'Failed to create job'}), 500
 
-    # Get tutor and tutee information for email notification
-    tutor_info = supabase.table('tutors').select('first_name, last_name').eq('id', tutor_id).single().execute()
-    tutee_info = supabase.table('tutees').select('email, first_name, last_name').eq('id', opp_res.data.get('tutee_id')).single().execute()
+    # Get tutor and (if permitted) tutee information for email notification
+    try:
+        tutor_info = supabase.table('tutors').select('first_name, last_name').eq('id', tutor_id).single().execute()
+    except Exception:
+        tutor_info = None
+    try:
+        tutee_info = supabase.table('tutees').select('email, first_name, last_name').eq('id', opp_res.data.get('tutee_id')).single().execute()
+    except Exception:
+        tutee_info = None
     
-    # Send email notification to tutee
-    if tutor_info.data and tutee_info.data:
+    if tutor_info and tutor_info.data and tutee_info and tutee_info.data:
         email_service = get_email_service()
         tutor_name = f"{tutor_info.data.get('first_name', '')} {tutor_info.data.get('last_name', '')}".strip()
         tutee_name = f"{tutee_info.data.get('first_name', '')} {tutee_info.data.get('last_name', '')}".strip()
         tutee_email = tutee_info.data.get('email')
         
-        # Construct dashboard URL (you may need to adjust this based on your frontend URL)
         dashboard_url = f"{os.environ.get('FRONTEND_URL', 'https://your-app.vercel.app')}/tutee/dashboard"
         
-        # Send availability notification email
         email_service.send_availability_notification(
             tutee_email=tutee_email,
             tutee_name=tutee_name,
@@ -386,16 +393,19 @@ def get_job(job_id: str):
             tutee_id = None
 
     if tutee_id:
-        tutee_row = (
-            supabase
-            .table('tutees')
-            .select('id, email, first_name, last_name, graduation_year')
-            .eq('id', tutee_id)
-            .limit(1)
-            .execute()
-        )
-        if tutee_row and tutee_row.data:
-            job['tutee'] = tutee_row.data[0]
+        try:
+            tutee_row = (
+                supabase
+                .table('tutees')
+                .select('id, email, first_name, last_name, graduation_year')
+                .eq('id', tutee_id)
+                .limit(1)
+                .execute()
+            )
+            if tutee_row and tutee_row.data:
+                job['tutee'] = tutee_row.data[0]
+        except Exception:
+            pass
 
     return jsonify({'job': job}), 200
 
@@ -492,68 +502,82 @@ def schedule_job(job_id: str):
     if not upd.data:
         return jsonify({'error': 'Failed to update job'}), 500
 
-    # Get complete job details with tutor and tutee information for email notification
-    job_with_details = supabase.table('tutoring_jobs').select('*, tutor:tutors(email, first_name, last_name), tutee:tutees(email, first_name, last_name, graduation_year)').eq('id', job_id).single().execute()
-    
-    if job_with_details.data:
-        # Send session confirmation email
-        email_service = get_email_service()
-        
-        # Extract session details
-        job_data = job_with_details.data
-        tutor_info = job_data.get('tutor', {})
-        tutee_info = job_data.get('tutee', {})
-        
-        # Construct names
-        tutor_name = f"{tutor_info.get('first_name', '')} {tutor_info.get('last_name', '')}".strip()
-        tutee_name = f"{tutee_info.get('first_name', '')} {tutee_info.get('last_name', '')}".strip()
-        
-        # Calculate tutee grade from graduation year
+    # Prepare and send session confirmation email(s) without nested selects
+    email_service = get_email_service()
+    job_row = None
+    try:
+        job_row = supabase.table('tutoring_jobs').select('*').eq('id', job_id).single().execute()
+    except Exception:
+        job_row = None
+    tutor_row = None
+    try:
+        tutor_row = supabase.table('tutors').select('email, first_name, last_name').eq('auth_id', request.user_id).single().execute()
+    except Exception:
+        tutor_row = None
+    tutee_row = None
+    try:
+        if job_row and job_row.data and job_row.data.get('tutee_id'):
+            tutee_row = supabase.table('tutees').select('email, first_name, last_name, graduation_year').eq('id', job_row.data.get('tutee_id')).single().execute()
+    except Exception:
+        tutee_row = None
+
+    if tutor_row and tutor_row.data and job_row and job_row.data:
+        tutor_name = f"{(tutor_row.data or {}).get('first_name','')} {(tutor_row.data or {}).get('last_name','')}".strip()
+        tutee_name = None
+        tutee_email = None
         tutee_grade = None
-        if tutee_info.get('graduation_year'):
+        if tutee_row and tutee_row.data:
+            tutee_name = f"{tutee_row.data.get('first_name','')} {tutee_row.data.get('last_name','')}".strip()
+            tutee_email = tutee_row.data.get('email')
             try:
                 from datetime import datetime
                 current_year = datetime.now().year
-                years_left = int(tutee_info['graduation_year']) - current_year
-                grade_mapping = {4: '9', 3: '10', 2: '11', 1: '12'}
-                tutee_grade = grade_mapping.get(years_left, '12')
-            except:
+                gy = tutee_row.data.get('graduation_year')
+                if gy:
+                    years_left = int(gy) - current_year
+                    grade_mapping = {4: '9', 3: '10', 2: '11', 1: '12'}
+                    tutee_grade = grade_mapping.get(years_left, '12')
+            except Exception:
                 tutee_grade = '12'
-        
-        # Format date and time from scheduled_time
+
         try:
             from datetime import datetime
             scheduled_dt = datetime.fromisoformat(scheduled_time.replace('Z', '+00:00'))
             formatted_date = scheduled_dt.strftime('%A, %B %d, %Y')
             formatted_time = scheduled_dt.strftime('%I:%M %p')
-        except:
-            formatted_date = "Scheduled Date"
-            formatted_time = "Scheduled Time"
-        
-        # Construct subject string
-        subject_name = job_data.get('subject_name', '')
-        subject_type = job_data.get('subject_type', '')
-        subject_grade = job_data.get('subject_grade', '')
-        subject_string = f"{subject_name} • {subject_type} • Grade {subject_grade}".strip()
-        
-        # Get location
-        location = job_data.get('location', 'Location TBD')
-        
-        # Send confirmation emails using the email service
-        email_service.send_session_confirmation(
-            tutor_email=tutor_info.get('email'),
-            tutee_email=tutee_info.get('email'),
-            session_details={
-                'subject': subject_string,
-                'date': formatted_date,
-                'time': formatted_time,
-                'location': location,
-                'tutor_name': tutor_name,
-                'tutee_name': tutee_name,
-                'tutee_grade': tutee_grade,
-                'duration_minutes': duration_minutes
-            }
-        )
+        except Exception:
+            formatted_date = 'Scheduled Date'
+            formatted_time = 'Scheduled Time'
+
+        subject_string = f"{job_row.data.get('subject_name','')} • {job_row.data.get('subject_type','')} • Grade {job_row.data.get('subject_grade','')}".strip()
+        location = job_row.data.get('location') or 'Location TBD'
+
+        if (tutor_row.data or {}).get('email') and tutee_email:
+            email_service.send_session_confirmation(
+                tutor_email=(tutor_row.data or {}).get('email'),
+                tutee_email=tutee_email,
+                session_details={
+                    'subject': subject_string,
+                    'date': formatted_date,
+                    'time': formatted_time,
+                    'location': location,
+                    'tutor_name': tutor_name,
+                    'tutee_name': tutee_name or 'Student',
+                    'tutee_grade': tutee_grade,
+                    'duration_minutes': duration_minutes
+                }
+            )
+        elif (tutor_row.data or {}).get('email'):
+            subj = f"Session Confirmation: {subject_string} on {formatted_date}"
+            html = f"""
+            <html><body>
+            <h2>Session Confirmation</h2>
+            <p>Hello {tutor_name},</p>
+            <p>Your session has been scheduled for <strong>{subject_string}</strong> on <strong>{formatted_date}</strong> at <strong>{formatted_time}</strong> at <strong>{location}</strong>.</p>
+            </body></html>
+            """
+            text = f"Session Confirmation for {subject_string} on {formatted_date} at {formatted_time} ({location})"
+            email_service.send_email((tutor_row.data or {}).get('email'), subj, html, text)
 
     return jsonify({'message': 'Scheduled', 'job': upd.data[0]}), 200
 

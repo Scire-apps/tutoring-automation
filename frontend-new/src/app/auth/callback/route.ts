@@ -70,10 +70,38 @@ export async function POST(request: NextRequest) {
 // handle GET by taking the user into the app where the client-side listener will
 // immediately redirect them to the appropriate dashboard based on their role.
 export async function GET(request: NextRequest) {
+  // Prepare redirect response we can mutate cookies on
+  const redirectUrl = new URL('/', request.url);
+  const response = NextResponse.redirect(redirectUrl);
+
+  // Create server client wired to this request/response cookies
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          response.cookies.set({ name, value, ...options });
+        },
+        remove(name: string, options: CookieOptions) {
+          response.cookies.set({ name, value: '', ...options });
+        },
+      },
+    }
+  );
+
   try {
-    const url = new URL('/', request.url);
-    return NextResponse.redirect(url);
-  } catch {
-    return NextResponse.redirect(new URL('/', request.url));
+    const code = new URL(request.url).searchParams.get('code');
+    if (code) {
+      // Exchange the verification code (or magic link) for a session and persist cookies
+      await supabase.auth.exchangeCodeForSession(code);
+    }
+  } catch (e) {
+    console.error('Auth callback GET: exchangeCodeForSession failed:', e);
   }
+
+  return response;
 }

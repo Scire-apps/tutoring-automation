@@ -9,6 +9,7 @@ from routes.tutee import tutee_bp
 from routes.tutor import tutor_bp
 from routes.auth import auth_bp
 from routes.jobs import jobs_bp
+from routes.help import help_bp
 import re
 
 # Load environment variables
@@ -91,6 +92,7 @@ def create_app():
     app.register_blueprint(tutor_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(jobs_bp)
+    app.register_blueprint(help_bp)
     
     @app.route('/')
     def hello():

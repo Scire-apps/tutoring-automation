@@ -19,6 +19,10 @@ export default function TuteeDashboardPage() {
   const [subjects, setSubjects] = useState<string[]>([]);
   const [allSubjects, setAllSubjects] = useState<string[]>([]);
   const [savingSubjects, setSavingSubjects] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
+  const [helpUrgency, setHelpUrgency] = useState<'urgent'|'non-urgent'>('non-urgent');
+  const [helpDescription, setHelpDescription] = useState<string>("");
+  const [helpSubmitting, setHelpSubmitting] = useState<boolean>(false);
 
   // Helper function to check if there are sessions waiting for availability
   const hasPendingAvailability = () => {
@@ -244,6 +248,23 @@ export default function TuteeDashboardPage() {
                 <p className="text-sm text-gray-500 group-hover:text-blue-700">Find a tutor for your subjects</p>
               </div>
             </Link>
+            {/* Ask for Help Card */}
+            <button
+              onClick={() => setShowHelpModal(true)}
+              className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-lg hover:border-blue-200 hover:bg-blue-50 transition-colors group text-left"
+            >
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5h.01" />
+                  </svg>
+                </div>
+              </div>
+              <div className="ml-4 text-left">
+                <h4 className="text-lg font-medium text-gray-900 group-hover:text-blue-900">Ask for Help</h4>
+                <p className="text-sm text-gray-500 group-hover:text-blue-700">Contact your school help desk</p>
+              </div>
+            </button>
           </div>
         </div>
 
@@ -578,6 +599,59 @@ export default function TuteeDashboardPage() {
                   {savingSubjects ? "Saving..." : "Save"}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showHelpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowHelpModal(false)}></div>
+          <div className="relative bg-white rounded-lg border-2 border-gray-100 w-full max-w-lg p-6">
+            <h3 className="text-lg font-semibold mb-2">Ask for Help</h3>
+            <p className="text-sm text-gray-600 mb-4">Submit a help request to your school's help desk.</p>
+            <div className="grid grid-cols-1 gap-3 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
+                <select
+                  className="w-full border rounded px-3 py-2"
+                  value={helpUrgency}
+                  onChange={(e) => setHelpUrgency((e.target.value as 'urgent'|'non-urgent') || 'non-urgent')}
+                >
+                  <option value="urgent">Urgent</option>
+                  <option value="non-urgent">Non-urgent</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  className="w-full border rounded px-3 py-2 min-h-[140px]"
+                  placeholder="Describe your issue or question..."
+                  value={helpDescription}
+                  onChange={(e) => setHelpDescription(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button className="px-3 py-1.5 border rounded" onClick={() => setShowHelpModal(false)}>Cancel</button>
+              <button
+                className="px-3 py-1.5 bg-blue-600 text-white rounded disabled:opacity-50"
+                disabled={helpSubmitting || !helpDescription.trim()}
+                onClick={async () => {
+                  try {
+                    setHelpSubmitting(true);
+                    await api.submitHelpRequest({ urgency: helpUrgency, description: helpDescription.trim() });
+                    setShowHelpModal(false);
+                    setHelpDescription("");
+                    setHelpUrgency('non-urgent');
+                  } catch (e: any) {
+                    setError(e?.message || 'Failed to submit help request.');
+                  } finally {
+                    setHelpSubmitting(false);
+                  }
+                }}
+              >
+                {helpSubmitting ? 'Submitting...' : 'Submit Request'}
+              </button>
             </div>
           </div>
         </div>

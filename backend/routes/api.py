@@ -6,6 +6,7 @@ from utils.db import get_supabase_client
 from utils.auth import require_auth
 from utils.email_service import get_email_service
 from utils.storage import get_storage_service
+from utils.db import get_db_manager
 
 # Configure logging
 logger = logging.getLogger(__name__)

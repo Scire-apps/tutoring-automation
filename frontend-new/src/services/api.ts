@@ -425,6 +425,16 @@ export async function sendApprovalStatusNotification(
 }
 
 /**
+ * Submit a help request (tutor or tutee)
+ */
+export async function submitHelpRequest(payload: { urgency: 'urgent'|'non-urgent'; description: string }) {
+  return apiRequest<{ message: string; help: any }>(
+    `/api/help/submit`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  );
+}
+
+/**
  * API service object
  */
 const apiService = {
@@ -458,6 +468,7 @@ const apiService = {
   listOwnCertificationRequests,
   getTutorApprovals,
   getTuteeJobDetails,
+  submitHelpRequest,
 };
 
 export default apiService;

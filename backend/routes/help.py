@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from utils.auth import require_auth
+from utils.auth import require_auth, require_admin
 from utils.db import get_supabase_client
 
 help_bp = Blueprint('help', __name__)
@@ -90,4 +90,47 @@ def submit_help_request():
         return jsonify({'error': 'failed_to_submit'}), 500
     return jsonify({'message': 'submitted', 'help': ins.data[0]}), 201
 
+
+@help_bp.route('/api/admin/help-requests', methods=['GET'])
+@require_admin
+def list_help_requests_admin():
+    """List help requests visible to the admin (scoped by admin's school).
+
+    Returns most recent first.
+    """
+    supabase = get_supabase_client()
+    try:
+        admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
+        school_id = (admin_res.data or {}).get('school_id') if admin_res.data else None
+        query = supabase.table('help_questions').select('*').order('submitted_at', desc=True)
+        if school_id:
+            query = query.eq('school_id', school_id)
+        res = query.limit(100).execute()
+        return jsonify({'help_requests': res.data or []}), 200
+    except Exception as e:
+        print(f"Error listing help requests: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@help_bp.route('/api/admin/help-requests/<request_id>', methods=['DELETE'])
+@require_admin
+def delete_help_request_admin(request_id: str):
+    """Mark a help request as resolved by deleting it (scoped by admin's school)."""
+    supabase = get_supabase_client()
+    try:
+        # Scope check
+        admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
+        admin_school_id = (admin_res.data or {}).get('school_id') if admin_res.data else None
+
+        row = supabase.table('help_questions').select('school_id').eq('id', request_id).single().execute()
+        if not row.data:
+            return jsonify({'error': 'not_found'}), 404
+        if admin_school_id and row.data.get('school_id') != admin_school_id:
+            return jsonify({'error': 'not_in_admin_school_scope'}), 403
+
+        supabase.table('help_questions').delete().eq('id', request_id).execute()
+        return jsonify({'message': 'resolved'}), 200
+    except Exception as e:
+        print(f"Error deleting help request: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
 

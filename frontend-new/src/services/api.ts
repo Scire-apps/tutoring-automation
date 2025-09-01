@@ -435,6 +435,26 @@ export async function submitHelpRequest(payload: { urgency: 'urgent'|'non-urgent
 }
 
 /**
+ * Admin: list help requests (scoped by admin's school)
+ */
+export async function listHelpRequests() {
+  return apiRequest<{ help_requests: any[] }>(
+    `/api/admin/help-requests`,
+    { method: 'GET' }
+  );
+}
+
+/**
+ * Admin: resolve (delete) a help request by id
+ */
+export async function resolveHelpRequest(requestId: string) {
+  return apiRequest<{ message: string }>(
+    `/api/admin/help-requests/${requestId}`,
+    { method: 'DELETE' }
+  );
+}
+
+/**
  * API service object
  */
 const apiService = {
@@ -469,6 +489,8 @@ const apiService = {
   getTutorApprovals,
   getTuteeJobDetails,
   submitHelpRequest,
+  listHelpRequests,
+  resolveHelpRequest,
 };
 
 export default apiService;

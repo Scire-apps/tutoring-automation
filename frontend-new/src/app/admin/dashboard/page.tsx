@@ -17,6 +17,10 @@ export default function AdminDashboardPage() {
   const [acting, setActing] = useState<boolean>(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [helpRequests, setHelpRequests] = useState<any[]>([]);
+  const [expandedHelpIds, setExpandedHelpIds] = useState<Record<string, boolean>>({});
+  const [helpError, setHelpError] = useState<string | null>(null);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
   const navigate = (href: string) => { if (typeof window !== 'undefined') window.location.href = href; };
   
   useEffect(() => {
@@ -108,6 +112,15 @@ export default function AdminDashboardPage() {
         if (crResp.ok) {
           const crJson = await crResp.json();
           setCertificationRequests(crJson.requests || []);
+        }
+
+        // Help requests (scoped by admin's school on backend)
+        const hqResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/help-requests`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (hqResp.ok) {
+          const hqJson = await hqResp.json();
+          setHelpRequests((hqJson.help_requests || []).slice(0, 100));
         }
       } catch (err) {
         console.error('Error fetching admin data:', err);
@@ -245,6 +258,101 @@ export default function AdminDashboardPage() {
                   </div>
                 </li>
               ))
+            )}
+          </ul>
+        </div>
+
+        {/* Help Requests */}
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+          <div className="px-4 py-5 sm:px-6">
+            <h2 className="text-lg leading-6 font-medium text-gray-900">Help Requests</h2>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">Questions submitted by tutors and tutees in your school.</p>
+          </div>
+          {helpError && (
+            <div className="px-4 text-sm text-red-600">{helpError}</div>
+          )}
+          <ul className="divide-y divide-gray-200">
+            {helpRequests.length === 0 ? (
+              <li className="px-4 py-4 text-gray-500 text-center">No help requests</li>
+            ) : (
+              helpRequests.map((h: any) => {
+                const isExpanded = !!expandedHelpIds[h.id];
+                const schoolName = schools.find((s) => s.id === h.school_id)?.name;
+                const initials = `${(h.user_first_name || '?').charAt(0)}${(h.user_last_name || '').charAt(0)}`;
+                const urgencyBadge = h.urgency === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
+                return (
+                  <li key={h.id} className="px-4 py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                            <span className="text-sm font-medium text-gray-700">{initials}</span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {h.user_first_name} {h.user_last_name} <span className="text-gray-500">({h.role})</span>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {h.user_email} • {schoolName || 'Unknown school'} {h.submitted_at ? `• ${new Date(h.submitted_at).toLocaleString()}` : ''}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${urgencyBadge}`}>
+                          {h.urgency === 'high' ? 'Urgent' : 'Non-urgent'}
+                        </span>
+                        <button
+                          className="text-gray-500"
+                          onClick={() => setExpandedHelpIds((prev) => ({ ...prev, [h.id]: !isExpanded }))}
+                        >
+                          {isExpanded ? 'Hide' : 'View'}
+                        </button>
+                      </div>
+                    </div>
+                    {isExpanded && (
+                      <div className="mt-3 border-t pt-3 text-sm text-gray-800">
+                        {h.user_grade && (
+                          <div className="mb-1"><span className="font-medium">Grade:</span> {h.user_grade}</div>
+                        )}
+                        <div className="mb-2">
+                          <div className="font-medium">Description</div>
+                          <div className="whitespace-pre-wrap text-gray-700">{h.description}</div>
+                        </div>
+                        <div className="flex justify-end">
+                          <button
+                            className={`px-3 py-1.5 bg-green-600 text-white rounded disabled:opacity-50`}
+                            disabled={resolvingId === h.id}
+                            onClick={async () => {
+                              try {
+                                setHelpError(null);
+                                setResolvingId(h.id);
+                                const { supabase } = await import('@/services/supabase');
+                                const { data: { session } } = await supabase.auth.getSession();
+                                const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/help-requests/${h.id}`, {
+                                  method: 'DELETE',
+                                  headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }
+                                });
+                                if (!resp.ok) {
+                                  const j = await resp.json().catch(()=>({}));
+                                  throw new Error(j.error || 'Failed to resolve help request');
+                                }
+                                setHelpRequests((prev) => prev.filter((x) => x.id !== h.id));
+                              } catch (e: any) {
+                                setHelpError(e?.message || 'Failed to resolve help request');
+                              } finally {
+                                setResolvingId(null);
+                              }
+                            }}
+                          >
+                            {resolvingId === h.id ? 'Resolving...' : 'Mark as resolved'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                );
+              })
             )}
           </ul>
         </div>

@@ -16,6 +16,7 @@ function TutorRegisterForm() {
   const [schools, setSchools] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailTaken, setEmailTaken] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSchools, setIsLoadingSchools] = useState(true);
   const [registrationComplete, setRegistrationComplete] = useState(false);
@@ -64,7 +65,13 @@ function TutorRegisterForm() {
         }
       } catch {}
       if (error) {
-        setError(error.message);
+        const msg = String(error.message || '').toLowerCase();
+        if (msg.includes('already') && (msg.includes('registered') || msg.includes('exists'))) {
+          setEmailError('This email is already registered. Please sign in or reset your password.');
+          setEmailTaken(true);
+        } else {
+          setError(error.message);
+        }
         return;
       }
       setRegistrationComplete(true);
@@ -148,6 +155,7 @@ function TutorRegisterForm() {
                   setEmail(v);
                   if (v && !isHdsbEmail(v)) setEmailError('Please use your @hdsb.ca email address.');
                   else setEmailError(null);
+                  if (emailTaken) setEmailTaken(false);
                 }}
                 aria-invalid={!!emailError}
               />
@@ -162,7 +170,7 @@ function TutorRegisterForm() {
           {error && (<div className="text-red-500 text-sm mt-2">{error}</div>)}
 
           <div>
-            <button type="submit" disabled={isLoading || isLoadingSchools || !!emailError || !/^[^@\s]+@hdsb\.ca$/i.test((email||'').trim())} className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300">
+            <button type="submit" disabled={isLoading || isLoadingSchools || !!emailError || emailTaken || !/^[^@\s]+@hdsb\.ca$/i.test((email||'').trim())} className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300">
               {isLoading ? 'Registering...' : 'Register'}
             </button>
           </div>

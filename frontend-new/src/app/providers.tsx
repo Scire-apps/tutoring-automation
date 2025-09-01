@@ -323,6 +323,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
 
+    // Detect duplicate registrations (Supabase returns user with empty identities when email already exists)
+    if (!error && data.user && Array.isArray((data.user as any).identities) && (data.user as any).identities.length === 0) {
+      return { error: { message: 'This email is already registered. Please sign in or reset your password.' } };
+    }
+
     if (!error && data.user) {
       // Some projects have email confirmation; session may be null here.
       // If we do have a token, we can proactively ensure now; otherwise it will happen on first login

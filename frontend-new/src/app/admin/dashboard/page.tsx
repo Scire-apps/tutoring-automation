@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/app/providers';
+import api from '@/services/api';
 import { Admin, School, Tutor } from '@/types/models';
 
 export default function AdminDashboardPage() {
@@ -62,11 +63,7 @@ export default function AdminDashboardPage() {
         }
 
         // Single aggregated fetch for dashboard
-        const overviewResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/overview`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!overviewResp.ok) throw new Error('Failed to load admin overview');
-        const overview = await overviewResp.json();
+        const overview = await api.getAdminOverview();
         setAdmin(overview.admin as Admin);
         setSchools((overview.schools || []) as School[]);
         setTutors((overview.tutors || []) as Tutor[]);

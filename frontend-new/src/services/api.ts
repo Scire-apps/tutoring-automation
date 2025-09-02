@@ -8,6 +8,54 @@ import { supabase } from './supabase';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://tutoring-automation-sdt9.onrender.com';
 
+// In-memory client-side TTL cache for GET requests
+type CacheEntry = { ts: number; maxAge: number; data: any };
+const memoryCache: Map<string, CacheEntry> = new Map();
+const DEFAULT_TTL_MS = Number(process.env.NEXT_PUBLIC_API_CACHE_TTL || 5000);
+
+function cacheKey(method: string, url: string, token?: string) {
+  return `${method}|${url}|${token || ''}`;
+}
+
+function pickTtlMs(endpoint: string): number {
+  try {
+    if (endpoint.startsWith('/api/admin/overview')) return Number(process.env.NEXT_PUBLIC_ADMIN_OVERVIEW_TTL || 3000);
+    if (endpoint.startsWith('/api/admin/tutors/') && endpoint.endsWith('/edit-data')) return Number(process.env.NEXT_PUBLIC_ADMIN_EDIT_TTL || 3000);
+    if (endpoint.startsWith('/api/admin/help-requests')) return Number(process.env.NEXT_PUBLIC_ADMIN_HELP_TTL || 5000);
+    if (endpoint.startsWith('/api/admin/awaiting-verification')) return Number(process.env.NEXT_PUBLIC_ADMIN_AWAITING_TTL || 2000);
+    if (endpoint.startsWith('/api/admin/tutors') || endpoint.startsWith('/api/admin/opportunities') || endpoint.startsWith('/api/admin/jobs') || endpoint.startsWith('/api/admin/schools')) return Number(process.env.NEXT_PUBLIC_ADMIN_LIST_TTL || 5000);
+    if (endpoint.startsWith('/api/public/')) return Number(process.env.NEXT_PUBLIC_PUBLIC_CACHE_TTL || 600000);
+  } catch (_) {}
+  return DEFAULT_TTL_MS;
+}
+
+function getCached(method: string, fullUrl: string, token?: string) {
+  const key = cacheKey(method, fullUrl, token);
+  const entry = memoryCache.get(key);
+  if (!entry) return null;
+  const age = Date.now() - entry.ts;
+  if (age > entry.maxAge) {
+    memoryCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCached(method: string, fullUrl: string, token: string | undefined, data: any, maxAgeMs: number) {
+  const key = cacheKey(method, fullUrl, token);
+  memoryCache.set(key, { ts: Date.now(), maxAge: maxAgeMs, data });
+}
+
+function invalidateCacheByPrefix(prefix: string) {
+  try {
+    for (const key of Array.from(memoryCache.keys())) {
+      if (key.includes(`|${API_URL}${prefix}`)) {
+        memoryCache.delete(key);
+      }
+    }
+  } catch (_) {}
+}
+
 /**
  * Base API request function with error handling and authentication
  */
@@ -28,12 +76,19 @@ async function apiRequest<T>(
     ...options.headers,
   };
   
+  const method = (options.method || 'GET').toString().toUpperCase();
   const config = {
     ...options,
     headers,
   };
   
   try {
+    // Serve from cache for eligible GETs
+    if (method === 'GET' && (endpoint.startsWith('/api/admin/') || endpoint.startsWith('/api/public/'))) {
+      const cached = getCached(method, url, session?.access_token);
+      if (cached != null) return cached as T;
+    }
+
     const response = await fetch(url, config);
     
     if (!response.ok) {
@@ -53,6 +108,13 @@ async function apiRequest<T>(
     }
     
     const data = await response.json();
+    // Store in cache for eligible GETs
+    if (method === 'GET' && (endpoint.startsWith('/api/admin/') || endpoint.startsWith('/api/public/'))) {
+      setCached(method, url, session?.access_token, data, pickTtlMs(endpoint));
+    } else if (method !== 'GET' && endpoint.startsWith('/api/admin/')) {
+      // Invalidate admin caches on mutations
+      invalidateCacheByPrefix('/api/admin');
+    }
     return data as T;
   } catch (error) {
     console.error('API request failed:', error);
@@ -181,6 +243,29 @@ export async function listAwaitingVerificationJobs() {
     `/api/admin/awaiting-verification`,
     { method: 'GET' }
   );
+}
+
+export async function getAdminOverview() {
+  return apiRequest<{
+    admin: any;
+    tutors: any[];
+    opportunities: any[];
+    awaiting_jobs: any[];
+    certification_requests: any[];
+    schools: any[];
+  }>(`/api/admin/overview`, { method: 'GET' });
+}
+
+export async function getTutorEditData(tutorId: string) {
+  return apiRequest<{
+    tutor: any;
+    subject_approvals: any[];
+    subjects: { name: string }[];
+  }>(`/api/admin/tutors/${tutorId}/edit-data`, { method: 'GET' });
+}
+
+export async function getTutorDetailsAdmin(tutorId: string) {
+  return apiRequest<{ tutor: any; subject_approvals?: any[] }>(`/api/admin/tutors/${tutorId}`, { method: 'GET' });
 }
 
 export async function getRecordingLinkForJob(jobId: string) {

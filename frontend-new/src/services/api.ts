@@ -296,6 +296,23 @@ export async function getTutorHistoryForAdmin(tutorId: string) {
   );
 }
 
+export async function updateTutorStatusAdmin(tutorId: string, status: 'active'|'pending'|'suspended') {
+  return apiRequest<{ message: string }>(
+    `/api/admin/tutors/${tutorId}/status`,
+    { method: 'PUT', body: JSON.stringify({ status }) }
+  );
+}
+
+export async function updateTutorSubjectApprovalAdmin(
+  tutorId: string,
+  payload: { action: 'approve'|'reject'|'remove'; subject_name?: string; subject_type?: string; subject_grade?: string; subject_id?: string }
+) {
+  return apiRequest<{ message?: string }>(
+    `/api/admin/tutors/${tutorId}/subjects`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  );
+}
+
 // Certification Requests (Tutor)
 export async function createCertificationRequest(payload: {
   subject_name: string;
@@ -569,6 +586,8 @@ const apiService = {
   listSchoolsPublic,
   listTutorPastJobs,
   getTutorHistoryForAdmin,
+  updateTutorStatusAdmin,
+  updateTutorSubjectApprovalAdmin,
   createCertificationRequest,
   listOwnCertificationRequests,
   getTutorApprovals,

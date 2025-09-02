@@ -576,6 +576,10 @@ const apiService = {
   submitHelpRequest,
   listHelpRequests,
   resolveHelpRequest,
+  // Admin aggregate + edit-data (client-side cached)
+  getAdminOverview,
+  getTutorEditData,
+  getTutorDetailsAdmin,
 };
 
 export default apiService;

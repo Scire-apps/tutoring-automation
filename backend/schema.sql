@@ -527,15 +527,20 @@ create policy "opps update tutee own open or admin"
         select 1 from public.tutees te
         where te.id = tutoring_opportunities.tutee_id and te.auth_id = auth.uid()
       )
-      and tutoring_opportunities.status = 'open'
     )
   );
 
 drop policy if exists "opps delete admin only" on public.tutoring_opportunities;
-create policy "opps delete admin only"
+create policy "opps delete admin or tutee owner"
   on public.tutoring_opportunities for delete
   to authenticated
-  using (public.is_admin());
+  using (
+    public.is_admin()
+    or exists (
+      select 1 from public.tutees te
+      where te.id = tutoring_opportunities.tutee_id and te.auth_id = auth.uid()
+    )
+  );
 
 -- Jobs: admin all; tutor/tutee own read; updates restricted to owners or admin; deletes tutor owner or admin
 drop policy if exists "jobs select own or admin" on public.tutoring_jobs;

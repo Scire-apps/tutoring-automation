@@ -308,17 +308,17 @@ export default function TuteeDashboardPage() {
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 try {
-                                  // Optimistically update UI
+                                  // Optimistically remove from UI
                                   setData((prev: any) => prev ? {
                                     ...prev,
-                                    opportunities: (prev.opportunities || []).map((op: any) => op.id === o.id ? { ...op, status: 'cancelled' } : op)
+                                    opportunities: (prev.opportunities || []).filter((op: any) => op.id !== o.id)
                                   } : prev);
                                   await api.cancelTuteeOpportunity(o.id);
                                 } catch (err) {
-                                  // Revert on failure
+                                  // Revert on failure (add back)
                                   setData((prev: any) => prev ? {
                                     ...prev,
-                                    opportunities: (prev.opportunities || []).map((op: any) => op.id === o.id ? { ...op, status: 'open' } : op)
+                                    opportunities: [o, ...(prev.opportunities || [])]
                                   } : prev);
                                 }
                               }}

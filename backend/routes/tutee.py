@@ -21,10 +21,26 @@ def get_tutee_dashboard():
     tutee = tutee_result.data
 
     # Load own opportunities (embedded subject fields)
-    opps = supabase.table('tutoring_opportunities').select('*').eq('tutee_id', tutee['id']).order('created_at', desc=True).execute()
+    opps = (
+        supabase
+        .table('tutoring_opportunities')
+        .select('*')
+        .eq('tutee_id', tutee['id'])
+        .order('created_at', desc=True)
+        .limit(100)
+        .execute()
+    )
 
     # Load own jobs (embedded subject fields)
-    jobs = supabase.table('tutoring_jobs').select('*').eq('tutee_id', tutee['id']).order('created_at', desc=True).execute()
+    jobs = (
+        supabase
+        .table('tutoring_jobs')
+        .select('*')
+        .eq('tutee_id', tutee['id'])
+        .order('created_at', desc=True)
+        .limit(100)
+        .execute()
+    )
 
     # Compute grade suggestion from graduation_year if present
     grade_suggestion = None

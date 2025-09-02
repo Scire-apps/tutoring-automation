@@ -27,6 +27,7 @@ def get_tutor_dashboard():
         .select('*, tutee:tutees(id, first_name, last_name, email, school_id, graduation_year)')
         .eq('status', 'open')
         .order('created_at', desc=True)
+        .limit(100)
         .execute()
     )
 
@@ -37,6 +38,7 @@ def get_tutor_dashboard():
         .select('*')
         .eq('tutor_id', tutor['id'])
         .order('created_at', desc=True)
+        .limit(100)
         .execute()
     )
 
@@ -54,6 +56,7 @@ def get_tutor_dashboard():
             .select('*')
             .eq('tutor_id', tutor['id'])
             .order('created_at', desc=True)
+            .limit(100)
             .execute()
         )
         for aw in (awaiting_res.data or []):

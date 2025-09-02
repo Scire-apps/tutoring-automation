@@ -1,7 +1,9 @@
 import os
 import logging
+import time
+from collections import OrderedDict
 from supabase import create_client, Client
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -89,13 +91,85 @@ def _extract_bearer_token_from_request() -> Optional[str]:
         return None
 
 
+class _ClientLRUCache:
+    """Small LRU cache to reuse Supabase clients per JWT for a short TTL.
+
+    This avoids the overhead of creating a new HTTP client on every request,
+    while keeping memory bounded and respecting short-lived tokens.
+    """
+
+    def __init__(self, max_size: int = 64, ttl_seconds: int = 60):
+        self.max_size = max_size
+        self.ttl_seconds = ttl_seconds
+        self._store: OrderedDict[str, Tuple[float, Client]] = OrderedDict()
+
+    def get(self, key: str) -> Optional[Client]:
+        now = time.time()
+        try:
+            entry = self._store.get(key)
+            if not entry:
+                return None
+            ts, client = entry
+            if now - ts > self.ttl_seconds:
+                # expired
+                try:
+                    del self._store[key]
+                except Exception:
+                    pass
+                return None
+            # mark as recently used
+            try:
+                self._store.move_to_end(key)
+            except Exception:
+                pass
+            return client
+        except Exception:
+            return None
+
+    def set(self, key: str, client: Client) -> None:
+        now = time.time()
+        try:
+            self._store[key] = (now, client)
+            self._store.move_to_end(key)
+            while len(self._store) > self.max_size:
+                try:
+                    self._store.popitem(last=False)
+                except Exception:
+                    break
+        except Exception:
+            # best-effort cache, ignore failures
+            pass
+
+
+_cache_size = int(os.environ.get("SUPABASE_CLIENT_CACHE_SIZE", "64"))
+_cache_ttl = int(os.environ.get("SUPABASE_CLIENT_TTL_SECONDS", "60"))
+_client_cache = _ClientLRUCache(max_size=_cache_size, ttl_seconds=_cache_ttl)
+
+
+def _get_or_create_client(user_jwt: Optional[str]) -> Client:
+    key = user_jwt or "__anon__"
+    cached = _client_cache.get(key)
+    if cached is not None:
+        return cached
+    mgr = DatabaseManager(user_jwt=user_jwt)
+    _client_cache.set(key, mgr.client)
+    return mgr.client
+
+
 def get_supabase_client() -> Client:
-    """Return a new Supabase client using the anon key, bound to the current user's JWT if present."""
+    """Return a cached Supabase client bound to the current user's JWT if present."""
     token = _extract_bearer_token_from_request()
-    return DatabaseManager(user_jwt=token).client
+    return _get_or_create_client(token)
 
 
 def get_db_manager() -> DatabaseManager:
     """Return an ephemeral DatabaseManager bound to the current user's JWT if present."""
     token = _extract_bearer_token_from_request()
-    return DatabaseManager(user_jwt=token)
+    # For callers that rely on helper methods, wrap the cached client
+    mgr = DatabaseManager(user_jwt=token)
+    # Replace the fresh client with cached one to avoid duplicate sessions
+    try:
+        object.__setattr__(mgr, "_client", _get_or_create_client(token))
+    except Exception:
+        pass
+    return mgr

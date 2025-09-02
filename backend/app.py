@@ -10,6 +10,7 @@ from routes.tutor import tutor_bp
 from routes.auth import auth_bp
 from routes.jobs import jobs_bp
 from routes.help import help_bp
+from werkzeug.middleware.proxy_fix import ProxyFix
 import re
 
 # Load environment variables
@@ -18,6 +19,8 @@ load_dotenv()
 def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
+    # Trust X-Forwarded-* headers when behind proxy (Render/Vercel)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
     
     # Configure CORS to allow requests from frontend domains
     # Include specific domains and regex for Vercel previews

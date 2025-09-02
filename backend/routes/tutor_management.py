@@ -32,7 +32,7 @@ def list_tutors_for_admin():
         query = supabase.table('tutors').select('*, school:schools(name,domain)').order('created_at', desc=True)
         if school_id:
             query = query.eq('school_id', school_id)
-        tutors_res = query.execute()
+        tutors_res = query.limit(200).execute()
         return jsonify({'tutors': tutors_res.data or []}), 200
     except Exception as e:
         print(f"Error listing tutors for admin: {e}")

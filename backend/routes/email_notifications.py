@@ -117,8 +117,9 @@ def send_session_confirmation():
 
     # Send emails to both parties
     email_service = get_email_service()
+    # Send in sequence to reduce parallel SMTP overhead under constrained providers
     tutor_ok = email_service.send_email(tutor_email, f"Session Confirmation: {subj_text}", html, text)
-    tutee_ok = email_service.send_email(tutee_email, f"Session Confirmation: {subj_text}", html, text)
+    tutee_ok = tutor_ok and email_service.send_email(tutee_email, f"Session Confirmation: {subj_text}", html, text)
     success = tutor_ok and tutee_ok
     
     if success:

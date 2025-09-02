@@ -178,6 +178,13 @@ export async function listOpenOpportunities() {
   );
 }
 
+export async function cancelTuteeOpportunity(opportunityId: string) {
+  return apiRequest<{ message: string; opportunity: any }>(
+    `/api/tutee/opportunities/${opportunityId}/cancel`,
+    { method: 'POST' }
+  );
+}
+
 export async function completeJob(
   jobId: string,
   payload: {}
@@ -582,6 +589,7 @@ const apiService = {
   getRecordingLinkForJob,
   verifyCompletedJob,
   listOpenOpportunities,
+  cancelTuteeOpportunity,
   completeJob,
   listSchoolsPublic,
   listTutorPastJobs,

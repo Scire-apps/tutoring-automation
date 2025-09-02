@@ -893,6 +893,26 @@ def admin_overview():
             .execute()
         )
 
+        # Help requests (scoped by school if present)
+        if school_id:
+            help_q = (
+                supabase
+                .table('help_questions')
+                .select('id, auth_id, role, tutor_id, tutee_id, school_id, user_first_name, user_last_name, user_email, user_grade, submitted_at, urgency, description')
+                .eq('school_id', school_id)
+                .order('submitted_at', desc=True)
+                .limit(100)
+            )
+        else:
+            help_q = (
+                supabase
+                .table('help_questions')
+                .select('id, auth_id, role, tutor_id, tutee_id, school_id, user_first_name, user_last_name, user_email, user_grade, submitted_at, urgency, description')
+                .order('submitted_at', desc=True)
+                .limit(100)
+            )
+        help_res = help_q.execute()
+
         # Certification requests (scoped by school if present)
         if school_id:
             tutors_ids_res = supabase.table('tutors').select('id').eq('school_id', school_id).execute()
@@ -934,6 +954,8 @@ def admin_overview():
             if hasattr(opp_res, 'data') else [],
             'awaiting_jobs': awaiting_res.data or []
             if hasattr(awaiting_res, 'data') else [],
+            'help_requests': help_res.data or []
+            if hasattr(help_res, 'data') else [],
             'certification_requests': cert_res.data or []
             if hasattr(cert_res, 'data') else [],
             'schools': schools_cached,

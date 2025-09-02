@@ -93,23 +93,18 @@ export default function EditTutorPage() {
 
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token ?? '';
-      // Fetch via backend endpoints (service role)
-      const [tutorResp, subjectsResp, approvalsResp] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/subjects`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/approvals`, { headers: { Authorization: `Bearer ${token}` } }),
-      ]);
-      if (!tutorResp.ok) throw new Error('Tutor not found');
-      const tutorJson = await tutorResp.json();
-      const subjectsJson = subjectsResp.ok ? await subjectsResp.json() : { subjects: [] };
-      const approvalsJson = approvalsResp.ok ? await approvalsResp.json() : { subject_approvals: [] };
+      // Single aggregated fetch for edit page
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/edit-data`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!resp.ok) throw new Error('Failed to load tutor edit data');
+      const j = await resp.json();
 
       const structuredData = {
-        tutor: tutorJson.tutor,
-        subject_approvals: approvalsJson.subject_approvals || [],
-        // Normalize available subjects to a simple array of names from backend; fallback handled in UI
-        available_subjects: Array.isArray(subjectsJson.subjects)
-          ? subjectsJson.subjects.map((s: any) => s?.name).filter(Boolean)
+        tutor: j.tutor,
+        subject_approvals: j.subject_approvals || [],
+        available_subjects: Array.isArray(j.subjects)
+          ? j.subjects.map((s: any) => s?.name).filter(Boolean)
           : [],
       };
       setTutorData(structuredData);

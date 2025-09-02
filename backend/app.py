@@ -11,6 +11,11 @@ from routes.auth import auth_bp
 from routes.jobs import jobs_bp
 from routes.help import help_bp
 from werkzeug.middleware.proxy_fix import ProxyFix
+try:
+    # Optional gzip compression (safe default: compress text/json only)
+    from flask_compress import Compress
+except Exception:
+    Compress = None
 import re
 
 # Load environment variables
@@ -21,6 +26,15 @@ def create_app():
     app = Flask(__name__)
     # Trust X-Forwarded-* headers when behind proxy (Render/Vercel)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
+    # Enable gzip compression if available
+    if Compress is not None:
+        try:
+            app.config['COMPRESS_MIMETYPES'] = ['application/json', 'text/plain', 'text/html', 'text/css', 'application/javascript']
+            app.config['COMPRESS_LEVEL'] = int(os.environ.get('COMPRESS_LEVEL', '6'))
+            app.config['COMPRESS_MIN_SIZE'] = int(os.environ.get('COMPRESS_MIN_SIZE', '1024'))
+            Compress(app)
+        except Exception:
+            pass
     
     # Configure CORS to allow requests from frontend domains
     # Include specific domains and regex for Vercel previews

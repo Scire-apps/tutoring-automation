@@ -2,9 +2,11 @@ from flask import Blueprint, request, jsonify, current_app
 import os
 from datetime import datetime, timezone
 from utils.db import get_supabase_client
+from utils.cache import TTLCache
 from utils.auth import require_admin
 
 tutor_management_bp = Blueprint('tutor_management', __name__)
+_admin_cache = TTLCache(max_size=64, ttl_seconds=int(os.environ.get('ADMIN_CACHE_TTL', '60')))
 
 @tutor_management_bp.route('/api/admin/me', methods=['GET'])
 @require_admin
@@ -44,8 +46,12 @@ def list_schools_for_admin():
     """List schools (all)."""
     try:
         supabase = get_supabase_client()
-        schools_res = supabase.table('schools').select('*').order('name').execute()
-        return jsonify({'schools': schools_res.data or []}), 200
+        cached = _admin_cache.get('admin_schools')
+        if cached is None:
+            schools_res = supabase.table('schools').select('*').order('name').execute()
+            cached = schools_res.data or []
+            _admin_cache.set('admin_schools', cached)
+        return jsonify({'schools': cached}), 200
     except Exception as e:
         print(f"Error listing schools: {e}")
         return jsonify({'error': 'Internal server error'}), 500

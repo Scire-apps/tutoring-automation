@@ -70,6 +70,7 @@ export default function AdminDashboardPage() {
         setOpportunities((overview.opportunities || []).slice(0, 10));
         setAwaitingJobs(overview.awaiting_jobs || []);
         setCertificationRequests(overview.certification_requests || []);
+        setHelpRequests(overview.help_requests || []);
       } catch (err) {
         console.error('Error fetching admin data:', err);
       } finally {

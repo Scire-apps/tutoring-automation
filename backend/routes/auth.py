@@ -17,16 +17,17 @@ def get_role():
 
         # Check admin first
         try:
-            admin_res = supabase.table('admins').select('role').eq('auth_id', user_id).single().execute()
+            admin_res = supabase.table('admins').select('role').eq('auth_id', user_id).limit(1).execute()
             if admin_res.data:
-                return jsonify({ 'role': admin_res.data.get('role') }), 200
+                row = admin_res.data[0]
+                if row:
+                    return jsonify({ 'role': row.get('role') }), 200
         except Exception:
-            # Ignore and continue
             pass
 
         # Tutor
         try:
-            tutor_res = supabase.table('tutors').select('id').eq('auth_id', user_id).single().execute()
+            tutor_res = supabase.table('tutors').select('id').eq('auth_id', user_id).limit(1).execute()
             if tutor_res.data:
                 return jsonify({ 'role': 'tutor' }), 200
         except Exception:
@@ -34,7 +35,7 @@ def get_role():
 
         # Tutee
         try:
-            tutee_res = supabase.table('tutees').select('id').eq('auth_id', user_id).single().execute()
+            tutee_res = supabase.table('tutees').select('id').eq('auth_id', user_id).limit(1).execute()
             if tutee_res.data:
                 return jsonify({ 'role': 'tutee' }), 200
         except Exception:

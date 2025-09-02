@@ -3,6 +3,7 @@ import os
 import logging
 from utils.db import get_db_manager
 from utils.db import get_supabase_client
+from utils.cache import TTLCache
 from utils.auth import require_auth
 from utils.email_service import get_email_service
 from utils.storage import get_storage_service
@@ -12,6 +13,9 @@ from utils.db import get_db_manager
 logger = logging.getLogger(__name__)
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
+
+# Small in-process cache for public metadata that rarely changes
+_public_cache = TTLCache(max_size=32, ttl_seconds=int(os.environ.get('PUBLIC_CACHE_TTL', '600')))
 
 @api_bp.route('/status')
 def status():
@@ -75,9 +79,13 @@ def services_status():
 @api_bp.route('/public/schools', methods=['GET'])
 def list_schools_public():
     """Public list of schools for registration forms"""
-    supabase = get_supabase_client()
-    result = supabase.table('schools').select('id, name, domain').order('name').execute()
-    resp = jsonify({'schools': result.data or []})
+    cached = _public_cache.get('schools_public')
+    if cached is None:
+        supabase = get_supabase_client()
+        result = supabase.table('schools').select('id, name, domain').order('name').execute()
+        cached = {'schools': result.data or []}
+        _public_cache.set('schools_public', cached)
+    resp = jsonify(cached)
     # Ensure CORS headers are present even if CORS extension misses preflight
     origin = request.headers.get('Origin')
     if origin:
@@ -105,12 +113,17 @@ def list_subjects_public():
                 names = ['math','english','history']
         except Exception:
             names = ['math','english','history']
-        # Capitalize for display
-        subjects = [{'name': (n[0].upper() + n[1:]) if n else n} for n in names]
-        return jsonify({
-            'subjects': subjects,
-            'types': ['Academic','ALP','IB'],
-            'grades': ['9','10','11','12']
-        })
+        cache_key = 'subjects_public'
+        cached = _public_cache.get(cache_key)
+        if cached is None:
+            # Capitalize for display
+            subjects = [{'name': (n[0].upper() + n[1:]) if n else n} for n in names]
+            cached = {
+                'subjects': subjects,
+                'types': ['Academic','ALP','IB'],
+                'grades': ['9','10','11','12']
+            }
+            _public_cache.set(cache_key, cached)
+        return jsonify(cached)
     except Exception as e:
         return jsonify({'subjects': [], 'types': ['Academic','ALP','IB'], 'grades': ['9','10','11','12']}), 200

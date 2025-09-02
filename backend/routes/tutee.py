@@ -310,3 +310,48 @@ def get_tutee_job(job_id: str):
     except Exception:
         pass
     return jsonify({'job': job}), 200
+
+
+@tutee_bp.route('/api/tutee/opportunities/<opportunity_id>/cancel', methods=['POST'])
+@require_auth
+def cancel_tutee_opportunity(opportunity_id: str):
+    """Allow a tutee to cancel their own open tutoring request (opportunity).
+
+    Sets status to 'cancelled' when the opportunity belongs to the authenticated tutee
+    and is currently 'open'.
+    """
+    supabase = get_supabase_client()
+    try:
+        # Identify tutee
+        tutee_res = supabase.table('tutees').select('id').eq('auth_id', request.user_id).single().execute()
+        if not tutee_res.data:
+            return jsonify({'error': 'Tutee profile not found'}), 404
+        tutee_id = tutee_res.data['id']
+
+        # Ensure opportunity belongs to this tutee and is open
+        opp = (
+            supabase
+            .table('tutoring_opportunities')
+            .select('id, tutee_id, status')
+            .eq('id', opportunity_id)
+            .single()
+            .execute()
+        )
+        if not opp.data or opp.data.get('tutee_id') != tutee_id:
+            return jsonify({'error': 'Opportunity not found'}), 404
+        if opp.data.get('status') != 'open':
+            return jsonify({'error': 'cannot_cancel_non_open', 'details': f"Current status: {opp.data.get('status')}"}), 400
+
+        # Attempt to set status to cancelled
+        upd = (
+            supabase
+            .table('tutoring_opportunities')
+            .update({'status': 'cancelled'})
+            .eq('id', opportunity_id)
+            .execute()
+        )
+        if not upd.data:
+            return jsonify({'error': 'failed_to_cancel'}), 500
+        return jsonify({'message': 'Opportunity cancelled', 'opportunity': upd.data[0]}), 200
+    except Exception as e:
+        return jsonify({'error': 'cancel_failed', 'details': str(e)}), 500

@@ -299,8 +299,34 @@ export default function TuteeDashboardPage() {
                             )}
                           </div>
                         </div>
-                        <div className="text-sm text-gray-400">
-                          {new Date(o.created_at).toLocaleString()}
+                        <div className="flex items-center gap-3">
+                          <div className="text-sm text-gray-400">
+                            {new Date(o.created_at).toLocaleString()}
+                          </div>
+                          {o.status === 'open' && (
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                try {
+                                  // Optimistically update UI
+                                  setData((prev: any) => prev ? {
+                                    ...prev,
+                                    opportunities: (prev.opportunities || []).map((op: any) => op.id === o.id ? { ...op, status: 'cancelled' } : op)
+                                  } : prev);
+                                  await api.cancelTuteeOpportunity(o.id);
+                                } catch (err) {
+                                  // Revert on failure
+                                  setData((prev: any) => prev ? {
+                                    ...prev,
+                                    opportunities: (prev.opportunities || []).map((op: any) => op.id === o.id ? { ...op, status: 'open' } : op)
+                                  } : prev);
+                                }
+                              }}
+                              className="inline-flex items-center px-4 py-1.5 border border-transparent text-xs font-medium rounded-full h-10 text-red-600 font-medium bg-red-100 hover:bg-red-200"
+                            >
+                              Cancel
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

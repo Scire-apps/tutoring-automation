@@ -312,7 +312,7 @@ def get_tutee_job(job_id: str):
     return jsonify({'job': job}), 200
 
 
-@tutee_bp.route('/api/tutee/opportunities/<opportunity_id>/cancel', methods=['POST'])
+@tutee_bp.route('/api/tutee/opportunities/<opportunity_id>/cancel', methods=['POST', 'OPTIONS'])
 @require_auth
 def cancel_tutee_opportunity(opportunity_id: str):
     """Allow a tutee to cancel their own open tutoring request (opportunity).

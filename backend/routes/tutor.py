@@ -1,10 +1,15 @@
 import os
 from flask import Blueprint, request, jsonify
+import os
 from utils.auth import require_auth
 from utils.db import get_supabase_client
 from utils.email_service import get_email_service
+from utils.cache import TTLCache
 
 tutor_bp = Blueprint('tutor', __name__)
+_tutor_dashboard_cache = TTLCache(max_size=256, ttl_seconds=int(os.environ.get('TUTOR_DASHBOARD_CACHE_TTL', '3')))
+_tutor_profile_cache = TTLCache(max_size=256, ttl_seconds=int(os.environ.get('TUTOR_PROFILE_CACHE_TTL', '10')))
+_tutor_opps_cache = TTLCache(max_size=256, ttl_seconds=int(os.environ.get('TUTOR_OPPS_CACHE_TTL', '10')))
 
 
 @tutor_bp.route('/api/tutor/dashboard', methods=['GET'])
@@ -12,6 +17,17 @@ tutor_bp = Blueprint('tutor', __name__)
 def get_tutor_dashboard():
     """Return the authenticated tutor's profile, approved subjects, opportunities, and jobs"""
     supabase = get_supabase_client()
+
+    # Microcache per tutor to avoid repeated expensive reads during rapid navigation
+    try:
+        cache_key = f"dash:{request.user_id}"
+        cached = _tutor_dashboard_cache.get(cache_key)
+        if cached is not None:
+            resp = jsonify(cached)
+            resp.headers['Cache-Control'] = 'private, max-age=3'
+            return resp
+    except Exception:
+        pass
 
     tutor_result = supabase.table('tutors').select('*').eq('auth_id', request.user_id).single().execute()
     if not tutor_result.data:
@@ -71,12 +87,19 @@ def get_tutor_dashboard():
 
     # For privacy, do not attach tutee PII in bulk; clients should fetch details per job when needed
 
-    return jsonify({
+    payload = {
         'tutor': tutor,
         'approved_subject_ids': approved_subject_ids,
         'opportunities': opps.data or [],
         'jobs': jobs
-    })
+    }
+    try:
+        _tutor_dashboard_cache.set(cache_key, payload)
+    except Exception:
+        pass
+    resp = jsonify(payload)
+    resp.headers['Cache-Control'] = 'private, max-age=3'
+    return resp
 
 
 @tutor_bp.route('/api/tutor/opportunities/<opportunity_id>/accept', methods=['POST'])
@@ -189,10 +212,25 @@ def accept_opportunity(opportunity_id: str):
 @require_auth
 def tutor_profile():
     supabase = get_supabase_client()
+    try:
+        ck = f"prof:{request.user_id}"
+        cached = _tutor_profile_cache.get(ck)
+        if cached is not None:
+            resp = jsonify({'tutor': cached})
+            resp.headers['Cache-Control'] = 'private, max-age=10'
+            return resp
+    except Exception:
+        pass
     tutor_res = supabase.table('tutors').select('*, school:schools(name,domain)').eq('auth_id', request.user_id).single().execute()
     if not tutor_res.data:
         return jsonify({'error': 'Tutor not found'}), 404
-    return jsonify({'tutor': tutor_res.data}), 200
+    try:
+        _tutor_profile_cache.set(ck, tutor_res.data)
+    except Exception:
+        pass
+    resp = jsonify({'tutor': tutor_res.data})
+    resp.headers['Cache-Control'] = 'private, max-age=10'
+    return resp, 200
 
 
 @tutor_bp.route('/api/tutor/approvals', methods=['GET'])
@@ -221,7 +259,12 @@ def tutor_approvals():
 def list_open_opportunities():
     supabase = get_supabase_client()
     try:
-        # Optional: include tutor profile so frontend can use status without extra call
+        ck = f"opps:{request.user_id}"
+        cached = _tutor_opps_cache.get(ck)
+        if cached is not None:
+            resp = jsonify(cached)
+            resp.headers['Cache-Control'] = 'private, max-age=10'
+            return resp
         tutor_res = supabase.table('tutors').select('status').eq('auth_id', request.user_id).single().execute()
         res = (
             supabase
@@ -229,9 +272,17 @@ def list_open_opportunities():
             .select('*, tutee:tutees(id, first_name, last_name, email, school_id, graduation_year)')
             .eq('status', 'open')
             .order('created_at')
+            .limit(100)
             .execute()
         )
-        return jsonify({'opportunities': res.data or [], 'tutor_status': (tutor_res.data or {}).get('status')}), 200
+        payload = {'opportunities': res.data or [], 'tutor_status': (tutor_res.data or {}).get('status')}
+        try:
+            _tutor_opps_cache.set(ck, payload)
+        except Exception:
+            pass
+        resp = jsonify(payload)
+        resp.headers['Cache-Control'] = 'private, max-age=10'
+        return resp, 200
     except Exception as e:
         return jsonify({'error': 'failed_to_list_opportunities', 'details': str(e)}), 500
 

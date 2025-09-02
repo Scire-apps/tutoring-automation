@@ -1,10 +1,12 @@
 from flask import Blueprint, request, jsonify, current_app
 import os
+from utils.cache import TTLCache
 from utils.auth import require_auth
 from utils.db import get_supabase_client
 from utils.email_service import get_email_service
 
 tutee_bp = Blueprint('tutee', __name__)
+_tutee_dashboard_cache = TTLCache(max_size=256, ttl_seconds=int(os.environ.get('TUTEE_DASHBOARD_CACHE_TTL', '3')))
 
 
 @tutee_bp.route('/api/tutee/dashboard', methods=['GET'])
@@ -12,6 +14,17 @@ tutee_bp = Blueprint('tutee', __name__)
 def get_tutee_dashboard():
     """Return the authenticated tutee's profile, opportunities, and jobs"""
     supabase = get_supabase_client()
+
+    # Microcache per tutee to smooth repeated reads during rapid navigation
+    try:
+        ck = f"dash:{request.user_id}"
+        cached = _tutee_dashboard_cache.get(ck)
+        if cached is not None:
+            resp = jsonify(cached)
+            resp.headers['Cache-Control'] = 'private, max-age=3'
+            return resp
+    except Exception:
+        pass
 
     # Find tutee by auth_id
     tutee_result = supabase.table('tutees').select('*').eq('auth_id', request.user_id).single().execute()
@@ -55,12 +68,19 @@ def get_tutee_dashboard():
             grade_suggestion = mapping.get(years_left, '12')
     except Exception:
         pass
-    return jsonify({
+    payload = {
         'tutee': tutee,
         'opportunities': opps.data or [],
         'jobs': jobs.data or [],
         'grade_suggestion': grade_suggestion
-    })
+    }
+    try:
+        _tutee_dashboard_cache.set(ck, payload)
+    except Exception:
+        pass
+    resp = jsonify(payload)
+    resp.headers['Cache-Control'] = 'private, max-age=3'
+    return resp
 
 
 @tutee_bp.route('/api/tutee/opportunities', methods=['POST'])

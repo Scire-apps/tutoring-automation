@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase as sharedSupabase } from '@/services/supabase';
+import api from '@/services/api';
 import { useAuth } from '@/app/providers';
 
 // Embedded subject options per spec
@@ -91,14 +92,8 @@ export default function EditTutorPage() {
         return;
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token ?? '';
-      // Single aggregated fetch for edit page
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/edit-data`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!resp.ok) throw new Error('Failed to load tutor edit data');
-      const j = await resp.json();
+      // Single aggregated fetch for edit page (cached client-side)
+      const j = await api.getTutorEditData(tutorId);
 
       const structuredData = {
         tutor: j.tutor,

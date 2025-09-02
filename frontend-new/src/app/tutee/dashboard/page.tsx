@@ -587,6 +587,8 @@ export default function TuteeDashboardPage() {
                   className="px-3 py-2 bg-blue-600 text-white rounded"
                   disabled={savingSubjects}
                   onClick={async () => {
+                    // Optimistically close immediately
+                    setEditingSubjects(false);
                     try {
                       setSavingSubjects(true);
                       const apiBase = process.env.NEXT_PUBLIC_API_URL as string;
@@ -614,7 +616,6 @@ export default function TuteeDashboardPage() {
                         const j = await resp.json().catch(() => ({}));
                         throw new Error(j.error || "Failed to update");
                       }
-                      setEditingSubjects(false);
                     } catch (e) {
                       // Could show toast
                     } finally {

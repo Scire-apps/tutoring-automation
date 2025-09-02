@@ -175,22 +175,13 @@ export default function EditTutorPage() {
         return;
       }
 
-      // Update tutor status via backend (service role)
-      const { data: { session } } = await supabase.auth.getSession();
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/status`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(`Failed to update tutor status: ${err.error || resp.statusText}`);
-      }
+      // Update via API wrapper (auto-invalidate admin caches)
+      await api.updateTutorStatusAdmin(tutorId, status);
 
       console.log('🔍 TUTOR EDIT DEBUG: Tutor status updated successfully');
 
-      // Reload tutor data to reflect changes
-      await loadTutorData();
+      // Reflect change in UI immediately without full reload
+      setTutorData((prev) => prev ? { ...prev, tutor: { ...prev.tutor, status } } : prev);
       
     } catch (err) {
       console.error('🔍 TUTOR EDIT DEBUG: Error updating tutor status:', err);

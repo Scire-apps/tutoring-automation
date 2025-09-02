@@ -7,6 +7,7 @@ from utils.auth import require_admin
 
 tutor_management_bp = Blueprint('tutor_management', __name__)
 _admin_cache = TTLCache(max_size=64, ttl_seconds=int(os.environ.get('ADMIN_CACHE_TTL', '60')))
+_admin_overview_cache = TTLCache(max_size=64, ttl_seconds=int(os.environ.get('ADMIN_OVERVIEW_TTL', '3')))
 
 @tutor_management_bp.route('/api/admin/me', methods=['GET'])
 @require_admin
@@ -14,10 +15,18 @@ def get_admin_me():
     """Return current admin profile with school info"""
     try:
         supabase = get_supabase_client()
-        admin_res = supabase.table('admins').select('*, school:schools(name,domain)').eq('auth_id', request.user_id).single().execute()
+        admin_res = (
+            supabase
+            .table('admins')
+            .select('id, auth_id, email, first_name, last_name, role, school_id, school:schools(name,domain)')
+            .eq('auth_id', request.user_id)
+            .single()
+            .execute()
+        )
         if not admin_res.data:
             return jsonify({'error': 'Admin not found'}), 404
-        return jsonify({'admin': admin_res.data}), 200
+        admin_payload = admin_res.data
+        return jsonify({'admin': admin_payload}), 200
     except Exception as e:
         print(f"Error fetching admin me: {e}")
         return jsonify({'error': 'Internal server error'}), 500
@@ -31,10 +40,21 @@ def list_tutors_for_admin():
         admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
         school_id = admin_res.data.get('school_id') if admin_res.data else None
         # Note: supabase-py uses 'desc=True' rather than 'ascending=False'
-        query = supabase.table('tutors').select('*, school:schools(name,domain)').order('created_at', desc=True)
+        query = (
+            supabase
+            .table('tutors')
+            .select('id, first_name, last_name, email, school_id, status, volunteer_hours, created_at, school:schools(name,domain)')
+            .order('created_at', desc=True)
+        )
         if school_id:
             query = query.eq('school_id', school_id)
-        tutors_res = query.limit(200).execute()
+        # Support pagination
+        try:
+            limit = int(request.args.get('limit') or 100)
+        except Exception:
+            limit = 100
+        limit = max(1, min(limit, 500))
+        tutors_res = query.limit(limit).execute()
         return jsonify({'tutors': tutors_res.data or []}), 200
     except Exception as e:
         print(f"Error listing tutors for admin: {e}")
@@ -76,10 +96,20 @@ def list_opportunities_for_admin():
         else:
             tutee_ids = None
 
-        query = supabase.table('tutoring_opportunities').select('*').order('created_at', desc=True)
+        query = (
+            supabase
+            .table('tutoring_opportunities')
+            .select('id, tutee_id, subject_name, subject_type, subject_grade, language, status, created_at')
+            .order('created_at', desc=True)
+        )
         if tutee_ids and len(tutee_ids) > 0:
             query = query.in_('tutee_id', tutee_ids)
-        res = query.limit(50).execute()
+        try:
+            limit = int(request.args.get('limit') or 50)
+        except Exception:
+            limit = 50
+        limit = max(1, min(limit, 200))
+        res = query.limit(limit).execute()
         return jsonify({'opportunities': res.data or []}), 200
     except Exception as e:
         print(f"Error listing opportunities for admin: {e}")
@@ -98,7 +128,12 @@ def list_jobs_for_admin():
         school_id = admin_res.data.get('school_id') if admin_res.data else None
 
         # Build base query (related entity embedding removed under RLS constraints)
-        query = supabase.table('tutoring_jobs').select('*').order('created_at', desc=True)
+        query = (
+            supabase
+            .table('tutoring_jobs')
+            .select('id, tutor_id, tutee_id, subject_name, subject_type, subject_grade, language, scheduled_time, duration_minutes, created_at')
+            .order('created_at', desc=True)
+        )
 
         # If admin has school, limit using IDs for reliability
         if school_id:
@@ -140,7 +175,12 @@ def list_jobs_for_admin():
                         merged.append(row)
             return jsonify({'jobs': merged}), 200
 
-        res = query.execute()
+        try:
+            limit = int(request.args.get('limit') or 200)
+        except Exception:
+            limit = 200
+        limit = max(1, min(limit, 500))
+        res = query.limit(limit).execute()
         return jsonify({'jobs': res.data or []}), 200
     except Exception as e:
         print(f"Error listing jobs for admin: {e}")
@@ -153,7 +193,14 @@ def list_awaiting_verification_jobs():
     """List all jobs awaiting admin verification."""
     try:
         supabase = get_supabase_client()
-        res = supabase.table('awaiting_verification_jobs').select('*').order('created_at', desc=True).execute()
+        res = (
+            supabase
+            .table('awaiting_verification_jobs')
+            .select('id, tutor_id, tutee_id, subject_name, subject_type, subject_grade, language, scheduled_time, duration_minutes, created_at')
+            .order('created_at', desc=True)
+            .limit(200)
+            .execute()
+        )
         return jsonify({'jobs': res.data or []}), 200
     except Exception as e:
         print(f"Error listing awaiting verification jobs: {e}")
@@ -166,8 +213,9 @@ def get_recording_link_for_job(job_id: str):
     """Fetch the session recording link for a given job id (from session_recordings)."""
     try:
         supabase = get_supabase_client()
-        rec = supabase.table('session_recordings').select('recording_url').eq('job_id', job_id).single().execute()
-        return jsonify({'recording_url': (rec.data or {}).get('recording_url')}), 200
+        rec = supabase.table('session_recordings').select('recording_url').eq('job_id', job_id).limit(1).execute()
+        url = rec.data[0]['recording_url'] if (rec.data and len(rec.data) > 0) else None
+        return jsonify({'recording_url': url}), 200
     except Exception as e:
         print(f"Error fetching recording link: {e}")
         return jsonify({'error': 'Internal server error'}), 500
@@ -251,10 +299,14 @@ def get_tutor_details(tutor_id):
         supabase = get_supabase_client()
         
         # Get tutor details
-        tutor_result = supabase.table('tutors').select('''
-            *,
-            school:schools(name, domain)
-        ''').eq('id', tutor_id).single().execute()
+        tutor_result = (
+            supabase
+            .table('tutors')
+            .select('id, first_name, last_name, email, status, volunteer_hours, school_id, school:schools(name, domain)')
+            .eq('id', tutor_id)
+            .single()
+            .execute()
+        )
         
         if not tutor_result.data:
             return jsonify({'error': 'Tutor not found'}), 404
@@ -262,7 +314,13 @@ def get_tutor_details(tutor_id):
         tutor = tutor_result.data
         
         # Embedded subject model: approvals are stored with subject_name/type/grade
-        approvals = supabase.table('subject_approvals').select('*').eq('tutor_id', tutor_id).execute()
+        approvals = (
+            supabase
+            .table('subject_approvals')
+            .select('id, subject_name, subject_type, subject_grade, status, approved_at')
+            .eq('tutor_id', tutor_id)
+            .execute()
+        )
 
         return jsonify({
             'tutor': tutor,
@@ -477,9 +535,13 @@ def update_tutor_status(tutor_id):
         
         supabase = get_supabase_client()
         
-        result = supabase.table('tutors').update({
-            'status': status
-        }).eq('id', tutor_id).execute()
+        result = (
+            supabase
+            .table('tutors')
+            .update({'status': status})
+            .eq('id', tutor_id)
+            .execute()
+        )
         
         if not result.data:
             return jsonify({'error': 'Tutor not found'}), 404
@@ -497,7 +559,15 @@ def get_tutor_history(tutor_id: str):
     """Return past jobs (verified) for a specific tutor."""
     try:
         supabase = get_supabase_client()
-        res = supabase.table('past_jobs').select('*').eq('tutor_id', tutor_id).order('created_at', desc=True).execute()
+        res = (
+            supabase
+            .table('past_jobs')
+            .select('id, subject_name, subject_type, subject_grade, scheduled_time, duration_minutes, awarded_volunteer_hours, created_at')
+            .eq('tutor_id', tutor_id)
+            .order('created_at', desc=True)
+            .limit(200)
+            .execute()
+        )
         return jsonify({'jobs': res.data or []}), 200
     except Exception as e:
         print(f"Error fetching tutor history: {e}")
@@ -528,15 +598,23 @@ def list_certification_requests_admin():
             reqs = (
                 supabase
                 .table('certification_requests')
-                .select('*')
+                .select('id, tutor_id, tutor_name, tutor_mark, subject_name, subject_type, subject_grade, created_at')
                 .in_('tutor_id', tutor_ids)
                 .order('created_at', desc=True)
+                .limit(200)
                 .execute()
             )
             return jsonify({'requests': reqs.data or []}), 200
 
         # No school restriction: return all (super admin case)
-        reqs = supabase.table('certification_requests').select('*').order('created_at', desc=True).execute()
+        reqs = (
+            supabase
+            .table('certification_requests')
+            .select('id, tutor_id, tutor_name, tutor_mark, subject_name, subject_type, subject_grade, created_at')
+            .order('created_at', desc=True)
+            .limit(200)
+            .execute()
+        )
         return jsonify({'requests': reqs.data or []}), 200
     except Exception as e:
         print(f"Error listing certification requests: {e}")
@@ -644,4 +722,126 @@ def approve_certification_request(request_id: str):
     except Exception as e:
         import traceback
         print(f"Error approving certification request: {e}\n{traceback.format_exc()}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@tutor_management_bp.route('/api/admin/overview', methods=['GET'])
+@require_admin
+def admin_overview():
+    """Aggregate data for the admin dashboard in a single call.
+
+    Returns: {
+      admin, tutors, opportunities, awaiting_jobs, certification_requests, schools
+    }
+
+    Uses a short-lived microcache keyed by admin auth_id to smooth reloads.
+    """
+    try:
+        supabase = get_supabase_client()
+        cache_key = f"overview:{request.user_id}"
+        cached = _admin_overview_cache.get(cache_key)
+        if cached is not None:
+            return jsonify(cached), 200
+
+        # Admin profile
+        admin_res = (
+            supabase
+            .table('admins')
+            .select('id, auth_id, email, first_name, last_name, role, school_id, school:schools(name,domain)')
+            .eq('auth_id', request.user_id)
+            .single()
+            .execute()
+        )
+        admin_payload = admin_res.data if admin_res and admin_res.data else None
+        school_id = (admin_payload or {}).get('school_id')
+
+        # Tutors (scoped if school assigned)
+        tutors_q = (
+            supabase
+            .table('tutors')
+            .select('id, first_name, last_name, email, school_id, status, volunteer_hours, created_at, school:schools(name,domain)')
+            .order('created_at', desc=True)
+            .limit(100)
+        )
+        if school_id:
+            tutors_q = tutors_q.eq('school_id', school_id)
+        tutors_res = tutors_q.execute()
+
+        # Opportunities (scoped by admin's tutees when school assigned)
+        tutee_ids = None
+        if school_id:
+            tutees_res = supabase.table('tutees').select('id').eq('school_id', school_id).execute()
+            tutee_ids = [t['id'] for t in (tutees_res.data or [])]
+        opp_q = (
+            supabase
+            .table('tutoring_opportunities')
+            .select('id, tutee_id, subject_name, subject_type, subject_grade, language, status, created_at')
+            .order('created_at', desc=True)
+            .limit(50)
+        )
+        if tutee_ids:
+            opp_q = opp_q.in_('tutee_id', tutee_ids)
+        opp_res = opp_q.execute()
+
+        # Awaiting verification jobs
+        awaiting_res = (
+            supabase
+            .table('awaiting_verification_jobs')
+            .select('id, tutor_id, tutee_id, subject_name, subject_type, subject_grade, language, scheduled_time, duration_minutes, created_at')
+            .order('created_at', desc=True)
+            .limit(200)
+            .execute()
+        )
+
+        # Certification requests (scoped by school if present)
+        if school_id:
+            tutors_ids_res = supabase.table('tutors').select('id').eq('school_id', school_id).execute()
+            tutor_ids = [t['id'] for t in (tutors_ids_res.data or [])]
+            if tutor_ids:
+                cert_res = (
+                    supabase
+                    .table('certification_requests')
+                    .select('id, tutor_id, tutor_name, tutor_mark, subject_name, subject_type, subject_grade, created_at')
+                    .in_('tutor_id', tutor_ids)
+                    .order('created_at', desc=True)
+                    .limit(200)
+                    .execute()
+                )
+            else:
+                cert_res = type('obj', (), {'data': []})()
+        else:
+            cert_res = (
+                supabase
+                .table('certification_requests')
+                .select('id, tutor_id, tutor_name, tutor_mark, subject_name, subject_type, subject_grade, created_at')
+                .order('created_at', desc=True)
+                .limit(200)
+                .execute()
+            )
+
+        # Schools (admin needs for filters)
+        schools_cached = _admin_cache.get('admin_schools')
+        if schools_cached is None:
+            schools_res = supabase.table('schools').select('id, name, domain').order('name').execute()
+            schools_cached = schools_res.data or []
+            _admin_cache.set('admin_schools', schools_cached)
+
+        payload = {
+            'admin': admin_payload,
+            'tutors': tutors_res.data or []
+            if hasattr(tutors_res, 'data') else [],
+            'opportunities': opp_res.data or []
+            if hasattr(opp_res, 'data') else [],
+            'awaiting_jobs': awaiting_res.data or []
+            if hasattr(awaiting_res, 'data') else [],
+            'certification_requests': cert_res.data or []
+            if hasattr(cert_res, 'data') else [],
+            'schools': schools_cached,
+        }
+
+        _admin_overview_cache.set(cache_key, payload)
+        return jsonify(payload), 200
+    except Exception as e:
+        import traceback
+        print(f"Error building admin overview: {e}\n{traceback.format_exc()}")
         return jsonify({'error': 'Internal server error'}), 500

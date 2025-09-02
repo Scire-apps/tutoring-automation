@@ -61,67 +61,18 @@ export default function AdminDashboardPage() {
           return;
         }
 
-        // Admin profile
-        const adminResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`, {
+        // Single aggregated fetch for dashboard
+        const overviewResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/overview`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!adminResp.ok) throw new Error('Failed to load admin profile');
-        const adminJson = await adminResp.json();
-        setAdmin(adminJson.admin as Admin);
-
-        // Schools (for admin view; backend returns all)
-        const schoolsResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/schools`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (schoolsResp.ok) {
-          const schoolsJson = await schoolsResp.json();
-          setSchools((schoolsJson.schools || []) as School[]);
-        }
-
-        // Tutors list (scoped by school if admin has one)
-        const tutorsResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (tutorsResp.ok) {
-          const tutorsJson = await tutorsResp.json();
-          setTutors((tutorsJson.tutors || []) as Tutor[]);
-        }
-
-        // Opportunities list (scoped by school if admin has one)
-        const oppResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/opportunities`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (oppResp.ok) {
-          const oppJson = await oppResp.json();
-          setOpportunities((oppJson.opportunities || []).slice(0, 10));
-        }
-
-        // Awaiting verification jobs list
-        const awResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/awaiting-verification`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (awResp.ok) {
-          const awJson = await awResp.json();
-          setAwaitingJobs(awJson.jobs || []);
-        }
-
-        // Certification requests (scoped by admin's school on backend)
-        const crResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/certification-requests`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (crResp.ok) {
-          const crJson = await crResp.json();
-          setCertificationRequests(crJson.requests || []);
-        }
-
-        // Help requests (scoped by admin's school on backend)
-        const hqResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/help-requests`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (hqResp.ok) {
-          const hqJson = await hqResp.json();
-          setHelpRequests((hqJson.help_requests || []).slice(0, 100));
-        }
+        if (!overviewResp.ok) throw new Error('Failed to load admin overview');
+        const overview = await overviewResp.json();
+        setAdmin(overview.admin as Admin);
+        setSchools((overview.schools || []) as School[]);
+        setTutors((overview.tutors || []) as Tutor[]);
+        setOpportunities((overview.opportunities || []).slice(0, 10));
+        setAwaitingJobs(overview.awaiting_jobs || []);
+        setCertificationRequests(overview.certification_requests || []);
       } catch (err) {
         console.error('Error fetching admin data:', err);
       } finally {

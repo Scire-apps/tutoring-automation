@@ -123,39 +123,50 @@ export default function EditTutorPage() {
       }
 
       if (action === 'remove') {
-        // Remove the subject approval
-        console.log('🔍 TUTOR EDIT DEBUG: Attempting to remove approval for:', { tutorId, subject });
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/subjects`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        // Optimistically remove from UI
+        const prev = tutorData?.subject_approvals || [];
+        setTutorData((cur) => cur ? {
+          ...cur,
+          subject_approvals: cur.subject_approvals.filter(a => !(a.subject_name === subject.name && a.subject_type === subject.type && a.subject_grade === subject.grade))
+        } : cur);
+        try {
+          await api.updateTutorSubjectApprovalAdmin(tutorId, {
             action: 'remove',
             subject_name: subject.name,
             subject_type: subject.type,
             subject_grade: subject.grade,
-          })
-        });
-        if (!resp.ok) throw new Error('Failed to remove subject approval');
-        console.log('🔍 TUTOR EDIT DEBUG: Subject approval removed successfully');
+          });
+          // Reconcile from server in background (non-blocking)
+          loadTutorData();
+        } catch (e: any) {
+          // Revert on failure
+          setTutorData((cur) => cur ? { ...cur, subject_approvals: prev } : cur);
+          throw e;
+        }
       } else {
-        const { data: { session } } = await supabase.auth.getSession();
-        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/subjects`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        // Approve/reject path (rare here). Optimistically update status if present
+        const prev = tutorData?.subject_approvals || [];
+        setTutorData((cur) => cur ? {
+          ...cur,
+          subject_approvals: cur.subject_approvals.map(a => (
+            a.subject_name === subject.name && a.subject_type === subject.type && a.subject_grade === subject.grade
+              ? { ...a, status: action === 'approve' ? 'approved' : 'rejected', approved_at: action === 'approve' ? new Date().toISOString() : null }
+              : a
+          ))
+        } : cur);
+        try {
+          await api.updateTutorSubjectApprovalAdmin(tutorId, {
             action,
             subject_name: subject.name,
             subject_type: subject.type,
             subject_grade: subject.grade,
-          })
-        });
-        if (!resp.ok) throw new Error('Failed to update subject approval');
+          });
+          loadTutorData();
+        } catch (e: any) {
+          setTutorData((cur) => cur ? { ...cur, subject_approvals: prev } : cur);
+          throw e;
+        }
       }
-
-      // Reload tutor data to reflect changes
-      await loadTutorData();
       
     } catch (err) {
       console.error('🔍 TUTOR EDIT DEBUG: Error updating subject approval:', err);
@@ -210,24 +221,38 @@ export default function EditTutorPage() {
         ? `${selectedSubjectName} ${selectedIbLevel}`
         : selectedSubjectName;
 
-      console.log('🔍 TUTOR EDIT DEBUG: Approving subject via backend by embedded fields');
-      const { data: { session } } = await supabase.auth.getSession();
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/tutors/${tutorId}/subjects`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Optimistically add to UI
+      const optimistic = {
+        id: `temp-${Date.now()}`,
+        subject_name: finalSubjectName,
+        subject_type: selectedSubjectType,
+        subject_grade: selectedSubjectGrade,
+        status: 'approved',
+        approved_at: new Date().toISOString(),
+      } as any;
+      const prev = tutorData?.subject_approvals || [];
+      setTutorData((cur) => cur ? {
+        ...cur,
+        subject_approvals: cur.subject_approvals.some(a => a.subject_name === optimistic.subject_name && a.subject_type === optimistic.subject_type && a.subject_grade === optimistic.subject_grade)
+          ? cur.subject_approvals
+          : [optimistic, ...cur.subject_approvals]
+      } : cur);
+
+      try {
+        await api.updateTutorSubjectApprovalAdmin(tutorId, {
           action: 'approve',
           subject_name: finalSubjectName,
           subject_type: selectedSubjectType,
           subject_grade: selectedSubjectGrade,
-        })
-      });
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to add certification');
+        });
+        // Reconcile with server data in background
+        loadTutorData();
+        console.log('🔍 TUTOR EDIT DEBUG: Certification added successfully');
+      } catch (e: any) {
+        // Revert optimistic add
+        setTutorData((cur) => cur ? { ...cur, subject_approvals: prev } : cur);
+        throw e;
       }
-      
-      console.log('🔍 TUTOR EDIT DEBUG: Certification added successfully');
 
       // Clear the form
       setSelectedSubjectName('');
@@ -235,9 +260,6 @@ export default function EditTutorPage() {
       setSelectedSubjectGrade('');
       setSelectedIbLevel('');
 
-      // Reload tutor data to reflect changes
-      await loadTutorData();
-      
     } catch (err) {
       console.error('🔍 TUTOR EDIT DEBUG: Error adding certification:', err);
       setError(`Failed to add certification: ${err.message}`);

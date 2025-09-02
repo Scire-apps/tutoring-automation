@@ -342,16 +342,16 @@ def cancel_tutee_opportunity(opportunity_id: str):
         if opp.data.get('status') != 'open':
             return jsonify({'error': 'cannot_cancel_non_open', 'details': f"Current status: {opp.data.get('status')}"}), 400
 
-        # Attempt to set status to cancelled
-        upd = (
+        # Hard delete the opportunity
+        del_res = (
             supabase
             .table('tutoring_opportunities')
-            .update({'status': 'cancelled'})
+            .delete()
             .eq('id', opportunity_id)
             .execute()
         )
-        if not upd.data:
-            return jsonify({'error': 'failed_to_cancel'}), 500
-        return jsonify({'message': 'Opportunity cancelled', 'opportunity': upd.data[0]}), 200
+        if del_res.data is None:
+            return jsonify({'error': 'failed_to_delete'}), 500
+        return jsonify({'message': 'Opportunity deleted', 'id': opportunity_id}), 200
     except Exception as e:
         return jsonify({'error': 'cancel_failed', 'details': str(e)}), 500

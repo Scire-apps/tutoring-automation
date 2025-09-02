@@ -663,12 +663,14 @@ export default function TuteeDashboardPage() {
                 className="px-3 py-1.5 bg-blue-600 text-white rounded disabled:opacity-50"
                 disabled={helpSubmitting || !helpDescription.trim()}
                 onClick={async () => {
+                  // Optimistically close the modal immediately
+                  setShowHelpModal(false);
+                  const desc = helpDescription.trim();
+                  setHelpDescription("");
+                  setHelpUrgency('non-urgent');
                   try {
                     setHelpSubmitting(true);
-                    await api.submitHelpRequest({ urgency: helpUrgency, description: helpDescription.trim() });
-                    setShowHelpModal(false);
-                    setHelpDescription("");
-                    setHelpUrgency('non-urgent');
+                    await api.submitHelpRequest({ urgency: helpUrgency, description: desc });
                   } catch (e: any) {
                     setError(e?.message || 'Failed to submit help request.');
                   } finally {

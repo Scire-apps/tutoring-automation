@@ -308,22 +308,11 @@ export default function EditTutorPage() {
 
   const groupSubjectsByCategory = () => ({ });
 
-  if (loading) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading tutor data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !tutorData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Tutor not found'}</p>
+          <p className="text-red-600 mb-4">{error}</p>
           <button
             onClick={() => router.back()}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -335,7 +324,7 @@ export default function EditTutorPage() {
     );
   }
 
-  const { tutor } = tutorData;
+  const tutor = (tutorData?.tutor) || { first_name: '', last_name: '', email: '', status: 'pending', school: { name: '', domain: '' } } as any;
   const groupedSubjects = groupSubjectsByCategory();
 
   return (
@@ -477,33 +466,31 @@ export default function EditTutorPage() {
               </p>
             </div>
             <div className="border-t border-gray-200">
-                        {tutorData.subject_approvals.length === 0 ? (
+              {(tutorData?.subject_approvals?.length ?? 0) === 0 ? (
                 <div className="px-4 py-8 text-center text-gray-500">
                   No certifications yet. Add certifications using the form above.
                 </div>
               ) : (
                 <div className="px-4 py-5 sm:px-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {tutorData.subject_approvals.map((approval) => (
+                    {(tutorData?.subject_approvals ?? []).map((approval) => (
                       <div key={approval.id} className="border rounded-lg p-4 bg-green-50">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                                      <h5 className="font-medium text-gray-900">{approval.subject_name} • {approval.subject_type}</h5>
+                            <h5 className="font-medium text-gray-900">{approval.subject_name} • {approval.subject_type}</h5>
                             <p className="text-sm text-gray-600">Grade: {approval.subject_grade}</p>
                           </div>
                           <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                             {approval.status}
                           </span>
                         </div>
-                        
                         {approval.approved_at && (
                           <p className="text-xs text-gray-500 mb-2">
                             Added: {new Date(approval.approved_at).toLocaleDateString()}
                           </p>
                         )}
-                        
                         <button
-                                    onClick={() => updateSubjectApproval({ name: approval.subject_name, type: approval.subject_type, grade: approval.subject_grade }, 'remove')}
+                          onClick={() => updateSubjectApproval({ name: approval.subject_name, type: approval.subject_type, grade: approval.subject_grade }, 'remove')}
                           disabled={updating === approval.id}
                           className="px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50"
                         >

@@ -8,6 +8,7 @@ from utils.auth import require_admin
 tutor_management_bp = Blueprint('tutor_management', __name__)
 _admin_cache = TTLCache(max_size=64, ttl_seconds=int(os.environ.get('ADMIN_CACHE_TTL', '60')))
 _admin_overview_cache = TTLCache(max_size=64, ttl_seconds=int(os.environ.get('ADMIN_OVERVIEW_TTL', '3')))
+_admin_help_cache = TTLCache(max_size=64, ttl_seconds=int(os.environ.get('ADMIN_HELP_TTL', '5')))
 
 @tutor_management_bp.route('/api/admin/me', methods=['GET'])
 @require_admin
@@ -314,19 +315,25 @@ def get_tutor_details(tutor_id):
         tutor = tutor_result.data
         
         # Embedded subject model: approvals are stored with subject_name/type/grade
+        ck = f"tutor:{tutor_id}"
+        cached_approvals = _admin_cache.get(f"approvals:{tutor_id}")
         approvals = (
             supabase
             .table('subject_approvals')
             .select('id, subject_name, subject_type, subject_grade, status, approved_at')
             .eq('tutor_id', tutor_id)
+            .order('approved_at', desc=True)
+            .limit(200)
             .execute()
         )
+        if not cached_approvals:
+            _admin_cache.set(f"approvals:{tutor_id}", approvals.data or [])
 
         return jsonify({
             'tutor': tutor,
             'approved_subject_ids': [],
             'available_subjects': [],
-            'subject_approvals': approvals.data or []
+            'subject_approvals': cached_approvals or (approvals.data or [])
         }), 200
         
     except Exception as e:
@@ -339,8 +346,22 @@ def list_tutor_approvals(tutor_id):
     """List subject approvals for a tutor (embedded subject fields)"""
     try:
         supabase = get_supabase_client()
-        res = supabase.table('subject_approvals').select('*').eq('tutor_id', tutor_id).execute()
-        return jsonify({'subject_approvals': res.data or []}), 200
+        ck = f"approvals:{tutor_id}"
+        cached = _admin_cache.get(ck)
+        if cached is not None:
+            return jsonify({'subject_approvals': cached}), 200
+        res = (
+            supabase
+            .table('subject_approvals')
+            .select('id, subject_name, subject_type, subject_grade, status, approved_at')
+            .eq('tutor_id', tutor_id)
+            .order('approved_at', desc=True)
+            .limit(200)
+            .execute()
+        )
+        data = res.data or []
+        _admin_cache.set(ck, data)
+        return jsonify({'subject_approvals': data}), 200
     except Exception as e:
         print(f"Error listing tutor approvals: {e}")
         return jsonify({'error': 'Internal server error'}), 500
@@ -379,13 +400,20 @@ def update_subject_approvals(tutor_id):
         
         # Deprecated subjects table path removed; we now embed subject fields
 
-        # Fetch tutor basic info (array column may not exist in some deployments)
-        tutor_row = supabase.table('tutors').select('first_name, last_name, email').eq('id', tutor_id).single().execute()
+        # Fetch tutor basic info
+        tutor_row = (
+            supabase
+            .table('tutors')
+            .select('first_name, last_name, email')
+            .eq('id', tutor_id)
+            .single()
+            .execute()
+        )
         if not tutor_row.data:
             return jsonify({'error': 'Tutor not found'}), 404
         # No more approved_subject_ids column maintenance; subject_approvals is source of truth
 
-        # Write into subject_approvals (embedded fields)
+        # Write into subject_approvals (embedded fields). Invalidate caches after mutation.
         try:
             if action == 'approve':
                 existing = supabase.table('subject_approvals').select('id').eq('tutor_id', tutor_id).eq('subject_name', subject_name).eq('subject_type', subject_type).eq('subject_grade', subject_grade).limit(1).execute()
@@ -417,6 +445,11 @@ def update_subject_approvals(tutor_id):
                         }).eq('tutor_id', tutor_id).eq('subject_name', subject_name).eq('subject_type', subject_type).eq('subject_grade', subject_grade).execute()
                     else:
                         supabase.table('subject_approvals').delete().eq('tutor_id', tutor_id).eq('subject_name', subject_name).eq('subject_type', subject_type).eq('subject_grade', subject_grade).execute()
+            # Invalidate caches
+            try:
+                _admin_cache.set(f"approvals:{tutor_id}", None)
+            except Exception:
+                pass
         except Exception as e:
             import traceback
             print(f"Subject approvals write failed: {e}\n{traceback.format_exc()}")
@@ -546,6 +579,11 @@ def update_tutor_status(tutor_id):
         if not result.data:
             return jsonify({'error': 'Tutor not found'}), 404
         
+        # Invalidate cached tutor data and approvals for this tutor
+        try:
+            _admin_cache.set(f"approvals:{tutor_id}", None)  # simple invalidation
+        except Exception:
+            pass
         return jsonify({'message': 'Tutor status updated successfully'}), 200
         
     except Exception as e:
@@ -571,6 +609,68 @@ def get_tutor_history(tutor_id: str):
         return jsonify({'jobs': res.data or []}), 200
     except Exception as e:
         print(f"Error fetching tutor history: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@tutor_management_bp.route('/api/admin/tutors/<tutor_id>/edit-data', methods=['GET'])
+@require_admin
+def get_tutor_edit_data(tutor_id: str):
+    """Aggregate data for the admin tutor edit page in a single call with microcaching."""
+    try:
+        supabase = get_supabase_client()
+        ck = f"edit:{tutor_id}"
+        cached = _admin_overview_cache.get(ck)
+        if cached is not None:
+            return jsonify(cached), 200
+
+        tutor_result = (
+            supabase
+            .table('tutors')
+            .select('id, first_name, last_name, email, status, volunteer_hours, school_id, school:schools(name, domain)')
+            .eq('id', tutor_id)
+            .single()
+            .execute()
+        )
+        if not tutor_result.data:
+            return jsonify({'error': 'Tutor not found'}), 404
+
+        approvals = (
+            supabase
+            .table('subject_approvals')
+            .select('id, subject_name, subject_type, subject_grade, status, approved_at')
+            .eq('tutor_id', tutor_id)
+            .order('approved_at', desc=True)
+            .limit(200)
+            .execute()
+        )
+
+        # Subjects list
+        names: list[str] = []
+        try:
+            subjects_file_path = os.path.abspath(os.path.join(current_app.root_path, '..', 'subjects.txt'))
+            if os.path.exists(subjects_file_path):
+                with open(subjects_file_path, 'r') as f:
+                    raw = f.read()
+                    if ',' in raw:
+                        names = [s.strip() for s in raw.split(',') if s.strip()]
+                    else:
+                        names = [s.strip() for s in raw.splitlines() if s.strip()]
+            else:
+                names = ['math','english','history']
+        except Exception:
+            names = ['math','english','history']
+        subjects_payload = [{'name': (n[0].upper() + n[1:]) if n else n} for n in names]
+
+        payload = {
+            'tutor': tutor_result.data,
+            'subject_approvals': approvals.data or [],
+            'subjects': subjects_payload,
+        }
+        _admin_overview_cache.set(ck, payload)
+        return jsonify(payload), 200
+    except Exception as e:
+        import traceback
+        print(f"Error building tutor edit data: {e}\n{traceback.format_exc()}")
         return jsonify({'error': 'Internal server error'}), 500
 
 

@@ -1,8 +1,11 @@
 from flask import Blueprint, request, jsonify
 from utils.auth import require_auth, require_admin
 from utils.db import get_supabase_client
+from utils.cache import TTLCache
+import os
 
 help_bp = Blueprint('help', __name__)
+_help_admin_cache = TTLCache(max_size=64, ttl_seconds=int(os.environ.get('ADMIN_HELP_TTL', '5')))
 
 
 @help_bp.route('/api/help/submit', methods=['POST'])
@@ -102,11 +105,24 @@ def list_help_requests_admin():
     try:
         admin_res = supabase.table('admins').select('school_id').eq('auth_id', request.user_id).single().execute()
         school_id = (admin_res.data or {}).get('school_id') if admin_res.data else None
-        query = supabase.table('help_questions').select('*').order('submitted_at', desc=True)
+
+        ck = f"help:{request.user_id}:{school_id or 'all'}"
+        cached = _help_admin_cache.get(ck)
+        if cached is not None:
+            return jsonify({'help_requests': cached}), 200
+
+        query = (
+            supabase
+            .table('help_questions')
+            .select('id, auth_id, role, tutor_id, tutee_id, school_id, user_first_name, user_last_name, user_email, user_grade, submitted_at, urgency, description')
+            .order('submitted_at', desc=True)
+        )
         if school_id:
             query = query.eq('school_id', school_id)
         res = query.limit(100).execute()
-        return jsonify({'help_requests': res.data or []}), 200
+        data = res.data or []
+        _help_admin_cache.set(ck, data)
+        return jsonify({'help_requests': data}), 200
     except Exception as e:
         print(f"Error listing help requests: {e}")
         return jsonify({'error': 'Internal server error'}), 500

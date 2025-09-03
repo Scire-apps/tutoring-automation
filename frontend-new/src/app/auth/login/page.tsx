@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginRole, setLoginRole] = useState<'tutee'|'tutor'>('tutee');
 
   const router = useRouter();
   const { signIn } = useAuth();
@@ -27,7 +28,27 @@ export default function LoginPage() {
     console.log("Login attempt started...");
 
     try {
-      const { error } = await signIn(email, password);
+      // Transform email for @hdsb.ca based on selected role (append +tutee/+tutor)
+      const transformEmailForRole = (raw: string, role: 'tutor'|'tutee'): string => {
+        try {
+          const trimmed = (raw || '').trim();
+          const atIdx = trimmed.indexOf('@');
+          if (atIdx <= 0) return trimmed;
+          const local = trimmed.slice(0, atIdx);
+          const domain = trimmed.slice(atIdx + 1);
+          if (!/^[Hh][Dd][Ss][Bb]\.ca$/.test(domain)) return trimmed; // only tag hdsb.ca
+          const tag = role.toLowerCase();
+          const lowerLocal = local.toLowerCase();
+          if (lowerLocal.endsWith('+' + tag)) return trimmed;
+          return `${local}+${tag}@${domain}`;
+        } catch {
+          return raw;
+        }
+      };
+
+      const emailToUse = transformEmailForRole(email, loginRole);
+
+      const { error } = await signIn(emailToUse, password);
 
       console.log("Sign in response:", { error });
 
@@ -111,6 +132,26 @@ export default function LoginPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md  -space-y-px">
+            {/* Role selector */}
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Log in as</label>
+              <div className="inline-flex rounded-full bg-gray-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => setLoginRole('tutee')}
+                  className={`px-4 py-1.5 text-sm rounded-full ${loginRole==='tutee' ? 'bg-blue-600 text-white' : 'text-gray-700'}`}
+                >
+                  Tutee
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLoginRole('tutor')}
+                  className={`px-4 py-1.5 text-sm rounded-full ${loginRole==='tutor' ? 'bg-blue-600 text-white' : 'text-gray-700'}`}
+                >
+                  Tutor
+                </button>
+              </div>
+            </div>
             <div>
               <label htmlFor="email-address" className="sr-only">
                 Email address

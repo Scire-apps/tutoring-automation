@@ -49,6 +49,30 @@ export default function AdminDashboardPage() {
   }, [user, isAdmin]);
   
   const handleSignOut = async () => { await signOut(); };
+
+  const closeCertModal = () => { setSelectedCertRequest(null); setActionError(null); };
+
+  const approveOrReject = async (action: 'approve'|'reject') => {
+    if (!selectedCertRequest) return;
+    try {
+      setActing(true);
+      setActionError(null);
+      const payload: any = {
+        action,
+        subject_name: selectedCertRequest.subject_name,
+        subject_type: selectedCertRequest.subject_type,
+        subject_grade: String(selectedCertRequest.subject_grade || selectedCertRequest.grade || ''),
+      };
+      await api.updateTutorSubjectApprovalAdmin(String(selectedCertRequest.tutor_id || selectedCertRequest.tutorId), payload);
+      // Optimistically remove the request and close
+      setCertificationRequests(prev => prev.filter(r => r.id !== selectedCertRequest.id));
+      closeCertModal();
+    } catch (e: any) {
+      setActionError(e?.message || 'Failed to process request');
+    } finally {
+      setActing(false);
+    }
+  };
   
   if (isLoading) {
     return (
@@ -182,6 +206,30 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* Certification Request Modal */}
+      {selectedCertRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={closeCertModal} />
+          <div className="relative z-10 w-full max-w-lg mx-auto bg-white rounded-2xl shadow-xl ring-1 ring-gray-200 p-6">
+            <div className="flex items-start justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Review Certification Request</h3>
+              <button onClick={closeCertModal} className="text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+            {actionError && <div className="mt-3 text-sm text-red-600">{actionError}</div>}
+            <div className="mt-4 text-sm text-gray-700 space-y-2">
+              <div><span className="font-medium">Tutor:</span> {selectedCertRequest.tutor_name || selectedCertRequest.tutor_full_name || 'Tutor'}</div>
+              <div><span className="font-medium">Subject:</span> {selectedCertRequest.subject_name} • {selectedCertRequest.subject_type} • Grade {selectedCertRequest.subject_grade}</div>
+              {selectedCertRequest.tutor_mark && (<div><span className="font-medium">Mark:</span> {selectedCertRequest.tutor_mark}</div>)}
+              {selectedCertRequest.created_at && (<div><span className="font-medium">Requested:</span> {new Date(selectedCertRequest.created_at).toLocaleString()}</div>)}
+            </div>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button disabled={acting} onClick={() => approveOrReject('reject')} className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50 disabled:opacity-50">{acting ? 'Working...' : 'Reject'}</button>
+              <button disabled={acting} onClick={() => approveOrReject('approve')} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow disabled:opacity-50">{acting ? 'Working...' : 'Approve'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

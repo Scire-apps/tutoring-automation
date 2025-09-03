@@ -342,7 +342,11 @@ export default function OpportunitiesPage() {
 
   return (
     <TutorLayout>
-      <div className="p-3 sm:p-6 bg-white min-h-full">
+      <div className="relative p-3 sm:p-6 bg-white min-h-full overflow-hidden">
+        <div className="pointer-events-none absolute -z-10 inset-0">
+          <div className="absolute -top-24 -left-24 w-[32rem] h-[32rem] rounded-full bg-gradient-to-tr from-blue-200 via-indigo-200 to-purple-200 blur-3xl opacity-70 animate-pulse" />
+          <div className="absolute -bottom-24 -right-24 w-[32rem] h-[32rem] rounded-full bg-gradient-to-tr from-indigo-200 via-purple-200 to-pink-200 blur-3xl opacity-70 animate-pulse" />
+        </div>
         <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
           {/* Page header with refresh button */}
           <div className="flex justify-between items-center">
@@ -392,17 +396,17 @@ export default function OpportunitiesPage() {
 
           {/* Opportunities table */}
           {opportunities.length > 0 ? (
-            <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="bg-white shadow-xl ring-1 ring-gray-200 rounded-2xl overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-gray-100">
+                  <thead className="bg-gray-50/70">
                     <tr>
                       <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">Subject</th>
                       <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">Student</th>
                       <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white divide-y divide-gray-100">
                     {opportunities.map((opportunity) => (
                       <>
                         {/* Main row */}
@@ -424,7 +428,7 @@ export default function OpportunitiesPage() {
 
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <div className="text-sm font-medium text-gray-900 truncate">
+                                  <div className="text-sm font-semibold text-gray-900 truncate">
                                    {opportunity.subject_name} • {opportunity.subject_type} • Grade {opportunity.subject_grade}
                                   </div>
                                   {opportunity.priority === "high" && (
@@ -468,7 +472,7 @@ export default function OpportunitiesPage() {
                                     const emailConflict = isHdsb(tutorEmail) && isHdsb(tuteeEmail) && baseLocal(tutorEmail) === baseLocal(tuteeEmail);
                                     return applyingTo === opportunity.id || (tutorStatus && tutorStatus.toLowerCase() !== 'active') || emailConflict;
                                   })()}
-                                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
+                                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 shadow-sm"
                                 >
                                   {(() => {
                                     const tutorEmail = user?.email || '';
@@ -524,10 +528,10 @@ export default function OpportunitiesPage() {
                               <div className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                   <div>
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                    <h4 className="text-sm font-semibold text-gray-800 mb-2">
                                       Student Details
                                     </h4>
-                                    <div className="text-sm text-gray-600 space-y-1">
+                                    <div className="text-sm text-gray-700 space-y-1 rounded-xl border border-gray-100 p-3 shadow-sm">
                                       <p><span className="font-medium">Name:</span> {(opportunity.tutee?.first_name || opportunity.tutee_first_name || '')} {(opportunity.tutee?.last_name || opportunity.tutee_last_name || '')}</p>
                                       {opportunity.tutee_pronouns && (
                                         <p><span className="font-medium">Pronouns:</span> {opportunity.tutee_pronouns}</p>
@@ -545,10 +549,10 @@ export default function OpportunitiesPage() {
                                     </div>
                                   </div>
                                   <div>
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                    <h4 className="text-sm font-semibold text-gray-800 mb-2">
                                       Session Details
                                     </h4>
-                                    <div className="text-sm text-gray-600 space-y-1">
+                                    <div className="text-sm text-gray-700 space-y-1 rounded-xl border border-gray-100 p-3 shadow-sm">
                                       <p><span className="font-medium">Subject:</span> {opportunity.subject_name ? `${opportunity.subject_name} • ${opportunity.subject_type} • Grade ${opportunity.subject_grade}` : (opportunity.subject || '')}</p>
                                       {opportunity.language && (<p><span className="font-medium">Language:</span> {opportunity.language}</p>)}
                                       {opportunity.additional_notes && (

@@ -91,27 +91,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Hero visual */}
-          <div className="order-1 lg:order-2 relative">
-            <div className="relative mx-auto w-full max-w-md">
-              <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-blue-400 via-indigo-400 to-purple-400 opacity-30 blur-2xl animate-pulse" />
-              <div className="relative rounded-3xl bg-white/80 backdrop-blur shadow-xl ring-1 ring-gray-200 p-6">
-                <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-                  <div className="text-sm text-gray-600">Welcome</div>
-                  <div className="mt-1 text-xl font-semibold text-gray-900">Your tutoring hub</div>
-                  <div className="mt-3 h-2 rounded-full bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100" />
-                </div>
-                <div className="mt-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-4 text-white">
-                  <div className="text-sm opacity-90">Next session</div>
-                  <div className="mt-1 text-lg font-semibold">Math • Today 4:00 PM</div>
-                  <div className="mt-2 flex items-center gap-2 text-xs opacity-90">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20">📍</span>
-                    <span>Library Room 204</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Hero visual removed per request */}
         </section>
 
         {/* Secondary sections */}

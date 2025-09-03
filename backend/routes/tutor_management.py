@@ -455,6 +455,20 @@ def update_subject_approvals(tutor_id):
             print(f"Subject approvals write failed: {e}\n{traceback.format_exc()}")
             return jsonify({'error': 'Failed to update subject approvals', 'details': str(e)}), 500
         
+        # After approve or reject, delete matching certification request(s)
+        if action in ['approve', 'reject']:
+            try:
+                supabase.table('certification_requests')\
+                    .delete()\
+                    .eq('tutor_id', tutor_id)\
+                    .eq('subject_name', subject_name)\
+                    .eq('subject_type', subject_type)\
+                    .eq('subject_grade', subject_grade)\
+                    .execute()
+            except Exception as e:
+                # Non-fatal if the cleanup fails
+                print(f"Warning: failed to delete certification_requests for tutor {tutor_id} {subject_name}/{subject_type}/{subject_grade}: {e}")
+        
         # Send email notification for approval/rejection (not for removal)
         if action in ['approve', 'reject']:
             try:

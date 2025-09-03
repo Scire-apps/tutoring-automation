@@ -640,55 +640,59 @@ export default function TuteeDashboardPage() {
       )}
       {showHelpModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowHelpModal(false)}></div>
-          <div className="relative bg-white rounded-lg border-2 border-gray-100 w-full max-w-lg p-6">
-            <h3 className="text-lg font-semibold mb-2">Ask for Help</h3>
-            <p className="text-sm text-gray-600 mb-4">Submit a help request to your school's help desk.</p>
-            <div className="grid grid-cols-1 gap-3 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
-                <select
-                  className="w-full border rounded px-3 py-2"
-                  value={helpUrgency}
-                  onChange={(e) => setHelpUrgency((e.target.value as 'urgent'|'non-urgent') || 'non-urgent')}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowHelpModal(false)}></div>
+          <div className="relative w-full max-w-lg">
+            <div className="absolute -inset-2 rounded-3xl bg-gradient-to-tr from-blue-400 via-indigo-400 to-purple-400 opacity-30 blur-2xl animate-pulse" />
+            <div className="relative bg-white/90 backdrop-blur shadow-xl ring-1 ring-gray-200 rounded-2xl p-6">
+              <h3 className="text-lg font-semibold mb-2">Ask for Help</h3>
+              <p className="text-sm text-gray-600 mb-4">Submit a help request to your school's help desk.</p>
+              <div className="grid grid-cols-1 gap-3 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
+                  <select
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                    value={helpUrgency}
+                    onChange={(e) => setHelpUrgency((e.target.value as 'urgent'|'non-urgent') || 'non-urgent')}
+                  >
+                    <option value="urgent">Urgent</option>
+                    <option value="non-urgent">Non-urgent</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 min-h-[140px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                    placeholder="Describe your issue or question..."
+                    value={helpDescription}
+                    onChange={(e) => setHelpDescription(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button className="px-3 py-1.5 border border-gray-200 rounded-xl hover:bg-gray-50" onClick={() => setShowHelpModal(false)}>Cancel</button>
+                <button
+                  className="group relative overflow-hidden px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-md transition hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 disabled:opacity-60"
+                  disabled={helpSubmitting || !helpDescription.trim()}
+                  onClick={async () => {
+                    // Optimistically close the modal immediately
+                    setShowHelpModal(false);
+                    const desc = helpDescription.trim();
+                    setHelpDescription("");
+                    setHelpUrgency('non-urgent');
+                    try {
+                      setHelpSubmitting(true);
+                      await api.submitHelpRequest({ urgency: helpUrgency, description: desc });
+                    } catch (e: any) {
+                      setError(e?.message || 'Failed to submit help request.');
+                    } finally {
+                      setHelpSubmitting(false);
+                    }
+                  }}
                 >
-                  <option value="urgent">Urgent</option>
-                  <option value="non-urgent">Non-urgent</option>
-                </select>
+                  <span className="relative z-10 font-semibold tracking-wide">{helpSubmitting ? 'Submitting...' : 'Submit Request'}</span>
+                  <span className="pointer-events-none absolute -inset-px rounded-[inherit] bg-gradient-to-r from-blue-400/40 via-indigo-400/30 to-purple-400/40 blur opacity-60 group-hover:opacity-90" />
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  className="w-full border rounded px-3 py-2 min-h-[140px]"
-                  placeholder="Describe your issue or question..."
-                  value={helpDescription}
-                  onChange={(e) => setHelpDescription(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button className="px-3 py-1.5 border rounded" onClick={() => setShowHelpModal(false)}>Cancel</button>
-              <button
-                className="px-3 py-1.5 bg-blue-600 text-white rounded disabled:opacity-50"
-                disabled={helpSubmitting || !helpDescription.trim()}
-                onClick={async () => {
-                  // Optimistically close the modal immediately
-                  setShowHelpModal(false);
-                  const desc = helpDescription.trim();
-                  setHelpDescription("");
-                  setHelpUrgency('non-urgent');
-                  try {
-                    setHelpSubmitting(true);
-                    await api.submitHelpRequest({ urgency: helpUrgency, description: desc });
-                  } catch (e: any) {
-                    setError(e?.message || 'Failed to submit help request.');
-                  } finally {
-                    setHelpSubmitting(false);
-                  }
-                }}
-              >
-                {helpSubmitting ? 'Submitting...' : 'Submit Request'}
-              </button>
             </div>
           </div>
         </div>

@@ -65,6 +65,8 @@ export default function AdminDashboardPage() {
         request_id: selectedCertRequest.id,
       };
       await api.updateTutorSubjectApprovalAdmin(String(selectedCertRequest.tutor_id || selectedCertRequest.tutorId), payload);
+      // Ensure deletion of the certification request regardless of approval/rejection result
+      try { await api.deleteCertificationRequestAdmin(String(selectedCertRequest.id)); } catch (_) {}
       // Optimistically remove the request and close
       setCertificationRequests(prev => prev.filter(r => r.id !== selectedCertRequest.id));
       closeCertModal();

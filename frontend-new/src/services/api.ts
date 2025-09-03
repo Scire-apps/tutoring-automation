@@ -565,6 +565,13 @@ export async function resolveHelpRequest(requestId: string) {
   );
 }
 
+export async function deleteCertificationRequestAdmin(requestId: string) {
+  return apiRequest<{ message: string }>(
+    `/api/admin/certification-requests/${requestId}`,
+    { method: 'DELETE' }
+  );
+}
+
 /**
  * API service object
  */
@@ -609,6 +616,8 @@ const apiService = {
   getAdminOverview,
   getTutorEditData,
   getTutorDetailsAdmin,
+  // New: admin delete certification request
+  deleteCertificationRequestAdmin,
 };
 
 export default apiService;

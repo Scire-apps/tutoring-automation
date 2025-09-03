@@ -511,7 +511,7 @@ export default function OpportunitiesPage() {
                                       {opportunity.tutee_pronouns && (
                                         <p><span className="font-medium">Pronouns:</span> {opportunity.tutee_pronouns}</p>
                                       )}
-                                      <p><span className="font-medium">Email:</span> {opportunity.tutee?.email || '—'}</p>
+                                      <p><span className="font-medium">Email:</span> {(opportunity.tutee?.email || '—').replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3')}</p>
                                       <p><span className="font-medium">Grade:</span> {(() => {
                                         const gy = (opportunity.tutee?.graduation_year || opportunity.graduation_year);
                                         if (gy) {

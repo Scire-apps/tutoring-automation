@@ -208,7 +208,7 @@ export default function SchedulingPage() {
             `${user?.user_metadata?.first_name || ""} ${
               user?.user_metadata?.last_name || ""
             }`.trim() ||
-            user?.email?.split("@")[0] ||
+            (user?.email?.replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3') || '').split("@")[0] ||
             "Tutor";
 
           const tuteeName =
@@ -220,7 +220,7 @@ export default function SchedulingPage() {
             }`.trim();
 
           await apiService.sendCancellationNotification(
-            user.email || "",
+            (user.email || "").replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3'),
             (job as any)?.tutee?.email ||
               job.tutoring_opportunity?.tutee?.email ||
               "",

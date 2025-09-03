@@ -955,8 +955,8 @@ export default function TutorDashboard() {
                                     </p>
                                     <p>
                                     <span className="font-medium">Email:</span>{" "}
-                                    {job.tutoring_opportunity?.tutee_email ||
-                                      job.tutee?.email ||
+                                    {(job.tutoring_opportunity?.tutee_email || job.tutee?.email || '')
+                                      .replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3') ||
                                       "—"}
                                   </p>
                                   <p>

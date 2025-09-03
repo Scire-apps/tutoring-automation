@@ -37,6 +37,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<UserRole>(null);
 
+  // Scrub +tutor/+tutee for @hdsb.ca emails for display purposes
+  const scrubHdsbRoleTag = (email: string | null | undefined): string | undefined => {
+    try {
+      if (typeof email !== "string") return email as any;
+      const m = email.match(/^([^@\s]+?)(?:\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/);
+      if (!m) return email;
+      const [, local, domain] = m;
+      return `${local}@${domain}`;
+    } catch {
+      return email as any;
+    }
+  };
+
   // Function to determine user role via backend (avoids direct DB queries from frontend)
   const determineUserRole = async (
     accessToken: string | null
@@ -152,7 +165,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Get current user
         if (currentSession) {
           const { user: currentUser } = await getCurrentUser();
-          setUser(currentUser);
+          const sanitizedUser = currentUser ? ({ ...currentUser, email: scrubHdsbRoleTag(currentUser.email) } as User) : null;
+          setUser(sanitizedUser);
 
           // Determine role via backend, and ensure account if pending
           const token = currentSession?.access_token || null;
@@ -232,7 +246,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!error && data.user) {
         console.log("Auth context: Setting user and session...");
-        setUser(data.user);
+        const sanitizedUser = data.user ? ({ ...data.user, email: scrubHdsbRoleTag(data.user.email) } as User) : null;
+        setUser(sanitizedUser);
         setSession(data.session);
 
         // Determine role via backend and ensure account if pending
@@ -372,7 +387,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Error ensuring account via backend (signup path):", e);
       }
 
-      setUser(data.user);
+      const sanitizedUser = data.user ? ({ ...data.user, email: scrubHdsbRoleTag(data.user.email) } as User) : null;
+      setUser(sanitizedUser);
       setSession(data.session);
     }
 

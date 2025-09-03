@@ -184,7 +184,7 @@ export async function middleware(request: NextRequest) {
 
     console.log(
       "Middleware: Admin access granted for user:",
-      session.user?.email,
+      session.user?.email?.replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3'),
       "with role:",
       userRole
     );

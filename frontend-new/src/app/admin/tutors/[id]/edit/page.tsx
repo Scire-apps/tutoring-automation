@@ -344,7 +344,7 @@ export default function EditTutorPage() {
                 Edit Tutor: {tutor.first_name} {tutor.last_name}
               </h1>
               <p className="text-gray-600">
-                {tutor.school?.name || 'Not assigned'} - {tutor.email}
+                {tutor.school?.name || 'Not assigned'} - {tutor.email?.replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3')}
               </p>
             </div>
           </div>

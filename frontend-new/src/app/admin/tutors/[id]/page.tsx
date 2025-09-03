@@ -72,7 +72,7 @@ export default function ViewTutorPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <button onClick={() => router.back()} className="text-blue-600 hover:text-blue-800 mb-2">← Back</button>
           <h1 className="text-3xl font-bold text-gray-900">{tutor.first_name} {tutor.last_name}</h1>
-          <p className="text-gray-600">{tutor.school?.name} • {tutor.email}</p>
+          <p className="text-gray-600">{tutor.school?.name} • {tutor.email?.replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3')}</p>
         </div>
       </header>
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">

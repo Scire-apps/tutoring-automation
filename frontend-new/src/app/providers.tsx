@@ -291,6 +291,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     schoolId?: string,
     accountType: "tutor" | "tutee" = "tutor"
   ) => {
+    // Append +tutor/+tutee tag to the local part of @hdsb.ca emails before signup
+    const transformEmailForRole = (raw: string, role: "tutor" | "tutee"): string => {
+      try {
+        const trimmed = (raw || '').trim();
+        const atIdx = trimmed.indexOf('@');
+        if (atIdx <= 0) return trimmed;
+        const local = trimmed.slice(0, atIdx);
+        const domain = trimmed.slice(atIdx + 1);
+        if (!/^[Hh][Dd][Ss][Bb]\.ca$/.test(domain)) return trimmed; // only tag hdsb.ca
+        const tag = role.toLowerCase();
+        // Avoid duplicate role suffix
+        const lowerLocal = local.toLowerCase();
+        if (lowerLocal.endsWith('+' + tag)) return trimmed;
+        return `${local}+${tag}@${domain}`;
+      } catch {
+        return raw;
+      }
+    };
+
+    const emailToUse = transformEmailForRole(email, accountType);
     // Enforce HDSB email domain on signup (frontend-only restriction)
     try {
       const isHdsb = /^[^@\s]+@hdsb\.ca$/i.test((email || '').trim());
@@ -311,7 +331,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Sign up with Supabase Auth
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: emailToUse,
       password,
       options: {
         data: {

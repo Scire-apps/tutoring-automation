@@ -96,14 +96,10 @@ export default function Home() {
             <div className="relative mx-auto w-full max-w-md">
               <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-blue-400 via-indigo-400 to-purple-400 opacity-30 blur-2xl animate-pulse" />
               <div className="relative rounded-3xl bg-white/80 backdrop-blur shadow-xl ring-1 ring-gray-200 p-6">
-                <div className="grid grid-cols-2 gap-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="text-xs text-gray-500">Metric</div>
-                      <div className="mt-1 text-2xl font-semibold text-gray-900">{[120, 85, 34, 210, 56, 98][i]}</div>
-                      <div className="mt-2 h-2 rounded-full bg-gradient-to-r from-blue-200 to-indigo-200" />
-                    </div>
-                  ))}
+                <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+                  <div className="text-sm text-gray-600">Welcome</div>
+                  <div className="mt-1 text-xl font-semibold text-gray-900">Your tutoring hub</div>
+                  <div className="mt-3 h-2 rounded-full bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100" />
                 </div>
                 <div className="mt-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-4 text-white">
                   <div className="text-sm opacity-90">Next session</div>

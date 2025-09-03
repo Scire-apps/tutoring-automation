@@ -84,8 +84,12 @@ function TutorRegisterForm() {
 
   if (registrationComplete) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
+      <div className="relative min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute -top-32 -left-32 w-[40rem] h-[40rem] rounded-full bg-gradient-to-tr from-blue-200 via-indigo-200 to-purple-200 blur-3xl opacity-70 animate-pulse" />
+          <div className="absolute -bottom-32 -right-32 w-[40rem] h-[40rem] rounded-full bg-gradient-to-tr from-indigo-200 via-purple-200 to-pink-200 blur-3xl opacity-70 animate-pulse" />
+        </div>
+        <div className="max-w-md w-full space-y-8 bg-white/90 rounded-2xl shadow-xl ring-1 ring-gray-200 p-8 backdrop-blur">
           <div className="text-center">
             <svg className="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -104,30 +108,35 @@ function TutorRegisterForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="relative min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-32 -left-32 w-[40rem] h-[40rem] rounded-full bg-gradient-to-tr from-blue-200 via-indigo-200 to-purple-200 blur-3xl opacity-70 animate-pulse" />
+        <div className="absolute -bottom-32 -right-32 w-[40rem] h-[40rem] rounded-full bg-gradient-to-tr from-indigo-200 via-purple-200 to-pink-200 blur-3xl opacity-70 animate-pulse" />
+      </div>
+      <div className="max-w-md w-full">
+        <div className="relative rounded-2xl bg-white/90 backdrop-blur shadow-xl ring-1 ring-gray-200 p-6 sm:p-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Register as a tutor</h2>
+          <h2 className="mt-1 text-center text-3xl font-extrabold text-gray-900">Register as a tutor</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}<Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500">sign in to your existing account</Link>
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+        <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-md -space-y-px">
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
                 <label htmlFor="first-name" className="sr-only">First Name</label>
-                <input id="first-name" name="firstName" type="text" required className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                <input id="first-name" name="firstName" type="text" required className="appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-200 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:z-10 sm:text-sm shadow-sm" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
               </div>
               <div>
                 <label htmlFor="last-name" className="sr-only">Last Name</label>
-                <input id="last-name" name="lastName" type="text" required className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                <input id="last-name" name="lastName" type="text" required className="appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-200 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:z-10 sm:text-sm shadow-sm" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
               </div>
             </div>
 
             <div className="mb-3">
               <label htmlFor="school" className="sr-only">School</label>
-              <select id="school" name="school" required className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" value={schoolId} onChange={(e) => setSchoolId(e.target.value)} disabled={isLoadingSchools}>
+              <select id="school" name="school" required className="appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-200 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:z-10 sm:text-sm shadow-sm" value={schoolId} onChange={(e) => setSchoolId(e.target.value)} disabled={isLoadingSchools}>
                 <option value="">Select your school</option>
                 {schools.map((school) => (
                   <option key={school.id} value={school.id}>{school.name}</option>
@@ -147,7 +156,7 @@ function TutorRegisterForm() {
                 autoComplete="email"
                 required
                 pattern="^[^@\s]+@hdsb\.ca$"
-                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${emailError ? 'border-red-500' : 'border-gray-300'} placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                className={`appearance-none rounded-xl relative block w-full px-3 py-2 border ${emailError ? 'border-red-500' : 'border-gray-200'} placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:z-10 sm:text-sm shadow-sm`}
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => {
@@ -163,18 +172,20 @@ function TutorRegisterForm() {
 
             <div>
               <label htmlFor="password" className="sr-only">Password</label>
-              <input id="password" name="password" type="password" autoComplete="new-password" required className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} />
+              <input id="password" name="password" type="password" autoComplete="new-password" required className="appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-200 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:z-10 sm:text-sm shadow-sm" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} />
             </div>
           </div>
 
           {error && (<div className="text-red-500 text-sm mt-2">{error}</div>)}
 
           <div>
-            <button type="submit" disabled={isLoading || isLoadingSchools || !!emailError || emailTaken || !/^[^@\s]+@hdsb\.ca$/i.test((email||'').trim())} className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300">
-              {isLoading ? 'Registering...' : 'Register'}
+            <button type="submit" disabled={isLoading || isLoadingSchools || !!emailError || emailTaken || !/^[^@\s]+@hdsb\.ca$/i.test((email||'').trim())} className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-60 shadow-md">
+              <span className="relative z-10 font-semibold tracking-wide">{isLoading ? 'Registering...' : 'Register'}</span>
+              <span className="pointer-events-none absolute -inset-px rounded-[inherit] bg-gradient-to-r from-blue-400/40 via-indigo-400/30 to-purple-400/40 blur opacity-60 group-hover:opacity-90" />
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

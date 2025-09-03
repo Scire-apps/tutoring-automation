@@ -328,9 +328,13 @@ export default function EditTutorPage() {
   const groupedSubjects = groupSubjectsByCategory();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-white overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-32 -left-32 w-[40rem] h-[40rem] rounded-full bg-gradient-to-tr from-blue-200 via-indigo-200 to-purple-200 blur-3xl opacity-70 animate-pulse" />
+        <div className="absolute -bottom-32 -right-32 w-[40rem] h-[40rem] rounded-full bg-gradient-to-tr from-indigo-200 via-purple-200 to-pink-200 blur-3xl opacity-70 animate-pulse" />
+      </div>
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white/80 backdrop-blur shadow-sm ring-1 ring-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
@@ -340,7 +344,7 @@ export default function EditTutorPage() {
               >
                 ← Back to Dashboard
               </button>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
                 Edit Tutor: {tutor.first_name} {tutor.last_name}
               </h1>
               <p className="text-gray-600">
@@ -356,9 +360,9 @@ export default function EditTutorPage() {
         <div className="px-4 py-6 sm:px-0">
           
           {/* Tutor Status */}
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+          <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl mb-8">
             <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
+              <h3 className="text-lg leading-6 font-semibold text-gray-900">
                 Tutor Status
               </h3>
               <p className="mt-1 max-w-2xl text-sm text-gray-500">
@@ -382,14 +386,14 @@ export default function EditTutorPage() {
                     key={status}
                     onClick={() => updateTutorStatus(status as any)}
                     disabled={tutor.status === status || updating === 'status'}
-                    className={`px-4 py-2 text-sm font-medium rounded-md ${
+                    className={`px-4 py-2 text-sm font-medium rounded-xl ${
                       tutor.status === status
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : status === 'active'
-                        ? 'bg-green-600 text-white hover:bg-green-700'
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : status === 'pending'
-                        ? 'bg-yellow-600 text-white hover:bg-yellow-700'
-                        : 'bg-red-600 text-white hover:bg-red-700'
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
                     }`}
                   >
                     {updating === 'status' ? 'Updating...' : `Set ${status}`}
@@ -400,9 +404,9 @@ export default function EditTutorPage() {
           </div>
 
           {/* Add New Certification (select embedded fields) */}
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+          <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl mb-8">
             <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
+              <h3 className="text-lg leading-6 font-semibold text-gray-900">
                 Add Subject Certification
               </h3>
               <p className="mt-1 max-w-2xl text-sm text-gray-500">
@@ -413,7 +417,7 @@ export default function EditTutorPage() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-                  <select value={selectedSubjectName} onChange={(e)=>setSelectedSubjectName(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 rounded-md">
+                  <select value={selectedSubjectName} onChange={(e)=>setSelectedSubjectName(e.target.value)} className="block w-full px-3 py-2 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500">
                     <option value="">Select...</option>
                     {(tutorData?.available_subjects && tutorData.available_subjects.length
                       ? tutorData.available_subjects
@@ -424,27 +428,27 @@ export default function EditTutorPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
-                  <select value={selectedSubjectType} onChange={(e)=>{ setSelectedSubjectType(e.target.value); if (e.target.value !== 'IB') setSelectedIbLevel(''); }} className="block w-full px-3 py-2 border border-gray-300 rounded-md">
+                  <select value={selectedSubjectType} onChange={(e)=>{ setSelectedSubjectType(e.target.value); if (e.target.value !== 'IB') setSelectedIbLevel(''); }} className="block w-full px-3 py-2 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500">
                     <option value="">Select...</option>
                     {SUBJECT_TYPES.map(s=> <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Grade</label>
-                  <select value={selectedSubjectGrade} onChange={(e)=>setSelectedSubjectGrade(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 rounded-md">
+                  <select value={selectedSubjectGrade} onChange={(e)=>setSelectedSubjectGrade(e.target.value)} className="block w-full px-3 py-2 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500">
                     <option value="">Select...</option>
                     {SUBJECT_GRADES.map(s=> <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
-                  <button onClick={addCertification} disabled={!selectedSubjectName || !selectedSubjectType || !selectedSubjectGrade || updating==='add-cert'} className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">{updating==='add-cert'?'Adding...':'Add Certification'}</button>
+                  <button onClick={addCertification} disabled={!selectedSubjectName || !selectedSubjectType || !selectedSubjectGrade || updating==='add-cert'} className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl shadow-sm hover:bg-blue-700 disabled:opacity-50">{updating==='add-cert'?'Adding...':'Add Certification'}</button>
                 </div>
               </div>
               {selectedSubjectType === 'IB' && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mt-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">IB Level</label>
-                    <select value={selectedIbLevel} onChange={(e)=>setSelectedIbLevel(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                    <select value={selectedIbLevel} onChange={(e)=>setSelectedIbLevel(e.target.value)} className="block w-full px-3 py-2 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required>
                       <option value="">Select...</option>
                       {['SL','HL'].map(l=> <option key={l} value={l}>{l}</option>)}
                     </select>
@@ -456,9 +460,9 @@ export default function EditTutorPage() {
           </div>
 
           {/* Current Certifications */}
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl">
             <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
+              <h3 className="text-lg leading-6 font-semibold text-gray-900">
                 Current Certifications
               </h3>
               <p className="mt-1 max-w-2xl text-sm text-gray-500">
@@ -474,13 +478,13 @@ export default function EditTutorPage() {
                 <div className="px-4 py-5 sm:px-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {(tutorData?.subject_approvals ?? []).map((approval) => (
-                      <div key={approval.id} className="border rounded-lg p-4 bg-green-50">
+                      <div key={approval.id} className="border rounded-xl p-4 bg-white shadow-sm">
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <h5 className="font-medium text-gray-900">{approval.subject_name} • {approval.subject_type}</h5>
                             <p className="text-sm text-gray-600">Grade: {approval.subject_grade}</p>
                           </div>
-                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                             {approval.status}
                           </span>
                         </div>

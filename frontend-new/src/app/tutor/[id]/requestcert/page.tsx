@@ -132,9 +132,8 @@ export default function TutorRequestCertificationPage() {
 
           {error && <div className="text-red-600 text-sm">{error}</div>}
           <div className="flex gap-3">
-            <button disabled={submitting} className="group relative overflow-hidden px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-md transition hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 disabled:opacity-60">
-              <span className="relative z-10 font-semibold tracking-wide">{submitting ? 'Submitting...' : 'Submit Request'}</span>
-              <span className="pointer-events-none absolute -inset-px rounded-[inherit] bg-gradient-to-r from-blue-400/40 via-indigo-400/30 to-purple-400/40 blur opacity-60 group-hover:opacity-90" />
+            <button disabled={submitting} className="px-4 py-2 rounded-xl bg-blue-600 text-white shadow-md transition hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 disabled:opacity-60">
+              <span className="font-semibold tracking-wide">{submitting ? 'Submitting...' : 'Submit Request'}</span>
             </button>
             <Link href="/tutor/dashboard" className="px-4 py-2 border border-gray-200 rounded-xl text-gray-700">Cancel</Link>
           </div>

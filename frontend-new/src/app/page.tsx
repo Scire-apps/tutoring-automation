@@ -31,8 +31,8 @@ export default function Home() {
 
       {/* Hero */}
       <main className="relative z-10">
-        <section className="mx-auto max-w-7xl px-6 pt-10 pb-8 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          <div className="order-2 lg:order-1 flex flex-col items-center lg:items-start text-center lg:text-left">
+        <section className="mx-auto max-w-7xl px-6 pt-10 pb-8 grid grid-cols-1 place-items-center gap-10">
+          <div className="order-2 lg:order-1 flex flex-col items-center text-center w-full max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 text-blue-700 px-3 py-1 text-xs font-semibold ring-1 ring-inset ring-blue-200">
               Proven at WOSS • Fast • Secure
             </div>

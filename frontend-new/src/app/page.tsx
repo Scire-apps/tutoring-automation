@@ -21,11 +21,7 @@ export default function Home() {
             <Image src="/logo.png" alt="Tutoring Logo" width={40} height={40} className="rounded-md shadow" />
             <span className="text-xl font-bold tracking-tight text-gray-900">WOSS Tutoring</span>
           </div>
-          <nav className="hidden sm:flex items-center gap-6 text-sm text-gray-600">
-            <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
-            <a href="#how" className="hover:text-gray-900 transition-colors">How it works</a>
-            <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-medium">Log in</Link>
-          </nav>
+          {/* Top-right navigation removed per request */}
         </div>
       </header>
 

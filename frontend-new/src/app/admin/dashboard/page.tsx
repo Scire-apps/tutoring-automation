@@ -62,6 +62,7 @@ export default function AdminDashboardPage() {
         subject_name: selectedCertRequest.subject_name,
         subject_type: selectedCertRequest.subject_type,
         subject_grade: String(selectedCertRequest.subject_grade || selectedCertRequest.grade || ''),
+        request_id: selectedCertRequest.id,
       };
       await api.updateTutorSubjectApprovalAdmin(String(selectedCertRequest.tutor_id || selectedCertRequest.tutorId), payload);
       // Optimistically remove the request and close

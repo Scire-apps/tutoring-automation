@@ -56,34 +56,7 @@ function invalidateCacheByPrefix(prefix: string) {
   } catch (_) {}
 }
 
-// Remove +tutor/+tutee tags from @hdsb.ca emails for display purposes
-function scrubHdsbRoleTag(email: string): string {
-  try {
-    if (typeof email !== 'string') return email as any;
-    // Only scrub for @hdsb.ca domains
-    const match = email.match(/^([^@\s]+?)(?:\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/);
-    if (!match) return email;
-    const [, local, domain] = match;
-    return `${local}@${domain}`;
-  } catch (_) {
-    return email;
-  }
-}
-
-function scrubEmailsDeep(value: any): any {
-  if (value == null) return value;
-  const t = typeof value;
-  if (t === 'string') return scrubHdsbRoleTag(value);
-  if (Array.isArray(value)) return value.map(v => scrubEmailsDeep(v));
-  if (t === 'object') {
-    const out: any = Array.isArray(value) ? [] : {};
-    for (const key of Object.keys(value)) {
-      out[key] = scrubEmailsDeep((value as any)[key]);
-    }
-    return out;
-  }
-  return value;
-}
+// Note: Email scrubbing for display is handled per-page; no centralized mutation here.
 
 /**
  * Base API request function with error handling and authentication
@@ -136,8 +109,7 @@ async function apiRequest<T>(
       throw new Error(errorMessage);
     }
     
-    const raw = await response.json();
-    const data = scrubEmailsDeep(raw);
+    const data = await response.json();
     // Store in cache for eligible GETs
     if (method === 'GET' && (endpoint.startsWith('/api/admin/') || endpoint.startsWith('/api/public/'))) {
       setCached(method, url, session?.access_token, data, pickTtlMs(endpoint));

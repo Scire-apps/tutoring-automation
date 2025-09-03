@@ -97,14 +97,24 @@ export default function TuteeRequestPage() {
 
   return (
     <TuteeLayout>
-      <div className="p-6 bg-white max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold">Request Tutoring</h1>
-        <form onSubmit={submit} className="mt-6 space-y-4">
+      <div className="relative p-6 bg-white min-h-full overflow-hidden">
+        <div className="pointer-events-none absolute -z-10 inset-0">
+          <div className="absolute -top-24 -left-24 w-[32rem] h-[32rem] rounded-full bg-gradient-to-tr from-blue-200 via-indigo-200 to-purple-200 blur-3xl opacity-70 animate-pulse" />
+          <div className="absolute -bottom-24 -right-24 w-[32rem] h-[32rem] rounded-full bg-gradient-to-tr from-indigo-200 via-purple-200 to-pink-200 blur-3xl opacity-70 animate-pulse" />
+        </div>
+
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Request Tutoring</h1>
+          <p className="mt-1 text-gray-600">Tell us what you need help with and we’ll match you quickly.</p>
+
+          <form onSubmit={submit} className="mt-6 space-y-5 relative">
+            <div className="absolute -inset-2 rounded-3xl bg-gradient-to-tr from-blue-400 via-indigo-400 to-purple-400 opacity-20 blur-2xl" />
+            <div className="relative rounded-2xl bg-white/80 backdrop-blur shadow-xl ring-1 ring-gray-200 p-5 sm:p-6 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium">Subject</label>
               <select
-                className="mt-1 border rounded px-3 py-2 w-full"
+                className="mt-1 border border-gray-200 rounded-xl px-3 py-2 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
                 value={subjectName}
                 onChange={(e) => {
                   if (e.target.value === "EDIT_COURSES") {
@@ -132,7 +142,7 @@ export default function TuteeRequestPage() {
             <div>
               <label className="block text-sm font-medium">Type</label>
               <select
-                className="mt-1 border rounded px-3 py-2 w-full"
+                className="mt-1 border border-gray-200 rounded-xl px-3 py-2 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
                 value={subjectType}
                 onChange={(e) => {
                   setSubjectType(e.target.value);
@@ -151,7 +161,7 @@ export default function TuteeRequestPage() {
             <div>
               <label className="block text-sm font-medium">Grade</label>
               <select
-                className="mt-1 border rounded px-3 py-2 w-full"
+                className="mt-1 border border-gray-200 rounded-xl px-3 py-2 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
                 value={subjectGrade}
                 onChange={(e) => setSubjectGrade(e.target.value)}
                 required
@@ -182,7 +192,7 @@ export default function TuteeRequestPage() {
                   Preferred Language
                 </label>
                 <input
-                  className="mt-1 border rounded px-3 py-2 w-full"
+                  className="mt-1 border border-gray-200 rounded-xl px-3 py-2 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
                   value={ellLanguage}
                   onChange={(e) => setEllLanguage(e.target.value)}
                   placeholder="e.g., Spanish, French"
@@ -195,7 +205,7 @@ export default function TuteeRequestPage() {
               <div>
                 <label className="block text-sm font-medium">IB Level</label>
                 <select
-                  className="mt-1 border rounded px-3 py-2 w-full"
+                  className="mt-1 border border-gray-200 rounded-xl px-3 py-2 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
                   value={ibLevel}
                   onChange={(e) => setIbLevel(e.target.value)}
                   required
@@ -219,7 +229,7 @@ export default function TuteeRequestPage() {
               Location Preference
             </label>
             <select
-              className="mt-1 border rounded px-3 py-2 w-full"
+              className="mt-1 border border-gray-200 rounded-xl px-3 py-2 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
               value={locationPreference}
               onChange={(e) => setLocationPreference(e.target.value)}
               required
@@ -234,7 +244,7 @@ export default function TuteeRequestPage() {
               Additional Notes
             </label>
             <textarea
-              className="mt-1 border rounded px-3 py-2 w-full"
+              className="mt-1 border border-gray-200 rounded-xl px-3 py-2 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -243,11 +253,14 @@ export default function TuteeRequestPage() {
           {error && <div className="text-red-600 text-sm">{error}</div>}
           <button
             disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded"
+            className="group relative overflow-hidden px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-md transition hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 disabled:opacity-60"
           >
-            {loading ? "Submitting..." : "Submit Request"}
+            <span className="relative z-10 font-semibold tracking-wide">{loading ? "Submitting..." : "Submit Request"}</span>
+            <span className="pointer-events-none absolute -inset-px rounded-[inherit] bg-gradient-to-r from-blue-400/40 via-indigo-400/30 to-purple-400/40 blur opacity-60 group-hover:opacity-90" />
           </button>
-        </form>
+            </div>
+          </form>
+        </div>
       </div>
       {editingSubjects && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -255,7 +268,7 @@ export default function TuteeRequestPage() {
             className="absolute inset-0 bg-black/40"
             onClick={() => setEditingSubjects(false)}
           ></div>
-          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+          <div className="relative bg-white rounded-2xl shadow-xl ring-1 ring-gray-200 w-full max-w-md p-6">
             <h3 className="text-lg font-semibold mb-2">Edit My Subjects</h3>
             <div className="space-y-2 mb-3">
               {subjects.map((s, idx) => {
@@ -267,7 +280,7 @@ export default function TuteeRequestPage() {
                 return (
                   <div key={idx} className="flex gap-2">
                     <select
-                      className="flex-1 border rounded px-3 py-2"
+                      className="flex-1 border border-gray-200 rounded-xl px-3 py-2 shadow-sm"
                       value={s}
                       onChange={(e) => {
                         const next = subjects.slice();
@@ -289,7 +302,7 @@ export default function TuteeRequestPage() {
                         next.splice(idx, 1);
                         setSubjects(next);
                       }}
-                      className="px-3 py-2 border rounded"
+                      className="px-3 py-2 border border-gray-200 rounded-xl"
                     >
                       Remove
                     </button>
@@ -306,19 +319,19 @@ export default function TuteeRequestPage() {
                   !subjects.some((s) => !s) &&
                   setSubjects([...subjects, ""])
                 }
-                className="px-3 py-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 border border-gray-200 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add course
               </button>
               <div className="flex gap-2">
                 <button
-                  className="px-3 py-2 border rounded"
+                  className="px-3 py-2 border border-gray-200 rounded-xl"
                   onClick={() => setEditingSubjects(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="px-3 py-2 bg-blue-600 text-white rounded"
+                  className="px-3 py-2 bg-blue-600 text-white rounded-xl"
                   disabled={savingSubjects}
                   onClick={async () => {
                     try {

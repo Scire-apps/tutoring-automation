@@ -246,6 +246,16 @@ export default function OpportunitiesPage() {
     await signOut();
   };
 
+  const isHdsb = (email?: string) => /@hdsb\.ca$/i.test(String(email || ''));
+  const baseLocal = (email?: string) => {
+    if (!email) return '';
+    const at = email.indexOf('@');
+    if (at <= 0) return '';
+    const local = email.slice(0, at);
+    const plus = local.indexOf('+');
+    return (plus >= 0 ? local.slice(0, plus) : local).toLowerCase();
+  };
+
   // Helper function to format time in 12-hour format with AM/PM
   const formatTime = (timeString: string) => {
     if (!timeString) return "";
@@ -452,12 +462,23 @@ export default function OpportunitiesPage() {
                                     e.stopPropagation();
                                     handleApply(opportunity.id);
                                   }}
-                                  disabled={applyingTo === opportunity.id || (tutorStatus && tutorStatus.toLowerCase() !== 'active')}
+                                  disabled={(() => {
+                                    const tutorEmail = user?.email || '';
+                                    const tuteeEmail = (opportunity.tutee?.email || (opportunity as any).tutee_email || '') as string;
+                                    const emailConflict = isHdsb(tutorEmail) && isHdsb(tuteeEmail) && baseLocal(tutorEmail) === baseLocal(tuteeEmail);
+                                    return applyingTo === opportunity.id || (tutorStatus && tutorStatus.toLowerCase() !== 'active') || emailConflict;
+                                  })()}
                                   className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
                                 >
-                                  {applyingTo === opportunity.id
-                                    ? "Applying..."
-                                    : (tutorStatus && tutorStatus.toLowerCase() !== 'active') ? 'Unavailable (Not Active)' : "Apply"}
+                                  {(() => {
+                                    const tutorEmail = user?.email || '';
+                                    const tuteeEmail = (opportunity.tutee?.email || (opportunity as any).tutee_email || '') as string;
+                                    const emailConflict = isHdsb(tutorEmail) && isHdsb(tuteeEmail) && baseLocal(tutorEmail) === baseLocal(tuteeEmail);
+                                    if (applyingTo === opportunity.id) return 'Applying...';
+                                    if (tutorStatus && tutorStatus.toLowerCase() !== 'active') return 'Unavailable (Not Active)';
+                                    if (emailConflict) return 'Not Allowed (Same User)';
+                                    return 'Apply';
+                                  })()}
                                 </button>
                               ) : (
                                 <button

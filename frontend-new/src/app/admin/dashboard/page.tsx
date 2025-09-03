@@ -26,43 +26,11 @@ export default function AdminDashboardPage() {
   
   useEffect(() => {
     const fetchAdminData = async () => {
-      console.log('Admin dashboard: Checking auth state...');
-      console.log('Admin dashboard: Auth loading:', authLoading);
-      console.log('Admin dashboard: User exists:', !!user);
-      console.log('Admin dashboard: User role:', userRole || 'unknown');
-      console.log('Admin dashboard: Is admin:', isAdmin());
-      
-      // Wait for auth to finish loading
-      if (authLoading) {
-        console.log('Admin dashboard: Auth still loading, waiting...');
-        return;
-      }
-      
-      if (!user) {
-        console.log('Admin dashboard: No user, redirecting to login');
-        navigate('/auth/login');
-        return;
-      }
-      
-      // Check if user is actually an admin
-      if (!isAdmin()) {
-        console.log('Admin dashboard: User is not an admin, redirecting to tutor dashboard');
-        navigate('/tutor/dashboard');
-        return;
-      }
-      
-      console.log('Admin dashboard: Admin user authenticated, proceeding...');
-      
+      if (authLoading) return;
+      if (!user) { navigate('/auth/login'); return; }
+      if (!isAdmin()) { navigate('/tutor/dashboard'); return; }
       try {
-        // Fetch via backend using service role (avoids RLS recursion)
-        const token = session?.access_token;
-        if (!token) {
-          console.error('Admin dashboard: no access token found');
-          navigate('/auth/login');
-          return;
-        }
-
-        // Single aggregated fetch for dashboard
+        const token = session?.access_token; if (!token) { navigate('/auth/login'); return; }
         const overview = await api.getAdminOverview();
         setAdmin(overview.admin as Admin);
         setSchools((overview.schools || []) as School[]);
@@ -77,15 +45,10 @@ export default function AdminDashboardPage() {
         setIsLoading(false);
       }
     };
-    
     fetchAdminData();
   }, [user, isAdmin]);
   
-  const handleSignOut = async () => {
-    console.log('Admin dashboard: Starting sign out...');
-    await signOut();
-    // SupabaseListener will move us to /auth/login
-  };
+  const handleSignOut = async () => { await signOut(); };
   
   if (isLoading) {
     return (
@@ -112,12 +75,7 @@ export default function AdminDashboardPage() {
             <span className="text-sm text-gray-600">
               {admin?.first_name} {admin?.last_name}
             </span>
-            <button
-              onClick={handleSignOut}
-              className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-sm shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Sign out
-            </button>
+            <button onClick={handleSignOut} className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-sm shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Sign out</button>
           </div>
         </div>
       </header>
@@ -134,438 +92,90 @@ export default function AdminDashboardPage() {
                 <div className="opacity-80 text-sm">{admin?.school?.name || 'Admin'}</div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner">
-                  <div className="text-xs opacity-85">Tutors</div>
-                  <div className="text-lg font-bold">{tutors.length}</div>
-                </div>
-                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner">
-                  <div className="text-xs opacity-85">Opportunities</div>
-                  <div className="text-lg font-bold">{opportunities.length}</div>
-                </div>
-                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner">
-                  <div className="text-xs opacity-85">Awaiting Jobs</div>
-                  <div className="text-lg font-bold">{awaitingJobs.length}</div>
-                </div>
-                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner">
-                  <div className="text-xs opacity-85">Cert Requests</div>
-                  <div className="text-lg font-bold">{certificationRequests.length}</div>
-                </div>
-                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner">
-                  <div className="text-xs opacity-85">Help</div>
-                  <div className="text-lg font-bold">{helpRequests.length}</div>
-                </div>
+                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner"><div className="text-xs opacity-85">Tutors</div><div className="text-lg font-bold">{tutors.length}</div></div>
+                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner"><div className="text-xs opacity-85">Opportunities</div><div className="text-lg font-bold">{opportunities.length}</div></div>
+                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner"><div className="text-xs opacity-85">Awaiting Jobs</div><div className="text-lg font-bold">{awaitingJobs.length}</div></div>
+                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner"><div className="text-xs opacity-85">Cert Requests</div><div className="text-lg font-bold">{certificationRequests.length}</div></div>
+                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner"><div className="text-xs opacity-85">Help</div><div className="text-lg font-bold">{helpRequests.length}</div></div>
               </div>
             </div>
           </div>
         </div>
-        {/* Quick Actions removed (single admin role) */}
 
         {/* Admin Info */}
         <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl mb-8">
           <div className="px-4 py-5 sm:px-6">
-            <h2 className="text-lg leading-6 font-semibold text-gray-900">
-              Admin Information
-            </h2>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">
-              Your account details and permissions.
-            </p>
+            <h2 className="text-lg leading-6 font-semibold text-gray-900">Admin Information</h2>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">Your account details and permissions.</p>
           </div>
           <div className="border-t border-gray-100 px-4 py-5 sm:p-0">
             <dl className="sm:divide-y sm:divide-gray-200">
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Full name</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {admin?.first_name} {admin?.last_name}
-                </dd>
-              </div>
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Email address</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {admin?.email?.replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3')}
-                </dd>
-              </div>
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Role</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  Admin
-                </dd>
-              </div>
-              {admin?.role === 'admin' && (
-                <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-500">School</dt>
-                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {admin?.school?.name || 'Not assigned'}
-                  </dd>
-                </div>
-              )}
+              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"><dt className="text-sm font-medium text-gray-500">Full name</dt><dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{admin?.first_name} {admin?.last_name}</dd></div>
+              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"><dt className="text-sm font-medium text-gray-500">Email address</dt><dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{admin?.email?.replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3')}</dd></div>
+              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"><dt className="text-sm font-medium text-gray-500">Role</dt><dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">Admin</dd></div>
+              {admin?.role === 'admin' && (<div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"><dt className="text-sm font-medium text-gray-500">School</dt><dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{admin?.school?.name || 'Not assigned'}</dd></div>)}
             </dl>
           </div>
         </div>
         
         {/* Pending Verification Section */}
         <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl mb-8">
-          <div className="px-4 py-5 sm:px-6">
-            <h2 className="text-lg leading-6 font-semibold text-gray-900">Jobs Pending Verification</h2>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">Verify completed sessions and award volunteer hours.</p>
-          </div>
-          <ul className="divide-y divide-gray-100">
-            {awaitingJobs.length === 0 ? (
-              <li className="px-4 py-4 text-gray-500 text-center">No jobs awaiting verification</li>
-            ) : (
-              awaitingJobs.map((job: any) => (
-                <AwaitingJobRow key={job.id} job={job} />
-              ))
-            )}
-          </ul>
+          <div className="px-4 py-5 sm:px-6"><h2 className="text-lg leading-6 font-semibold text-gray-900">Jobs Pending Verification</h2><p className="mt-1 max-w-2xl text-sm text-gray-500">Verify completed sessions and award volunteer hours.</p></div>
+          <ul className="divide-y divide-gray-100">{awaitingJobs.length === 0 ? (<li className="px-4 py-4 text-gray-500 text-center">No jobs awaiting verification</li>) : (awaitingJobs.map((job: any) => (<AwaitingJobRow key={job.id} job={job} />)))}</ul>
         </div>
 
         {/* Certification Requests */}
         <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl mb-8">
-          <div className="px-4 py-5 sm:px-6">
-            <h2 className="text-lg leading-6 font-semibold text-gray-900">Certification Requests</h2>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">Tutor certification requests for your school.</p>
-          </div>
-          <ul className="divide-y divide-gray-100">
-            {certificationRequests.length === 0 ? (
-              <li className="px-4 py-4 text-gray-500 text-center">No certification requests</li>
-            ) : (
-              certificationRequests.map((req: any) => (
-                <li key={req.id} className="px-4 py-4 cursor-pointer hover:bg-gray-50" onClick={() => { setSelectedCertRequest(req); setActionError(null); }}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {req.tutor_name || 'Tutor'} — {req.subject_name} • {req.subject_type} • Grade {req.subject_grade}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Requested {req.created_at ? new Date(req.created_at).toLocaleString() : ''}
-                        {req.tutor_mark ? ` • Mark: ${req.tutor_mark}` : ''}
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-500">Click to review</div>
-                  </div>
-                </li>
-              ))
-            )}
-          </ul>
+          <div className="px-4 py-5 sm:px-6"><h2 className="text-lg leading-6 font-semibold text-gray-900">Certification Requests</h2><p className="mt-1 max-w-2xl text-sm text-gray-500">Tutor certification requests for your school.</p></div>
+          <ul className="divide-y divide-gray-100">{certificationRequests.length === 0 ? (<li className="px-4 py-4 text-gray-500 text-center">No certification requests</li>) : (certificationRequests.map((req: any) => (<li key={req.id} className="px-4 py-4 cursor-pointer hover:bg-gray-50" onClick={() => { setSelectedCertRequest(req); setActionError(null); }}><div className="flex items-center justify-between"><div><div className="text-sm font-medium text-gray-900">{req.tutor_name || 'Tutor'} — {req.subject_name} • {req.subject_type} • Grade {req.subject_grade}</div><div className="text-xs text-gray-500">Requested {req.created_at ? new Date(req.created_at).toLocaleString() : ''}{req.tutor_mark ? ` • Mark: ${req.tutor_mark}` : ''}</div></div><div className="text-xs text-gray-500">Click to review</div></div></li>)))}</ul>
         </div>
 
         {/* Help Requests */}
         <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl mb-8">
-          <div className="px-4 py-5 sm:px-6">
-            <h2 className="text-lg leading-6 font-semibold text-gray-900">Help Requests</h2>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">Questions submitted by tutors and tutees in your school.</p>
-          </div>
-          {helpError && (
-            <div className="px-4 text-sm text-red-600">{helpError}</div>
-          )}
-          <ul className="divide-y divide-gray-100">
-            {helpRequests.length === 0 ? (
-              <li className="px-4 py-4 text-gray-500 text-center">No help requests</li>
-            ) : (
-              helpRequests.map((h: any) => {
-                const isExpanded = !!expandedHelpIds[h.id];
-                const schoolName = schools.find((s) => s.id === h.school_id)?.name;
-                const initials = `${(h.user_first_name || '?').charAt(0)}${(h.user_last_name || '').charAt(0)}`;
-                const urgencyBadge = h.urgency === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
-                return (
-                  <li key={h.id} className="px-4 py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-sm font-medium text-gray-700">{initials}</span>
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {h.user_first_name} {h.user_last_name} <span className="text-gray-500">({h.role})</span>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {h.user_email} • {schoolName || 'Unknown school'} {h.submitted_at ? `• ${new Date(h.submitted_at).toLocaleString()}` : ''}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${urgencyBadge}`}>
-                          {h.urgency === 'high' ? 'Urgent' : 'Non-urgent'}
-                        </span>
-                        <button
-                          className="text-gray-500"
-                          onClick={() => setExpandedHelpIds((prev) => ({ ...prev, [h.id]: !isExpanded }))}
-                        >
-                          {isExpanded ? 'Hide' : 'View'}
-                        </button>
-                      </div>
-                    </div>
-                    {isExpanded && (
-                      <div className="mt-3 border-t pt-3 text-sm text-gray-800">
-                        {h.user_grade && (
-                          <div className="mb-1"><span className="font-medium">Grade:</span> {h.user_grade}</div>
-                        )}
-                        <div className="mb-2">
-                          <div className="font-medium">Description</div>
-                          <div className="whitespace-pre-wrap text-gray-700">{h.description}</div>
-                        </div>
-                        <div className="flex justify-end">
-                          <button
-                            className={`px-3 py-1.5 bg-green-600 text-white rounded disabled:opacity-50`}
-                            disabled={resolvingId === h.id}
-                            onClick={async () => {
-                              try {
-                                setHelpError(null);
-                                setResolvingId(h.id);
-                                const { supabase } = await import('@/services/supabase');
-                                const { data: { session } } = await supabase.auth.getSession();
-                                const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/help-requests/${h.id}`, {
-                                  method: 'DELETE',
-                                  headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }
-                                });
-                                if (!resp.ok) {
-                                  const j = await resp.json().catch(()=>({}));
-                                  throw new Error(j.error || 'Failed to resolve help request');
-                                }
-                                setHelpRequests((prev) => prev.filter((x) => x.id !== h.id));
-                              } catch (e: any) {
-                                setHelpError(e?.message || 'Failed to resolve help request');
-                              } finally {
-                                setResolvingId(null);
-                              }
-                            }}
-                          >
-                            {resolvingId === h.id ? 'Resolving...' : 'Mark as resolved'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </li>
-                );
-              })
-            )}
-          </ul>
+          <div className="px-4 py-5 sm:px-6"><h2 className="text-lg leading-6 font-semibold text-gray-900">Help Requests</h2><p className="mt-1 max-w-2xl text-sm text-gray-500">Questions submitted by tutors and tutees in your school.</p></div>
+          {helpError && (<div className="px-4 text-sm text-red-600">{helpError}</div>)}
+          <ul className="divide-y divide-gray-100">{helpRequests.length === 0 ? (<li className="px-4 py-4 text-gray-500 text-center">No help requests</li>) : (helpRequests.map((h: any) => { const isExpanded = !!expandedHelpIds[h.id]; const schoolName = schools.find((s) => s.id === h.school_id)?.name; const initials = `${(h.user_first_name || '?').charAt(0)}${(h.user_last_name || '').charAt(0)}`; const urgencyBadge = h.urgency === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'; return (<li key={h.id} className="px-4 py-4"><div className="flex items-center justify-between"><div className="flex items-center"><div className="flex-shrink-0 h-10 w-10"><div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center"><span className="text-sm font-medium text-gray-700">{initials}</span></div></div><div className="ml-4"><div className="text-sm font-medium text-gray-900">{h.user_first_name} {h.user_last_name} <span className="text-gray-500">({h.role})</span></div><div className="text-xs text-gray-500">{h.user_email} • {schoolName || 'Unknown school'} {h.submitted_at ? `• ${new Date(h.submitted_at).toLocaleString()}` : ''}</div></div></div><div className="flex items-center gap-3"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${urgencyBadge}`}>{h.urgency === 'high' ? 'Urgent' : 'Non-urgent'}</span><button className="text-gray-500 hover:text-gray-700" onClick={() => setExpandedHelpIds((prev) => ({ ...prev, [h.id]: !isExpanded }))}>{isExpanded ? 'Hide' : 'View'}</button></div></div>{isExpanded && (<div className="mt-3 border-t pt-3 text-sm text-gray-800"><div className="mb-2"><div className="font-medium">Description</div><div className="whitespace-pre-wrap text-gray-700">{h.description}</div></div><div className="flex justify-end"><button className={`px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm disabled:opacity-50`} disabled={resolvingId === h.id} onClick={async () => { try { setHelpError(null); setResolvingId(h.id); const { supabase } = await import('@/services/supabase'); const { data: { session } } = await supabase.auth.getSession(); const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/help-requests/${h.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${session?.access_token ?? ''}` } }); if (!resp.ok) { const j = await resp.json().catch(()=>({})); throw new Error(j.error || 'Failed to resolve help request'); } setHelpRequests((prev) => prev.filter((x) => x.id !== h.id)); } catch (e: any) { setHelpError(e?.message || 'Failed to resolve help request'); } finally { setResolvingId(null); } }}> {resolvingId === h.id ? 'Resolving...' : 'Mark as resolved'} </button></div></div>)}</li>); }))}</ul>
         </div>
 
-        {selectedCertRequest && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedCertRequest(null)}></div>
-            <div className="relative bg-white rounded-lg shadow-lg w-full max-w-lg p-6">
-              <h3 className="text-lg font-semibold mb-2">Review Certification Request</h3>
-              {actionError && <div className="mb-2 text-sm text-red-600">{actionError}</div>}
-              <div className="text-sm text-gray-800 space-y-1 mb-4">
-                <div><span className="font-medium">Tutor:</span> {selectedCertRequest.tutor_name || selectedCertRequest.tutor_id}</div>
-                <div><span className="font-medium">Subject:</span> {selectedCertRequest.subject_name} • {selectedCertRequest.subject_type} • Grade {selectedCertRequest.subject_grade}</div>
-                {selectedCertRequest.tutor_mark && (
-                  <div><span className="font-medium">Tutor Mark:</span> {selectedCertRequest.tutor_mark}</div>
-                )}
-                {selectedCertRequest.created_at && (
-                  <div className="text-xs text-gray-500">Requested {new Date(selectedCertRequest.created_at).toLocaleString()}</div>
-                )}
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  className="px-3 py-1.5 border rounded"
-                  onClick={() => setSelectedCertRequest(null)}
-                  disabled={acting}
-                >
-                  Close
-                </button>
-                <button
-                  className="px-3 py-1.5 bg-red-600 text-white rounded disabled:opacity-50"
-                  disabled={acting}
-                  onClick={async () => {
-                    try {
-                      setActing(true);
-                      setActionError(null);
-                      const { supabase } = await import('@/services/supabase');
-                      const { data: { session } } = await supabase.auth.getSession();
-                      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/certification-requests/${selectedCertRequest.id}`, {
-                        method: 'DELETE',
-                        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }
-                      });
-                      if (!resp.ok) {
-                        const j = await resp.json().catch(()=>({}));
-                        throw new Error(j.error || 'Failed to delete request');
-                      }
-                      setCertificationRequests(prev => prev.filter(r => r.id !== selectedCertRequest.id));
-                      setSelectedCertRequest(null);
-                    } catch (e: any) {
-                      setActionError(e?.message || 'Failed to reject request');
-                    } finally {
-                      setActing(false);
-                    }
-                  }}
-                >
-                  Reject
-                </button>
-                <button
-                  className="px-3 py-1.5 bg-green-600 text-white rounded disabled:opacity-50"
-                  disabled={acting}
-                  onClick={async () => {
-                    try {
-                      setActing(true);
-                      setActionError(null);
-                      const { supabase } = await import('@/services/supabase');
-                      const { data: { session } } = await supabase.auth.getSession();
-                      // Approve via backend (writes to subject_approvals and deletes request)
-                      const approveResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/certification-requests/${selectedCertRequest.id}/approve`, {
-                        method: 'POST',
-                        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }
-                      });
-                      if (!approveResp.ok) {
-                        const j = await approveResp.json().catch(()=>({}));
-                        throw new Error(j.error || 'Failed to approve request');
-                      }
-                      setCertificationRequests(prev => prev.filter(r => r.id !== selectedCertRequest.id));
-                      setSelectedCertRequest(null);
-                    } catch (e: any) {
-                      setActionError(e?.message || 'Failed to certify request');
-                    } finally {
-                      setActing(false);
-                    }
-                  }}
-                >
-                  Certify
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* School/Opportunities Section (shows if admin has a school or we have opps) */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
-          <div className="px-4 py-5 sm:px-6">
-            <h2 className="text-lg leading-6 font-medium text-gray-900">
-              {admin?.school?.name ? `Recent Tutoring Opportunities at ${admin.school.name}` : 'Recent Tutoring Opportunities'}
-            </h2>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">
-              Latest tutoring requests
-            </p>
-          </div>
-          <ul className="divide-y divide-gray-200">
-            {opportunities.length === 0 ? (
-              <li className="px-4 py-4 text-gray-500 text-center">No tutoring opportunities found</li>
-            ) : (
-              opportunities.map((opportunity: any) => {
-                const tFirst = opportunity?.tutee?.first_name ?? opportunity?.tutee_first_name ?? '';
-                const tLast = opportunity?.tutee?.last_name ?? opportunity?.tutee_last_name ?? '';
-                const subj = opportunity?.subject_name ? `${opportunity.subject_name} • ${opportunity.subject_type} • Grade ${opportunity.subject_grade}` : (opportunity?.subject ?? '');
-                const firstInitial = tFirst && typeof tFirst === 'string' ? tFirst.charAt(0) : '?';
-                const lastInitial = tLast && typeof tLast === 'string' ? tLast.charAt(0) : '';
-                return (
-                  <li key={opportunity.id} className="px-4 py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-sm font-medium text-gray-700">
-                              {firstInitial}{lastInitial}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {tFirst} {tLast}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {subj}{opportunity.grade_level ? ` - Grade ${opportunity.grade_level}` : ''}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          opportunity.status === 'open' 
-                            ? 'bg-green-100 text-green-800'
-                            : opportunity.status === 'assigned'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {opportunity.status}
-                        </span>
-                        <div className="ml-4 text-sm text-gray-500">
-                          {new Date(opportunity.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                );
-              })
-            )}
-          </ul>
+        {/* School/Opportunities Section */}
+        <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl mb-8">
+          <div className="px-4 py-5 sm:px-6"><h2 className="text-lg leading-6 font-medium text-gray-900">{admin?.school?.name ? `Recent Tutoring Opportunities at ${admin.school.name}` : 'Recent Tutoring Opportunities'}</h2><p className="mt-1 max-w-2xl text-sm text-gray-500">Latest tutoring requests</p></div>
+          <ul className="divide-y divide-gray-200">{opportunities.length === 0 ? (<li className="px-4 py-4 text-gray-500 text-center">No tutoring opportunities found</li>) : (opportunities.map((opportunity: any) => { const tFirst = opportunity?.tutee?.first_name ?? opportunity?.tutee_first_name ?? ''; const tLast = opportunity?.tutee?.last_name ?? opportunity?.tutee_last_name ?? ''; const subj = opportunity?.subject_name ? `${opportunity.subject_name} • ${opportunity.subject_type} • Grade ${opportunity.subject_grade}` : (opportunity?.subject ?? ''); const firstInitial = tFirst && typeof tFirst === 'string' ? tFirst.charAt(0) : '?'; const lastInitial = tLast && typeof tLast === 'string' ? tLast.charAt(0) : ''; return (<li key={opportunity.id} className="px-4 py-4"><div className="flex items-center justify-between"><div className="flex items-center"><div className="flex-shrink-0 h-10 w-10"><div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center"><span className="text-sm font-medium text_gray-700">{firstInitial}{lastInitial}</span></div></div><div className="ml-4"><div className="text-sm font-medium text-gray-900">{tFirst} {tLast}</div><div className="text-sm text-gray-500">{subj}{opportunity.grade_level ? ` - Grade ${opportunity.grade_level}` : ''}</div></div></div><div className="flex items-center"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${opportunity.status === 'open' ? 'bg-green-100 text-green-800' : opportunity.status === 'assigned' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>{opportunity.status}</span><div className="ml-4 text-sm text-gray-500">{new Date(opportunity.created_at).toLocaleDateString()}</div></div></div></li>); }))}</ul>
         </div>
 
         {/* Tutors Section */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6">
-            <h2 className="text-lg leading-6 font-medium text-gray-900">
-              Tutors
-            </h2>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">All tutors in the system.</p>
-          </div>
+        <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl">
+          <div className="px-4 py-5 sm:px-6"><h2 className="text-lg leading-6 font-medium text-gray-900">Tutors</h2><p className="mt-1 max-w-2xl text-sm text-gray-500">All tutors in the system.</p></div>
           <div className="border-t border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead className="bg-gray-50/70">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    School
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Hours
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">School</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Hours</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-100">
                 {tutors.map((tutor) => (
-                  <tr key={tutor.id}>
+                  <tr key={tutor.id} className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {tutor.first_name} {tutor.last_name}
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold">{(tutor.first_name || 'T').charAt(0)}{(tutor.last_name || '').charAt(0)}</div>
+                        <span>{tutor.first_name} {tutor.last_name}</span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {tutor.email?.replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {tutor.school?.name || 'Not assigned'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        tutor.status === 'active' ? 'bg-green-100 text-green-800' :
-                        tutor.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {tutor.status === 'active' ? 'Active' :
-                         tutor.status === 'pending' ? 'Pending' :
-                         'Suspended'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {tutor.volunteer_hours || 0}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a href={`/admin/tutors/${tutor.id}`} className="text-blue-600 hover:text-blue-900 mr-4">
-                        View history
-                      </a>
-                      <a href={`/admin/tutors/${tutor.id}/edit`} className="text-blue-600 hover:text-blue-900">
-                        Edit certifications
-                      </a>
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tutor.email?.replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3')}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tutor.school?.name || 'Not assigned'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${tutor.status === 'active' ? 'bg-green-100 text-green-800' : tutor.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>{tutor.status === 'active' ? 'Active' : tutor.status === 'pending' ? 'Pending' : 'Suspended'}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tutor.volunteer_hours || 0}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><a href={`/admin/tutors/${tutor.id}`} className="text-blue-600 hover:text-blue-800 hover:underline mr-4">View history</a><a href={`/admin/tutors/${tutor.id}/edit`} className="text-blue-600 hover:text-blue-800 hover:underline">Edit certifications</a></td>
                   </tr>
                 ))}
                 {tutors.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                      No tutors found.
-                    </td>
-                  </tr>
+                  <tr><td colSpan={6} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No tutors found.</td></tr>
                 )}
               </tbody>
             </table>
@@ -587,16 +197,9 @@ function AwaitingJobRow({ job }: { job: any }) {
       try {
         const { supabase } = await import('@/services/supabase');
         const { data: { session } } = await supabase.auth.getSession();
-        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/awaiting-verification/${job.id}/recording`, {
-          headers: { Authorization: `Bearer ${session?.access_token ?? ''}` }
-        });
-        if (resp.ok) {
-          const j = await resp.json();
-          setRecordingUrl(j.recording_url || null);
-        }
-      } catch (e) {
-        // ignore
-      }
+        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/awaiting-verification/${job.id}/recording`, { headers: { Authorization: `Bearer ${session?.access_token ?? ''}` } });
+        if (resp.ok) { const j = await resp.json(); setRecordingUrl(j.recording_url || null); }
+      } catch (e) { }
     })();
   }, [job.id]);
 
@@ -609,15 +212,8 @@ function AwaitingJobRow({ job }: { job: any }) {
       if (Number.isNaN(hours) || hours < 0) { setError('Invalid hours'); return; }
       const { supabase } = await import('@/services/supabase');
       const { data: { session } } = await supabase.auth.getSession();
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/awaiting-verification/${job.id}/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? ''}` },
-        body: JSON.stringify({ awarded_hours: hours })
-      });
-      if (!resp.ok) {
-        const j = await resp.json().catch(()=>({}));
-        throw new Error(j.error || 'Failed to verify job');
-      }
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/awaiting-verification/${job.id}/verify`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? ''}` }, body: JSON.stringify({ awarded_hours: hours }) });
+      if (!resp.ok) { const j = await resp.json().catch(()=>({})); throw new Error(j.error || 'Failed to verify job'); }
       window.location.reload();
     } catch (e: any) {
       setError(e?.message || 'Failed to verify job');
@@ -630,14 +226,10 @@ function AwaitingJobRow({ job }: { job: any }) {
     <li className="px-4 py-4">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-sm font-medium text-gray-900">
-            {job.subject_name} • {job.subject_type} • Grade {job.subject_grade}
-          </div>
+          <div className="text-sm font-medium text-gray-900">{job.subject_name} • {job.subject_type} • Grade {job.subject_grade}</div>
           <div className="text-xs text-gray-500">Scheduled: {job.scheduled_time ? new Date(job.scheduled_time).toLocaleString() : 'N/A'}</div>
         </div>
-        <button className="text-gray-500" onClick={()=> setExpanded(v=>!v)}>
-          {expanded ? 'Hide' : 'View'}
-        </button>
+        <button className="text-gray-500" onClick={()=> setExpanded(v=>!v)}>{expanded ? 'Hide' : 'View'}</button>
       </div>
       {expanded && (
         <div className="mt-3 border-t pt-3">

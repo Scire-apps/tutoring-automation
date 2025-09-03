@@ -522,10 +522,12 @@ export default function TuteeDashboardPage() {
       {editingSubjects && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setEditingSubjects(false)}
           ></div>
-          <div className="relative bg-white rounded-lg border-2 border-gray-100 w-full max-w-md p-6">
+          <div className="relative w-full max-w-md">
+            <div className="absolute -inset-2 rounded-3xl bg-gradient-to-tr from-blue-400 via-indigo-400 to-purple-400 opacity-30 blur-2xl animate-pulse" />
+            <div className="relative bg-white/90 backdrop-blur shadow-xl ring-1 ring-gray-200 rounded-2xl p-6">
             <h3 className="text-lg font-semibold mb-2">Edit My Subjects</h3>
             <div className="space-y-2 mb-3">
               {subjects.map((s, idx) => {
@@ -537,7 +539,7 @@ export default function TuteeDashboardPage() {
                 return (
                   <div key={idx} className="flex gap-2">
                     <select
-                      className="flex-1 border rounded px-3 py-2"
+                      className="flex-1 border border-gray-200 rounded-xl px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
                       value={s}
                       onChange={(e) => {
                         const next = subjects.slice();
@@ -559,7 +561,7 @@ export default function TuteeDashboardPage() {
                         next.splice(idx, 1);
                         setSubjects(next);
                       }}
-                      className="px-3 py-2 border rounded"
+                      className="px-3 py-2 border border-gray-200 rounded-xl hover:bg-gray-50"
                     >
                       Remove
                     </button>
@@ -576,19 +578,19 @@ export default function TuteeDashboardPage() {
                   !subjects.some((s) => !s) &&
                   setSubjects([...subjects, ""])
                 }
-                className="px-3 py-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 border border-gray-200 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
                 Add course
               </button>
               <div className="flex gap-2">
                 <button
-                  className="px-3 py-2 border rounded"
+                  className="px-3 py-2 border border-gray-200 rounded-xl hover:bg-gray-50"
                   onClick={() => setEditingSubjects(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="px-3 py-2 bg-blue-600 text-white rounded"
+                  className="group relative overflow-hidden px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-md transition hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 disabled:opacity-60"
                   disabled={savingSubjects}
                   onClick={async () => {
                     // Optimistically close immediately
@@ -627,9 +629,11 @@ export default function TuteeDashboardPage() {
                     }
                   }}
                 >
-                  {savingSubjects ? "Saving..." : "Save"}
+                  <span className="relative z-10 font-semibold tracking-wide">{savingSubjects ? "Saving..." : "Save"}</span>
+                  <span className="pointer-events-none absolute -inset-px rounded-[inherit] bg-gradient-to-r from-blue-400/40 via-indigo-400/30 to-purple-400/40 blur opacity-60 group-hover:opacity-90" />
                 </button>
               </div>
+            </div>
             </div>
           </div>
         </div>

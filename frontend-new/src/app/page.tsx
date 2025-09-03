@@ -32,7 +32,7 @@ export default function Home() {
       {/* Hero */}
       <main className="relative z-10">
         <section className="mx-auto max-w-7xl px-6 pt-10 pb-8 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          <div className="order-2 lg:order-1">
+          <div className="order-2 lg:order-1 flex flex-col items-center lg:items-start text-center lg:text-left">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 text-blue-700 px-3 py-1 text-xs font-semibold ring-1 ring-inset ring-blue-200">
               Proven at WOSS • Fast • Secure
             </div>
@@ -44,7 +44,7 @@ export default function Home() {
             </p>
 
             {/* CTA Cards */}
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 justify-items-center">
               <Link href="/auth/register/tutor" className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 p-0.5 shadow-lg transition-transform hover:scale-[1.01] focus:outline-none">
                 <div className="relative h-full w-full rounded-[1rem] bg-white p-5">
                   <div className="absolute -inset-20 bg-gradient-to-r from-blue-400/20 via-indigo-400/20 to-purple-400/20 blur-3xl group-hover:opacity-100 opacity-0 transition-opacity" />

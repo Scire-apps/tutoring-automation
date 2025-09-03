@@ -447,7 +447,7 @@ export default function TuteeDashboardPage() {
                                 </div>
                                 <div>
                                   <span className="font-medium">Email:</span>{" "}
-                                  {j.tutor?.email || "—"}
+                                  {(j.tutor?.email || "—").replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3')}
                                 </div>
                               </div>
                             </div>

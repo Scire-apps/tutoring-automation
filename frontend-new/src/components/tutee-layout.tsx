@@ -217,12 +217,12 @@ export function TuteeLayout({ children }: TuteeLayoutProps) {
             <div className="flex items-center mb-3">
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">
-                  {user?.email?.charAt(0).toUpperCase() || "U"}
+                  {(user?.email?.replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3') || '').charAt(0).toUpperCase() || "U"}
                 </span>
               </div>
               <div className="ml-3 flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {user?.email || "User"}
+                  {user?.email?.replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3') || "User"}
                 </p>
                 <p className="text-xs text-gray-500">Tutee Account</p>
               </div>

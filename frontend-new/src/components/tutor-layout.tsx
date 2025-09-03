@@ -223,12 +223,12 @@ export function TutorLayout({ children }: TutorLayoutProps) {
             <div className="flex items-center mb-3">
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">
-                  {user?.email?.charAt(0).toUpperCase() || "T"}
+                  {(user?.email?.replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3') || '').charAt(0).toUpperCase() || "T"}
                 </span>
               </div>
               <div className="ml-3 flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {user?.email || "Tutor"}
+                  {user?.email?.replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3') || "Tutor"}
                 </p>
                 <p className="text-xs text-gray-500">Tutor Account</p>
               </div>

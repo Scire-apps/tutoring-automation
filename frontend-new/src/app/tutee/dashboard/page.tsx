@@ -96,11 +96,15 @@ export default function TuteeDashboardPage() {
   return (
     <TuteeLayout>
       
-      <div className="p-6 bg-white min-h-full">
+      <div className="relative p-6 bg-white min-h-full overflow-hidden">
+        <div className="pointer-events-none absolute -z-10 inset-0">
+          <div className="absolute -top-24 -left-24 w-[32rem] h-[32rem] rounded-full bg-gradient-to-tr from-blue-200 via-indigo-200 to-purple-200 blur-3xl opacity-70 animate-pulse" />
+          <div className="absolute -bottom-24 -right-24 w-[32rem] h-[32rem] rounded-full bg-gradient-to-tr from-indigo-200 via-purple-200 to-pink-200 blur-3xl opacity-70 animate-pulse" />
+        </div>
         {/* Stats cards */}
          {/* Welcome section */}
          <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-2">
             Welcome back!
           </h2>
           <p className="text-gray-600">
@@ -109,7 +113,7 @@ export default function TuteeDashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
+          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow">
             <div className="p-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -139,7 +143,7 @@ export default function TuteeDashboardPage() {
               </div>
             </div>
           </div>
-          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
+          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow">
             <div className="p-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -173,7 +177,7 @@ export default function TuteeDashboardPage() {
               </div>
             </div>
           </div>
-          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
+          <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow">
             <div className="p-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -216,7 +220,7 @@ export default function TuteeDashboardPage() {
             {/* Edit My Subjects Card */}
             <button
               onClick={() => setEditingSubjects(true)}
-              className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-lg hover:border-blue-200 hover:bg-blue-50 transition-colors group"
+              className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-colors group shadow-sm hover:shadow-md"
             >
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -234,7 +238,7 @@ export default function TuteeDashboardPage() {
             {/* Request Tutoring Card */}
             <Link
               href="/tutee/request"
-              className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-lg hover:border-blue-200 hover:bg-blue-50 transition-colors group"
+              className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-colors group shadow-sm hover:shadow-md"
             >
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -251,7 +255,7 @@ export default function TuteeDashboardPage() {
             {/* Ask for Help Card */}
             <button
               onClick={() => setShowHelpModal(true)}
-              className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-lg hover:border-blue-200 hover:bg-blue-50 transition-colors group text-left"
+              className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-colors group text-left shadow-sm hover:shadow-md"
             >
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -274,7 +278,7 @@ export default function TuteeDashboardPage() {
             Your Requests
           </h3>
           {data.opportunities && data.opportunities.length > 0 ? (
-            <div className="bg-white border-2 border-gray-100 overflow-hidden sm:rounded-md">
+            <div className="bg-white border-2 border-gray-100 overflow-hidden sm:rounded-md shadow-sm">
               <ul className="divide-y divide-gray-200">
                 {data.opportunities.map((o: any) => (
                   <li key={o.id}>
@@ -367,7 +371,7 @@ export default function TuteeDashboardPage() {
             )}
           </div>
           {data.jobs && data.jobs.length > 0 ? (
-            <div className="bg-white border-2 border-gray-100 overflow-hidden sm:rounded-md">
+            <div className="bg-white border-2 border-gray-100 overflow-hidden sm:rounded-md shadow-sm">
               <ul className="divide-y divide-gray-200">
                 {data.jobs.map((j: any, index: number) => (
                   <li key={j.id}>

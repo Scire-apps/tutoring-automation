@@ -393,7 +393,11 @@ export default function TutorDashboard() {
 
   return (
     <TutorLayout>
-      <div className="p-6 bg-white min-h-full">
+      <div className="relative p-6 bg-white min-h-full overflow-hidden">
+        <div className="pointer-events-none absolute -z-10 inset-0">
+          <div className="absolute -top-24 -left-24 w-[32rem] h-[32rem] rounded-full bg-gradient-to-tr from-blue-200 via-indigo-200 to-purple-200 blur-3xl opacity-70 animate-pulse" />
+          <div className="absolute -bottom-24 -right-24 w-[32rem] h-[32rem] rounded-full bg-gradient-to-tr from-indigo-200 via-purple-200 to-pink-200 blur-3xl opacity-70 animate-pulse" />
+        </div>
         {successMessage && (
           <div className="max-w-7xl mx-auto mb-6">
             <div
@@ -414,7 +418,7 @@ export default function TutorDashboard() {
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Welcome section */}
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-2">
               Welcome back, {tutorData?.first_name}!
             </h2>
             <div className="flex items-center gap-4 mb-3">
@@ -569,7 +573,7 @@ export default function TutorDashboard() {
 
           {/* Stats cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
+            <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <div className="p-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -600,7 +604,7 @@ export default function TutorDashboard() {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
+            <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <div className="p-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -631,7 +635,7 @@ export default function TutorDashboard() {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg">
+            <div className="bg-white overflow-hidden border-2 border-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <div className="p-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -676,7 +680,7 @@ export default function TutorDashboard() {
               {/* Request Certification Card */}
               <Link
                 href={`/tutor/${tutorData?.id || "me"}/requestcert`}
-                className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-lg hover:border-blue-200 hover:bg-blue-50 transition-colors group"
+                className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-colors group shadow-sm hover:shadow-md"
               >
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -708,7 +712,7 @@ export default function TutorDashboard() {
               {/* Browse Opportunities Card */}
               <Link
                 href="/tutor/opportunities"
-                className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-lg hover:border-blue-200 hover:bg-blue-50 transition-colors group"
+                className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-colors group shadow-sm hover:shadow-md"
               >
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -740,7 +744,7 @@ export default function TutorDashboard() {
               {/* Ask for Help Card */}
               <button
                 onClick={() => setShowHelpModal(true)}
-                className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-lg hover:border-blue-200 hover:bg-blue-50 transition-colors group text-left"
+                className="flex items-center p-6 bg-white border-2 border-blue-100 rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-colors group text-left shadow-sm hover:shadow-md"
               >
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">

@@ -903,7 +903,7 @@ export default function TutorDashboard() {
                                   e.stopPropagation();
                                   setShowRecordingModalFor(job.id);
                                 }}
-                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-purple-600 bg-purple-100 hover:bg-purple-200 w-35 items-center justify-center h-10"
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-blue-600 bg-blue-100 hover:bg-blue-200 w-35 items-center justify-center h-10"
                               >
                                 Upload Recording
                               </button>
@@ -1333,7 +1333,7 @@ export default function TutorDashboard() {
               <div className="flex justify-end gap-2">
                 <button className="px-3 py-1.5 border border-gray-200 rounded-xl hover:bg-gray-50" onClick={() => setShowHelpModal(false)}>Cancel</button>
                 <button
-                  className="group relative overflow-hidden px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-md transition hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 disabled:opacity-60"
+                  className="px-4 py-2 rounded-xl bg-blue-600 text-white shadow-md transition hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/60 disabled:opacity-60"
                   disabled={helpSubmitting || !helpDescription.trim()}
                   onClick={async () => {
                     // Optimistically close the modal immediately
@@ -1353,8 +1353,7 @@ export default function TutorDashboard() {
                     }
                   }}
                 >
-                  <span className="relative z-10 font-semibold tracking-wide">{helpSubmitting ? 'Submitting...' : 'Submit Request'}</span>
-                  <span className="pointer-events-none absolute -inset-px rounded-[inherit] bg-gradient-to-r from-blue-400/40 via-indigo-400/30 to-purple-400/40 blur opacity-60 group-hover:opacity-90" />
+                  <span className="font-semibold tracking-wide">{helpSubmitting ? 'Submitting...' : 'Submit Request'}</span>
                 </button>
               </div>
             </div>

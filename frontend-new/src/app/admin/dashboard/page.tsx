@@ -99,18 +99,22 @@ export default function AdminDashboardPage() {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-white overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-32 -left-32 w-[40rem] h-[40rem] rounded-full bg-gradient-to-tr from-blue-200 via-indigo-200 to-purple-200 blur-3xl opacity-70 animate-pulse" />
+        <div className="absolute -bottom-32 -right-32 w-[40rem] h-[40rem] rounded-full bg-gradient-to-tr from-indigo-200 via-purple-200 to-pink-200 blur-3xl opacity-70 animate-pulse" />
+      </div>
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white/80 backdrop-blur shadow-sm ring-1 ring-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">Admin Dashboard</h1>
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-600">
               {admin?.first_name} {admin?.last_name}
             </span>
             <button
               onClick={handleSignOut}
-              className="text-sm text-blue-600 hover:text-blue-500"
+              className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-sm shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               Sign out
             </button>
@@ -123,9 +127,9 @@ export default function AdminDashboardPage() {
         {/* Quick Actions removed (single admin role) */}
 
         {/* Admin Info */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+        <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl mb-8">
           <div className="px-4 py-5 sm:px-6">
-            <h2 className="text-lg leading-6 font-medium text-gray-900">
+            <h2 className="text-lg leading-6 font-semibold text-gray-900">
               Admin Information
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">
@@ -165,9 +169,9 @@ export default function AdminDashboardPage() {
         </div>
         
         {/* Pending Verification Section */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+        <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl mb-8">
           <div className="px-4 py-5 sm:px-6">
-            <h2 className="text-lg leading-6 font-medium text-gray-900">Jobs Pending Verification</h2>
+            <h2 className="text-lg leading-6 font-semibold text-gray-900">Jobs Pending Verification</h2>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">Verify completed sessions and award volunteer hours.</p>
           </div>
           <ul className="divide-y divide-gray-200">
@@ -182,9 +186,9 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Certification Requests */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+        <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl mb-8">
           <div className="px-4 py-5 sm:px-6">
-            <h2 className="text-lg leading-6 font-medium text-gray-900">Certification Requests</h2>
+            <h2 className="text-lg leading-6 font-semibold text-gray-900">Certification Requests</h2>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">Tutor certification requests for your school.</p>
           </div>
           <ul className="divide-y divide-gray-200">
@@ -212,9 +216,9 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Help Requests */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+        <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl mb-8">
           <div className="px-4 py-5 sm:px-6">
-            <h2 className="text-lg leading-6 font-medium text-gray-900">Help Requests</h2>
+            <h2 className="text-lg leading-6 font-semibold text-gray-900">Help Requests</h2>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">Questions submitted by tutors and tutees in your school.</p>
           </div>
           {helpError && (

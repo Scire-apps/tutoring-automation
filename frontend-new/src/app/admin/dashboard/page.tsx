@@ -124,6 +124,40 @@ export default function AdminDashboardPage() {
       
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Overview banner */}
+        <div className="relative overflow-hidden rounded-3xl mb-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl">
+          <div className="px-6 py-6">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+              <div>
+                <div className="text-sm/6 opacity-90">Welcome back</div>
+                <div className="mt-1 text-2xl font-semibold tracking-tight">{admin?.first_name} {admin?.last_name}</div>
+                <div className="opacity-80 text-sm">{admin?.school?.name || 'Admin'}</div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner">
+                  <div className="text-xs opacity-85">Tutors</div>
+                  <div className="text-lg font-bold">{tutors.length}</div>
+                </div>
+                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner">
+                  <div className="text-xs opacity-85">Opportunities</div>
+                  <div className="text-lg font-bold">{opportunities.length}</div>
+                </div>
+                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner">
+                  <div className="text-xs opacity-85">Awaiting Jobs</div>
+                  <div className="text-lg font-bold">{awaitingJobs.length}</div>
+                </div>
+                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner">
+                  <div className="text-xs opacity-85">Cert Requests</div>
+                  <div className="text-lg font-bold">{certificationRequests.length}</div>
+                </div>
+                <div className="rounded-xl bg-white/10 backdrop-blur px-3 py-2 shadow-inner">
+                  <div className="text-xs opacity-85">Help</div>
+                  <div className="text-lg font-bold">{helpRequests.length}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         {/* Quick Actions removed (single admin role) */}
 
         {/* Admin Info */}
@@ -136,7 +170,7 @@ export default function AdminDashboardPage() {
               Your account details and permissions.
             </p>
           </div>
-          <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
+          <div className="border-t border-gray-100 px-4 py-5 sm:p-0">
             <dl className="sm:divide-y sm:divide-gray-200">
               <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Full name</dt>
@@ -174,7 +208,7 @@ export default function AdminDashboardPage() {
             <h2 className="text-lg leading-6 font-semibold text-gray-900">Jobs Pending Verification</h2>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">Verify completed sessions and award volunteer hours.</p>
           </div>
-          <ul className="divide-y divide-gray-200">
+          <ul className="divide-y divide-gray-100">
             {awaitingJobs.length === 0 ? (
               <li className="px-4 py-4 text-gray-500 text-center">No jobs awaiting verification</li>
             ) : (
@@ -191,7 +225,7 @@ export default function AdminDashboardPage() {
             <h2 className="text-lg leading-6 font-semibold text-gray-900">Certification Requests</h2>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">Tutor certification requests for your school.</p>
           </div>
-          <ul className="divide-y divide-gray-200">
+          <ul className="divide-y divide-gray-100">
             {certificationRequests.length === 0 ? (
               <li className="px-4 py-4 text-gray-500 text-center">No certification requests</li>
             ) : (
@@ -224,7 +258,7 @@ export default function AdminDashboardPage() {
           {helpError && (
             <div className="px-4 text-sm text-red-600">{helpError}</div>
           )}
-          <ul className="divide-y divide-gray-200">
+          <ul className="divide-y divide-gray-100">
             {helpRequests.length === 0 ? (
               <li className="px-4 py-4 text-gray-500 text-center">No help requests</li>
             ) : (

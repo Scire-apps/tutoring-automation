@@ -222,7 +222,9 @@ create table if not exists public.session_recordings (
 -- 2) Indexes
 -- =========================================================
 create index if not exists idx_tutors_auth_id on public.tutors(auth_id);
+create index if not exists idx_tutors_school_id on public.tutors(school_id);
 create index if not exists idx_tutees_auth_id on public.tutees(auth_id);
+create index if not exists idx_tutees_auth_school on public.tutees(auth_id, school_id);
 create index if not exists idx_jobs_tutor_id on public.tutoring_jobs(tutor_id);
 create index if not exists idx_jobs_tutee_id on public.tutoring_jobs(tutee_id);
 create index if not exists idx_jobs_status on public.tutoring_jobs(status);
@@ -367,6 +369,20 @@ create policy "tutors self select or admin"
   on public.tutors for select
   to authenticated
   using (public.is_admin() or auth.uid() = auth_id);
+
+-- Tutees at the same school can view tutor rows (read-only)
+drop policy if exists "tutors select by tutee same school" on public.tutors;
+create policy "tutors select by tutee same school"
+  on public.tutors for select
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.tutees te
+      where te.auth_id = auth.uid()
+        and te.school_id = tutors.school_id
+    )
+  );
 
 drop policy if exists "tutors self upsert" on public.tutors;
 create policy "tutors self upsert"

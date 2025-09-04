@@ -201,9 +201,26 @@ def accept_opportunity(opportunity_id: str):
             dashboard_url=dashboard_url
         )
 
-    # Under RLS, tutors cannot delete or update opportunities; leave the row as-is.
-    # The job creation above reserves this opportunity in practice. Admin workflows can
-    # later mark the opportunity as assigned or remove it if desired.
+    # After job creation, remove the opportunity from the pool (best-effort)
+    try:
+        del_res = (
+            supabase
+            .table('tutoring_opportunities')
+            .delete()
+            .eq('id', opportunity_id)
+            .execute()
+        )
+        if del_res is None or getattr(del_res, 'data', None) is None:
+            # Fallback: mark as assigned if deletion not permitted/returned
+            try:
+                supabase.table('tutoring_opportunities').update({'status': 'assigned'}).eq('id', opportunity_id).execute()
+            except Exception:
+                pass
+    except Exception:
+        try:
+            supabase.table('tutoring_opportunities').update({'status': 'assigned'}).eq('id', opportunity_id).execute()
+        except Exception:
+            pass
 
     return jsonify({'message': 'Job created', 'job': job_res.data[0]}), 201
 
@@ -377,7 +394,27 @@ def apply_to_opportunity(opportunity_id: str):
             dashboard_url=dashboard_url
         )
 
-    # Under RLS, tutors cannot delete or update opportunities; leave the row as-is.
+    # After job creation, remove the opportunity from the pool (best-effort)
+    try:
+        del_res = (
+            supabase
+            .table('tutoring_opportunities')
+            .delete()
+            .eq('id', opportunity_id)
+            .execute()
+        )
+        if del_res is None or getattr(del_res, 'data', None) is None:
+            # Fallback: mark as assigned if deletion not permitted/returned
+            try:
+                supabase.table('tutoring_opportunities').update({'status': 'assigned'}).eq('id', opportunity_id).execute()
+            except Exception:
+                pass
+    except Exception:
+        try:
+            supabase.table('tutoring_opportunities').update({'status': 'assigned'}).eq('id', opportunity_id).execute()
+        except Exception:
+            pass
+
     # The created job serves as the reservation for this opportunity.
     return jsonify({'job': job_ins.data[0]}), 201
 

@@ -433,6 +433,23 @@ export default function TuteeDashboardPage() {
                               Set your availability
                             </Link>
                           )}
+                          {/* Allow tutee to cancel an active or pending job */}
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                // Optimistically remove from UI
+                                setData((prev: any) => prev ? { ...prev, jobs: (prev.jobs || []).filter((k: any) => k.id !== j.id) } : prev);
+                                await api.cancelJob(j.id);
+                              } catch (err) {
+                                // Revert on failure
+                                setData((prev: any) => prev ? { ...prev, jobs: [j, ...(prev.jobs || [])] } : prev);
+                              }
+                            }}
+                            className="inline-flex items-center px-4 py-1.5 border border-transparent text-xs font-medium rounded-full h-10 text-red-600 font-medium bg-red-100 hover:bg-red-200"
+                          >
+                            Cancel
+                          </button>
                         </div>
                       </div>
                       {expandedJobs.has(j.id) && (

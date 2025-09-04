@@ -309,17 +309,7 @@ export default function TutorDashboard() {
     setCancellingJobId(jobId);
 
     try {
-      // Use backend endpoint to cancel job and reopen opportunity
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tutor/jobs/${jobId}/cancel`,
-        {
-          method: "POST",
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-        }
-      );
+      await apiService.cancelJob(jobId);
 
       // Remove the job from the active jobs list
       setActiveJobs((prev) => prev.filter((job) => job.id !== jobId));

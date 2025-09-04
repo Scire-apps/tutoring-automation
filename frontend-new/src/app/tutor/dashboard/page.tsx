@@ -859,7 +859,7 @@ export default function TutorDashboard() {
                                 </div>
                                 {job.scheduled_time ? (
                                   <div className="text-xs text-gray-400 mt-1">
-                                    Scheduled: {formatTime(job.scheduled_time)}
+                                    Scheduled: {new Date(job.scheduled_time).toLocaleString()}
                                   </div>
                                 ) : (
                                   <div className="text-xs text-gray-400 mt-1">
@@ -1031,7 +1031,7 @@ export default function TutorDashboard() {
                                       <span className="font-medium">
                                         Scheduled Time:
                                       </span>{" "}
-                                      {formatTime(job.scheduled_time)}
+                                      {new Date(job.scheduled_time).toLocaleString()}
                                     </p>
                                   ) : null}
                                   {/* Status omitted here; shown in header badge */}

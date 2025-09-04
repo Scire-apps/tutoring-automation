@@ -4,6 +4,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List, Dict, Any, Optional
+import re
 import sib_api_v3_sdk
 from sib_api_v3_sdk.rest import ApiException
 from mailjet_rest import Client
@@ -51,6 +52,26 @@ class EmailService:
             bool: True if email was sent successfully, False otherwise
         """
         raise NotImplementedError("Subclasses must implement send_email method")
+
+    @staticmethod
+    def _scrub_hdsb_role_tag(address: Optional[str]) -> Optional[str]:
+        """Remove +tutor/+tutee tagging from @hdsb.ca emails for delivery.
+
+        Examples:
+          1abouaitaadh+tutor@hdsb.ca -> 1abouaitaadh@hdsb.ca
+          1smithj+tutee@HDSB.CA      -> 1smithj@HDSB.CA
+        Leaves non-hdsb domains untouched.
+        """
+        if not isinstance(address, str):
+            return address
+        try:
+            local, domain = address.split('@', 1)
+        except ValueError:
+            return address
+        if domain.lower() != 'hdsb.ca':
+            return address
+        cleaned_local = re.sub(r"\+(?:tutor|tutee)$", "", local, flags=re.IGNORECASE)
+        return f"{cleaned_local}@{domain}"
     
     def send_session_confirmation(self, tutor_email: str, tutee_email: str, 
                                  session_details: Dict[str, Any]) -> bool:
@@ -78,6 +99,10 @@ class EmailService:
         # Create email subject
         email_subject = f"Tutoring Session Confirmation: {subject_name} on {date}"
         
+        # Scrub recipient emails for delivery and display
+        tutor_email_clean = self._scrub_hdsb_role_tag(tutor_email) or tutor_email
+        tutee_email_clean = self._scrub_hdsb_role_tag(tutee_email) or tutee_email
+
         # Create HTML content for tutor
         tutor_html = f"""
         <html>
@@ -92,7 +117,7 @@ class EmailService:
                 <li><strong>Duration:</strong> {duration_minutes} minutes</li>
                 <li><strong>Location:</strong> {location}</li>
                 <li><strong>Student:</strong> {tutee_name}{' (Grade ' + tutee_grade + ')' if tutee_grade else ''}</li>
-                <li><strong>Student Email:</strong> {tutee_email}</li>
+                <li><strong>Student Email:</strong> {tutee_email_clean}</li>
             </ul>
             <p>Please remember to record your session and upload it to the platform to receive volunteer hours credit.</p>
             <p>If you need to cancel or reschedule, please do so at least 24 hours in advance through the tutoring platform.</p>
@@ -115,7 +140,7 @@ class EmailService:
         Duration: {duration_minutes} minutes
         Location: {location}
         Student: {tutee_name}{' (Grade ' + tutee_grade + ')' if tutee_grade else ''}
-        Student Email: {tutee_email}
+        Student Email: {tutee_email_clean}
         
         Please remember to record your session and upload it to the platform to receive volunteer hours credit.
         
@@ -139,7 +164,7 @@ class EmailService:
                 <li><strong>Location:</strong> {location}</li>
                 <li><strong>Tutor:</strong> {tutor_name}</li>
             </ul>
-            <p>If you need to cancel or reschedule, please contact your tutor directly at {tutor_email}.</p>
+            <p>If you need to cancel or reschedule, please contact your tutor directly at {tutor_email_clean}.</p>
             <p>We hope you have a productive tutoring session!</p>
         </body>
         </html>
@@ -160,14 +185,14 @@ class EmailService:
         Location: {location}
         Tutor: {tutor_name}
         
-        If you need to cancel or reschedule, please contact your tutor directly at {tutor_email}.
+        If you need to cancel or reschedule, please contact your tutor directly at {tutor_email_clean}.
         
         We hope you have a productive tutoring session!
         """
         
         # Send emails
-        tutor_success = self.send_email(tutor_email, email_subject, tutor_html, tutor_text)
-        tutee_success = self.send_email(tutee_email, email_subject, tutee_html, tutee_text)
+        tutor_success = self.send_email(tutor_email_clean, email_subject, tutor_html, tutor_text)
+        tutee_success = self.send_email(tutee_email_clean, email_subject, tutee_html, tutee_text)
         
         return tutor_success and tutee_success
 
@@ -381,10 +406,12 @@ class SMTPEmailService(EmailService):
             msg = MIMEMultipart('alternative')
             msg['Subject'] = subject
             msg['From'] = self.from_email
-            msg['To'] = to_email
+            to_email_clean = self._scrub_hdsb_role_tag(to_email) or to_email
+            msg['To'] = to_email_clean
             
             if cc:
-                msg['Cc'] = ", ".join(cc)
+                cc_clean = [self._scrub_hdsb_role_tag(c) or c for c in cc]
+                msg['Cc'] = ", ".join(cc_clean)
                 
             # Add text part if provided
             if body_text:
@@ -398,9 +425,9 @@ class SMTPEmailService(EmailService):
                 server.starttls()
                 server.login(self.username, self.password)
                 
-                recipients = [to_email]
+                recipients = [to_email_clean]
                 if cc:
-                    recipients.extend(cc)
+                    recipients.extend(cc_clean)
                     
                 server.sendmail(self.from_email, recipients, msg.as_string())
                 
@@ -526,12 +553,13 @@ class BrevoEmailService(EmailService):
             sender = {"email": self.from_email, "name": self.from_name}
             
             # Create recipient
-            to = [{"email": to_email}]
+            to_email_clean = self._scrub_hdsb_role_tag(to_email) or to_email
+            to = [{"email": to_email_clean}]
             
             # Create CC recipients if provided
             cc_list = None
             if cc:
-                cc_list = [{"email": email} for email in cc]
+                cc_list = [{"email": (self._scrub_hdsb_role_tag(email) or email)} for email in cc]
             
             # Create email
             send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
@@ -597,12 +625,13 @@ class MailjetEmailService(EmailService):
             
         try:
             # Prepare recipients
-            recipients = [{"Email": to_email}]
+            to_email_clean = self._scrub_hdsb_role_tag(to_email) or to_email
+            recipients = [{"Email": to_email_clean}]
             
             # Add CC recipients if provided
             if cc:
                 for cc_email in cc:
-                    recipients.append({"Email": cc_email})
+                    recipients.append({"Email": (self._scrub_hdsb_role_tag(cc_email) or cc_email)})
             
             # Prepare email data
             email_data = {
@@ -612,7 +641,7 @@ class MailjetEmailService(EmailService):
                             "Email": self.from_email,
                             "Name": self.from_name
                         },
-                        "To": [{"Email": to_email}],
+                        "To": [{"Email": to_email_clean}],
                         "Subject": subject,
                         "HTMLPart": body_html,
                     }

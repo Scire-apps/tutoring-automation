@@ -640,9 +640,23 @@ def schedule_job(job_id: str):
 
         try:
             from datetime import datetime
-            scheduled_dt = datetime.fromisoformat(scheduled_time.replace('Z', '+00:00'))
-            formatted_date = scheduled_dt.strftime('%A, %B %d, %Y')
-            formatted_time = scheduled_dt.strftime('%I:%M %p')
+            # Prefer explicit local date + start time provided by the client
+            if isinstance(explicit_date_key, str) and isinstance(explicit_start_hhmm, str):
+                try:
+                    y, m, d = map(int, explicit_date_key.split('-'))
+                    sh, sm = map(int, explicit_start_hhmm.split(':'))
+                    local_dt = datetime(y, m, d, sh, sm)
+                    formatted_date = local_dt.strftime('%A, %B %d, %Y')
+                    formatted_time = local_dt.strftime('%I:%M %p')
+                except Exception:
+                    # Fallback to ISO timestamp if parsing fails
+                    scheduled_dt = datetime.fromisoformat(scheduled_time.replace('Z', '+00:00'))
+                    formatted_date = scheduled_dt.strftime('%A, %B %d, %Y')
+                    formatted_time = scheduled_dt.strftime('%I:%M %p')
+            else:
+                scheduled_dt = datetime.fromisoformat(scheduled_time.replace('Z', '+00:00'))
+                formatted_date = scheduled_dt.strftime('%A, %B %d, %Y')
+                formatted_time = scheduled_dt.strftime('%I:%M %p')
         except Exception:
             formatted_date = 'Scheduled Date'
             formatted_time = 'Scheduled Time'

@@ -287,8 +287,8 @@ function AwaitingJobRow({ job }: { job: any }) {
           {error && <div className="mb-2 text-red-600 text-sm">{error}</div>}
           <div className="text-sm text-gray-700 space-y-1">
             <div><span className="font-medium">Recording:</span> {recordingUrl ? <a href={recordingUrl} target="_blank" className="text-blue-600 underline">View recording link</a> : 'No link found'}</div>
-            <div><span className="font-medium">Tutor:</span> {job.tutor_name ? job.tutor_name : job.tutor_id}</div>
-            <div><span className="font-medium">Tutee:</span> {job.tutee_name ? job.tutee_name : job.tutee_id}</div>
+            <div><span className="font-medium">Tutor:</span> {job.tutor_name || (job.opportunity_snapshot?.tutor_name) || 'Tutor'}</div>
+            <div><span className="font-medium">Tutee:</span> {job.tutee_name || (job.opportunity_snapshot?.tutee_name) || 'Tutee'}</div>
           </div>
           <div className="mt-3">
             <button disabled={awarding} onClick={handleVerify} className="px-3 py-1.5 bg-green-600 text-white rounded">{awarding ? 'Verifying...' : 'Verify Session'}</button>

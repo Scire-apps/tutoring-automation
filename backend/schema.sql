@@ -158,8 +158,9 @@ create table if not exists public.tutoring_jobs (
 create table if not exists public.awaiting_verification_jobs (
   id uuid primary key, -- same id as the original job
   opportunity_id uuid,
-  tutor_id uuid not null references public.tutors(id) on delete cascade,
-  tutee_id uuid not null references public.tutees(id) on delete cascade,
+  -- store denormalized names for admin convenience (ids remain inside opportunity_snapshot if needed)
+  tutor_name text,
+  tutee_name text,
   subject_name text not null check (char_length(subject_name) > 0),
   subject_type text not null check (subject_type in ('Academic','ALP','IB')),
   subject_grade text not null check (subject_grade in ('9','10','11','12')),
@@ -235,7 +236,7 @@ create index if not exists idx_jobs_created_at on public.tutoring_jobs(created_a
 create index if not exists idx_opps_status on public.tutoring_opportunities(status);
 create index if not exists idx_opps_tutee_id on public.tutoring_opportunities(tutee_id);
 create index if not exists idx_opps_created_at on public.tutoring_opportunities(created_at desc);
-create index if not exists idx_awaiting_tutor_id on public.awaiting_verification_jobs(tutor_id);
+-- indexes adjusted as names are plain text
 create index if not exists idx_past_jobs_tutor_id on public.past_jobs(tutor_id);
 create index if not exists idx_subject_approvals_tutor on public.subject_approvals(tutor_id, status, subject_type, subject_grade);
 create index if not exists idx_cert_requests_tutor on public.certification_requests(tutor_id);

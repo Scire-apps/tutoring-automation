@@ -202,11 +202,27 @@ def complete_job(job_id: str):
     try:
         # Move job to awaiting verification table
         job = job_res.data
+        # Fetch tutor/tutee names for denormalized storage in awaiting table
+        tutor_name = None
+        tutee_name = None
+        try:
+            t_row = supabase.table('tutors').select('first_name, last_name').eq('id', job.get('tutor_id')).single().execute()
+            if t_row and t_row.data:
+                tutor_name = f"{t_row.data.get('first_name','')} {t_row.data.get('last_name','')}".strip()
+        except Exception:
+            pass
+        try:
+            te_row = supabase.table('tutees').select('first_name, last_name').eq('id', job.get('tutee_id')).single().execute()
+            if te_row and te_row.data:
+                tutee_name = f"{te_row.data.get('first_name','')} {te_row.data.get('last_name','')}".strip()
+        except Exception:
+            pass
         awaiting_row = {
             'id': job['id'],
             'opportunity_id': job.get('opportunity_id'),
-            'tutor_id': job.get('tutor_id'),
-            'tutee_id': job.get('tutee_id'),
+            # store names directly in the awaiting table
+            'tutor_name': tutor_name,
+            'tutee_name': tutee_name,
             'subject_name': job.get('subject_name'),
             'subject_type': job.get('subject_type'),
             'subject_grade': job.get('subject_grade'),
@@ -215,7 +231,12 @@ def complete_job(job_id: str):
             'desired_duration_minutes': job.get('desired_duration_minutes'),
             'scheduled_time': job.get('scheduled_time'),
             'duration_minutes': job.get('duration_minutes'),
-            'opportunity_snapshot': job.get('opportunity_snapshot'),
+            # keep identifiers inside snapshot for admin verification logic
+            'opportunity_snapshot': {
+                **(job.get('opportunity_snapshot') or {}),
+                'tutor_id': job.get('tutor_id'),
+                'tutee_id': job.get('tutee_id'),
+            },
             'location': job.get('location'),
             'status': 'awaiting_admin_verification'
         }

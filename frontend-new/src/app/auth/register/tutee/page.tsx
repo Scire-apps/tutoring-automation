@@ -6,6 +6,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/providers';
+import { getGraduationYearOptions } from '@/utils/grad';
 
 function TuteeRegisterForm() {
   const [email, setEmail] = useState('');
@@ -22,8 +23,7 @@ function TuteeRegisterForm() {
   const [registrationComplete, setRegistrationComplete] = useState(false);
 
   // tutee extras
-  const currentYear = new Date().getFullYear();
-  const gradYears = [0,1,2,3,4].map(off => String(currentYear + off));
+  const gradYears = getGraduationYearOptions().map(String);
   const [graduationYear, setGraduationYear] = useState('');
   const [pronouns, setPronouns] = useState('');
   const [subjects, setSubjects] = useState<string[]>([]);

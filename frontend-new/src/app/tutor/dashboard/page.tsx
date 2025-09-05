@@ -10,6 +10,7 @@ import { useAuth } from "@/app/providers";
 import { supabase } from "@/services/supabase";
 import { TutorLayout } from "@/components/tutor-layout";
 import apiService from "@/services/api";
+import { computeCurrentGrade } from "@/utils/grad";
 
 interface TutoringJob {
   id: string;
@@ -956,17 +957,9 @@ export default function TutorDashboard() {
                                   <p>
                                     <span className="font-medium">Grade:</span>{" "}
                                     {(() => {
-                                      const gy =
-                                        job.tutoring_opportunity
-                                          ?.tutee_graduation_year ||
-                                        job.tutee?.graduation_year;
-                                      if (gy) {
-                                        const current =
-                                          new Date().getFullYear();
-                                        const g = 12 - (Number(gy) - current);
-                                        return isFinite(g) ? g : "—";
-                                      }
-                                      return "—";
+                                      const gy = job.tutoring_opportunity?.tutee_graduation_year || job.tutee?.graduation_year;
+                                      const g = computeCurrentGrade(gy);
+                                      return (g !== null && isFinite(g)) ? g : "—";
                                     })()}
                                     </p>
                                   </div>

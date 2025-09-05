@@ -9,6 +9,7 @@ import { useAuth } from "@/app/providers";
 import { supabase } from "@/services/supabase";
 import { TutorLayout } from "@/components/tutor-layout";
 import apiService from "@/services/api";
+import { computeCurrentGrade } from "@/utils/grad";
 
 interface TutoringOpportunity {
   id: string;
@@ -538,13 +539,9 @@ export default function OpportunitiesPage() {
                                       )}
                                       <p><span className="font-medium">Email:</span> {(opportunity.tutee?.email || '—').replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3')}</p>
                                       <p><span className="font-medium">Grade:</span> {(() => {
-                                        const gy = (opportunity.tutee?.graduation_year || opportunity.graduation_year);
-                                        if (gy) {
-                                          const current = new Date().getFullYear();
-                                          const g = 12 - (Number(gy) - current);
-                                          return isFinite(g) ? `Grade ${g}` : '—';
-                                        }
-                                        return '—';
+                                        const gy = (opportunity.tutee?.graduation_year || (opportunity as any).graduation_year);
+                                        const g = computeCurrentGrade(gy);
+                                        return (g !== null && isFinite(g)) ? `Grade ${g}` : '—';
                                       })()}</p>
                                     </div>
                                   </div>

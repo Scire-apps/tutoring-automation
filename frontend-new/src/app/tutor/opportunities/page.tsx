@@ -445,6 +445,10 @@ export default function OpportunitiesPage() {
                           <td className="px-3 py-4">
                              <div className="text-sm text-gray-900 truncate">
                               {(opportunity.tutee?.first_name || opportunity.tutee_first_name || '')} {(opportunity.tutee?.last_name || opportunity.tutee_last_name || '')}
+                              {(() => {
+                                const g = (opportunity.tutee?.grade || (opportunity as any).tutee_grade || (opportunity as any).grade);
+                                return g ? ` (Grade ${g})` : '';
+                              })()}
                              </div>
                             {(opportunity.tutee_pronouns) && (
                               <div className="text-xs text-gray-500 truncate">

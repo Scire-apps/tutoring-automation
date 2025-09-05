@@ -220,6 +220,8 @@ def complete_job(job_id: str):
         awaiting_row = {
             'id': job['id'],
             'opportunity_id': job.get('opportunity_id'),
+            'tutor_id': job.get('tutor_id'),
+            'tutee_id': job.get('tutee_id'),
             # store names directly in the awaiting table
             'tutor_name': tutor_name,
             'tutee_name': tutee_name,

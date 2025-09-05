@@ -155,7 +155,15 @@ def accept_opportunity(opportunity_id: str):
         return jsonify({'error': 'Not approved for this subject'}), 403
 
     # Create job (single-session, pending tutee scheduling)
-    opportunity_snapshot = opp
+    # Enrich snapshot with student's grade for easy UI rendering later
+    opportunity_snapshot = dict(opp)
+    try:
+        if opp.get('tutee_id'):
+            tutee_grade_row = supabase.table('tutees').select('grade').eq('id', opp.get('tutee_id')).single().execute()
+            if tutee_grade_row and tutee_grade_row.data:
+                opportunity_snapshot['tutee_grade'] = tutee_grade_row.data.get('grade')
+    except Exception:
+        pass
     job_insert = {
         'opportunity_id': opp['id'],
         'tutor_id': tutor['id'],
@@ -351,7 +359,14 @@ def apply_to_opportunity(opportunity_id: str):
 
     # Create job and move to pending tutee scheduling; snapshot the opportunity
     # so we can surface details later even after deleting the opportunity row.
-    opportunity_snapshot = opp_res.data
+    opportunity_snapshot = dict(opp_res.data)
+    try:
+        if opp_res.data.get('tutee_id'):
+            tutee_grade_row = supabase.table('tutees').select('grade').eq('id', opp_res.data.get('tutee_id')).single().execute()
+            if tutee_grade_row and tutee_grade_row.data:
+                opportunity_snapshot['tutee_grade'] = tutee_grade_row.data.get('grade')
+    except Exception:
+        pass
     job_ins = supabase.table('tutoring_jobs').insert({
         'opportunity_id': opportunity_id,
         'tutor_id': tutor_id,

@@ -495,7 +495,7 @@ def get_job(job_id: str):
             tutee_row = (
                 supabase
                 .table('tutees')
-                .select('id, email, first_name, last_name, graduation_year')
+                .select('id, email, first_name, last_name, grade')
                 .eq('id', tutee_id)
                 .limit(1)
                 .execute()

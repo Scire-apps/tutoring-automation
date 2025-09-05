@@ -67,7 +67,10 @@ create table if not exists public.tutees (
   first_name text not null,
   last_name text not null,
   school_id uuid references public.schools(id) on delete set null,
+  -- Deprecated: graduation_year no longer used by app; kept for backward compatibility
   graduation_year integer,
+  -- New: store grade directly as '9'|'10'|'11'|'12'
+  grade text check (grade in ('9','10','11','12')),
   subjects jsonb,
   pronouns text,
   created_at timestamptz not null default now(),

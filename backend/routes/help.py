@@ -38,7 +38,7 @@ def submit_help_request():
         tutor_row = None
     if role is None:
         try:
-            tutee_row = supabase.table('tutees').select('id, first_name, last_name, email, school_id, graduation_year').eq('auth_id', request.user_id).single().execute()
+            tutee_row = supabase.table('tutees').select('id, first_name, last_name, email, school_id, grade').eq('auth_id', request.user_id).single().execute()
             if tutee_row.data:
                 role = 'tutee'
         except Exception:
@@ -60,17 +60,7 @@ def submit_help_request():
         last_name = tutee_row.data.get('last_name')
         email = tutee_row.data.get('email')
         school_id = tutee_row.data.get('school_id')
-        gy = tutee_row.data.get('graduation_year')
-        try:
-            from datetime import datetime
-            current_year = datetime.utcnow().year
-            if gy:
-                years_left = int(gy) - current_year
-                user_grade = {4: '9', 3: '10', 2: '11', 1: '12'}.get(years_left, '12')
-            else:
-                user_grade = None
-        except Exception:
-            user_grade = None
+        user_grade = (tutee_row.data or {}).get('grade')
         tutor_id = None
         tutee_id = tutee_row.data.get('id')
 

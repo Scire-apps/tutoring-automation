@@ -9,7 +9,7 @@ import { useAuth } from "@/app/providers";
 import { supabase } from "@/services/supabase";
 import { TutorLayout } from "@/components/tutor-layout";
 import apiService from "@/services/api";
-import { computeCurrentGrade } from "@/utils/grad";
+// grade displayed directly from stored value
 
 interface TutoringOpportunity {
   id: string;
@@ -539,9 +539,8 @@ export default function OpportunitiesPage() {
                                       )}
                                       <p><span className="font-medium">Email:</span> {(opportunity.tutee?.email || '—').replace(/(^[^@\s]+)(\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/,'$1@$3')}</p>
                                       <p><span className="font-medium">Grade:</span> {(() => {
-                                        const gy = (opportunity.tutee?.graduation_year || (opportunity as any).graduation_year);
-                                        const g = computeCurrentGrade(gy);
-                                        return (g !== null && isFinite(g)) ? `Grade ${g}` : '—';
+                                        const g = (opportunity.tutee?.grade || (opportunity as any).tutee_grade || (opportunity as any).grade);
+                                        return g ? `Grade ${g}` : '—';
                                       })()}</p>
                                     </div>
                                   </div>

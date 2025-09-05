@@ -97,10 +97,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // For tutee, include extras from localStorage if present
       if (typeof window !== "undefined" && accountType === "tutee") {
         try {
-          const gy = window.localStorage.getItem("tutee_graduation_year");
+          const grade = window.localStorage.getItem("tutee_grade");
           const pr = window.localStorage.getItem("tutee_pronouns");
           const subsRaw = window.localStorage.getItem("tutee_subjects");
-          if (gy && gy.trim()) body.graduation_year = Number(gy);
+          if (grade && grade.trim()) body.grade = String(grade);
           if (pr && pr.trim()) body.pronouns = pr;
           if (subsRaw) {
             try {

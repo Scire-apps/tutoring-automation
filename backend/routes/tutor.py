@@ -40,7 +40,7 @@ def get_tutor_dashboard():
     opps = (
         supabase
         .table('tutoring_opportunities')
-        .select('*, tutee:tutees(id, first_name, last_name, email, school_id, graduation_year)')
+        .select('*, tutee:tutees(id, first_name, last_name, email, school_id, grade)')
         .eq('status', 'open')
         .order('created_at', desc=True)
         .limit(100)
@@ -286,7 +286,7 @@ def list_open_opportunities():
         res = (
             supabase
             .table('tutoring_opportunities')
-            .select('*, tutee:tutees(id, first_name, last_name, email, school_id, graduation_year)')
+            .select('*, tutee:tutees(id, first_name, last_name, email, school_id, grade)')
             .eq('status', 'open')
             .order('created_at')
             .limit(100)
@@ -615,7 +615,7 @@ def schedule_job(job_id: str):
     tutee_row = None
     try:
         if job_row and job_row.data and job_row.data.get('tutee_id'):
-            tutee_row = supabase.table('tutees').select('email, first_name, last_name, graduation_year').eq('id', job_row.data.get('tutee_id')).single().execute()
+            tutee_row = supabase.table('tutees').select('email, first_name, last_name, grade').eq('id', job_row.data.get('tutee_id')).single().execute()
     except Exception:
         tutee_row = None
 
@@ -627,16 +627,7 @@ def schedule_job(job_id: str):
         if tutee_row and tutee_row.data:
             tutee_name = f"{tutee_row.data.get('first_name','')} {tutee_row.data.get('last_name','')}".strip()
             tutee_email = tutee_row.data.get('email')
-            try:
-                from datetime import datetime
-                current_year = datetime.now().year
-                gy = tutee_row.data.get('graduation_year')
-                if gy:
-                    years_left = int(gy) - current_year
-                    grade_mapping = {4: '9', 3: '10', 2: '11', 1: '12'}
-                    tutee_grade = grade_mapping.get(years_left, '12')
-            except Exception:
-                tutee_grade = '12'
+            tutee_grade = (tutee_row.data or {}).get('grade')
 
         try:
             from datetime import datetime

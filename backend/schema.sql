@@ -158,7 +158,10 @@ create table if not exists public.tutoring_jobs (
 create table if not exists public.awaiting_verification_jobs (
   id uuid primary key, -- same id as the original job
   opportunity_id uuid,
-  -- store denormalized names for admin convenience (ids remain inside opportunity_snapshot if needed)
+  -- identifiers for integrity and relations
+  tutor_id uuid not null references public.tutors(id) on delete cascade,
+  tutee_id uuid not null references public.tutees(id) on delete cascade,
+  -- store denormalized names for admin convenience
   tutor_name text,
   tutee_name text,
   subject_name text not null check (char_length(subject_name) > 0),

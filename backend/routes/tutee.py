@@ -55,19 +55,8 @@ def get_tutee_dashboard():
         .execute()
     )
 
-    # Compute grade suggestion from graduation_year if present
-    grade_suggestion = None
-    try:
-        gy = tutee.get('graduation_year')
-        if gy:
-            from datetime import datetime
-            year_now = datetime.utcnow().year
-            years_left = int(gy) - year_now
-            # Map: years_left=3 -> grade 10, 4->9, 2->11, 1->12, <=0 -> 12
-            mapping = {4: '9', 3: '10', 2: '11', 1: '12'}
-            grade_suggestion = mapping.get(years_left, '12')
-    except Exception:
-        pass
+    # Direct grade (no calculation)
+    grade_suggestion = (tutee or {}).get('grade')
     payload = {
         'tutee': tutee,
         'opportunities': opps.data or [],

@@ -130,14 +130,11 @@ def ensure_account():
         # Tutee-specific optional fields
         try:
             # Accept from payload when present
-            gy = payload.get('graduation_year')
+            grade = payload.get('grade')
             pr = payload.get('pronouns')
             subs = payload.get('subjects')
-            if gy is not None:
-                try:
-                    data['graduation_year'] = int(gy)
-                except Exception:
-                    pass
+            if isinstance(grade, str) and grade in ['9','10','11','12']:
+                data['grade'] = grade
             if isinstance(pr, str) and pr.strip():
                 data['pronouns'] = pr.strip()
             if isinstance(subs, list):

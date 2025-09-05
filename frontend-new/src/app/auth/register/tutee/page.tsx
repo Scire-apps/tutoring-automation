@@ -6,7 +6,6 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/providers';
-import { getGraduationYearOptions } from '@/utils/grad';
 
 function TuteeRegisterForm() {
   const [email, setEmail] = useState('');
@@ -23,8 +22,7 @@ function TuteeRegisterForm() {
   const [registrationComplete, setRegistrationComplete] = useState(false);
 
   // tutee extras
-  const gradYears = getGraduationYearOptions().map(String);
-  const [graduationYear, setGraduationYear] = useState('');
+  const [grade, setGrade] = useState('');
   const [pronouns, setPronouns] = useState('');
   const [subjects, setSubjects] = useState<string[]>([]);
   const [allSubjects, setAllSubjects] = useState<string[]>([]);
@@ -75,7 +73,7 @@ function TuteeRegisterForm() {
           localStorage.setItem('signup_first_name', firstName || '');
           localStorage.setItem('signup_last_name', lastName || '');
           localStorage.setItem('signup_school_id', schoolId || '');
-          localStorage.setItem('tutee_graduation_year', graduationYear || '');
+          localStorage.setItem('tutee_grade', grade || '');
           localStorage.setItem('tutee_pronouns', pronouns || '');
           localStorage.setItem('tutee_subjects', JSON.stringify(subjects.filter(Boolean)));
         }
@@ -93,7 +91,7 @@ function TuteeRegisterForm() {
               first_name: firstName,
               last_name: lastName,
               school_id: schoolId,
-              graduation_year: graduationYear ? Number(graduationYear) : undefined,
+              grade: grade || undefined,
               pronouns,
               subjects: subjects.filter(Boolean),
             })
@@ -210,12 +208,12 @@ function TuteeRegisterForm() {
               <input id="password" name="password" type="password" autoComplete="new-password" required className="appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-200 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:z-10 sm:text-sm shadow-sm" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} />
             </div>
 
-            {/* Graduation Year */}
+            {/* Grade */}
             <div className="mb-3">
-              <label className="block text-sm font-medium mb-1">Graduation Year</label>
-              <select className="w-full border border-gray-200 rounded-xl px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" value={graduationYear} onChange={(e)=>setGraduationYear(e.target.value)} required>
+              <label className="block text-sm font-medium mb-1">Grade</label>
+              <select className="w-full border border-gray-200 rounded-xl px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" value={grade} onChange={(e)=>setGrade(e.target.value)} required>
                 <option value="">Select...</option>
-                {gradYears.map(y => (<option key={y} value={y}>{y}</option>))}
+                {['9','10','11','12'].map(g => (<option key={g} value={g}>{`Grade ${g}`}</option>))}
               </select>
             </div>
 

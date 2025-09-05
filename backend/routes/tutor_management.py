@@ -202,7 +202,28 @@ def list_awaiting_verification_jobs():
             .limit(200)
             .execute()
         )
-        return jsonify({'jobs': res.data or []}), 200
+        jobs = res.data or []
+        try:
+            tutor_ids = list({j.get('tutor_id') for j in jobs if j.get('tutor_id')})
+            tutee_ids = list({j.get('tutee_id') for j in jobs if j.get('tutee_id')})
+            tutors_map = {}
+            tutees_map = {}
+            if tutor_ids:
+                t_res = supabase.table('tutors').select('id, first_name, last_name, email').in_('id', tutor_ids).execute()
+                tutors_map = {t['id']: t for t in (t_res.data or []) if t.get('id')}
+            if tutee_ids:
+                te_res = supabase.table('tutees').select('id, first_name, last_name, email').in_('id', tutee_ids).execute()
+                tutees_map = {t['id']: t for t in (te_res.data or []) if t.get('id')}
+            for j in jobs:
+                t = tutors_map.get(j.get('tutor_id')) or {}
+                te = tutees_map.get(j.get('tutee_id')) or {}
+                j['tutor_name'] = f"{t.get('first_name','')} {t.get('last_name','')}".strip() or None
+                j['tutor_email'] = t.get('email')
+                j['tutee_name'] = f"{te.get('first_name','')} {te.get('last_name','')}".strip() or None
+                j['tutee_email'] = te.get('email')
+        except Exception:
+            pass
+        return jsonify({'jobs': jobs}), 200
     except Exception as e:
         print(f"Error listing awaiting verification jobs: {e}")
         return jsonify({'error': 'Internal server error'}), 500

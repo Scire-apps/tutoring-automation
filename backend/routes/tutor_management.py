@@ -907,7 +907,7 @@ def admin_overview():
         awaiting_res = (
             supabase
             .table('awaiting_verification_jobs')
-            .select('id, tutor_id, tutee_id, subject_name, subject_type, subject_grade, language, scheduled_time, duration_minutes, created_at')
+            .select('id, tutor_id, tutee_id, tutor_name, tutee_name, subject_name, subject_type, subject_grade, language, scheduled_time, duration_minutes, created_at, opportunity_snapshot')
             .order('created_at', desc=True)
             .limit(200)
             .execute()

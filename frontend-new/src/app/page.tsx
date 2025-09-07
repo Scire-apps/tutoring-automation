@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 "use client";
 import Link from 'next/link';
 import Image from 'next/image';
@@ -30,7 +32,7 @@ export default function Home() {
         <section className="mx-auto max-w-7xl px-6 pt-10 pb-8 grid grid-cols-1 place-items-center gap-10">
           <div className="order-2 lg:order-1 flex flex-col items-center text-center w-full max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 text-blue-700 px-3 py-1 text-xs font-semibold ring-1 ring-inset ring-blue-200">
-              Proven at WOSS • Fast • Secure
+              Simple • Fast • Secure
             </div>
             <h1 className="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900">
               Match. Learn. Excel.

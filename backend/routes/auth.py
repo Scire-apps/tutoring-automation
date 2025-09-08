@@ -125,7 +125,7 @@ def ensure_account():
         'school_id': school_id
     }
     if effective_type == 'tutor':
-        data.update({ 'status': 'pending', 'volunteer_hours': 0 })
+        data.update({ 'status': 'active', 'volunteer_hours': 0 })
     else:
         # Tutee-specific optional fields
         try:

@@ -242,7 +242,7 @@ export default function TuteeRequestPage() {
           <div>
             <label className="block text-sm font-medium" htmlFor="notes">
               More Details/Information
-              <span className="block text-xs font-normal mt-1">
+              <span className="block text-sm font-bold mt-2">
                 Please include any specific details or information about your request, such as the specific topic you need help with, the specific questions you have, or the specific assignments you need help with, etc.
               </span>
             </label>

@@ -24,6 +24,12 @@ function pickTtlMs(endpoint: string): number {
     if (endpoint.startsWith('/api/admin/help-requests')) return Number(process.env.NEXT_PUBLIC_ADMIN_HELP_TTL || 5000);
     if (endpoint.startsWith('/api/admin/awaiting-verification')) return Number(process.env.NEXT_PUBLIC_ADMIN_AWAITING_TTL || 2000);
     if (endpoint.startsWith('/api/admin/tutors') || endpoint.startsWith('/api/admin/opportunities') || endpoint.startsWith('/api/admin/jobs') || endpoint.startsWith('/api/admin/schools')) return Number(process.env.NEXT_PUBLIC_ADMIN_LIST_TTL || 5000);
+    // Tutor-side TTLs
+    if (endpoint.startsWith('/api/tutor/dashboard')) return Number(process.env.NEXT_PUBLIC_TUTOR_DASHBOARD_TTL || 3000);
+    if (endpoint.startsWith('/api/tutor/opportunities')) return Number(process.env.NEXT_PUBLIC_TUTOR_LIST_TTL || 3000);
+    if (endpoint.startsWith('/api/tutor/past-jobs')) return Number(process.env.NEXT_PUBLIC_TUTOR_PAST_TTL || 8000);
+    if (endpoint.startsWith('/api/tutor/jobs/')) return Number(process.env.NEXT_PUBLIC_TUTOR_JOB_TTL || 3000);
+    if (endpoint.startsWith('/api/tutor/approvals')) return Number(process.env.NEXT_PUBLIC_TUTOR_APPROVALS_TTL || 4000);
     if (endpoint.startsWith('/api/public/')) return Number(process.env.NEXT_PUBLIC_PUBLIC_CACHE_TTL || 600000);
   } catch (_) {}
   return DEFAULT_TTL_MS;
@@ -86,7 +92,7 @@ async function apiRequest<T>(
   
   try {
     // Serve from cache for eligible GETs
-    if (method === 'GET' && (endpoint.startsWith('/api/admin/') || endpoint.startsWith('/api/public/'))) {
+    if (method === 'GET' && (endpoint.startsWith('/api/admin/') || endpoint.startsWith('/api/public/') || endpoint.startsWith('/api/tutor/'))) {
       const cached = getCached(method, url, session?.access_token);
       if (cached != null) return cached as T;
     }
@@ -111,11 +117,16 @@ async function apiRequest<T>(
     
     const data = await response.json();
     // Store in cache for eligible GETs
-    if (method === 'GET' && (endpoint.startsWith('/api/admin/') || endpoint.startsWith('/api/public/'))) {
+    if (method === 'GET' && (endpoint.startsWith('/api/admin/') || endpoint.startsWith('/api/public/') || endpoint.startsWith('/api/tutor/'))) {
       setCached(method, url, session?.access_token, data, pickTtlMs(endpoint));
-    } else if (method !== 'GET' && endpoint.startsWith('/api/admin/')) {
-      // Invalidate admin caches on mutations
-      invalidateCacheByPrefix('/api/admin');
+    } else if (method !== 'GET') {
+      // Invalidate caches on mutations
+      if (endpoint.startsWith('/api/admin/')) {
+        invalidateCacheByPrefix('/api/admin');
+      }
+      if (endpoint.startsWith('/api/tutor/')) {
+        invalidateCacheByPrefix('/api/tutor');
+      }
     }
     return data as T;
   } catch (error) {

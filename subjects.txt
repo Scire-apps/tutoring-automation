@@ -1,1 +1,1 @@
-math, functions, advanced_functions, calculus, data_management, english, science, chemistry, physics, biology, history, geography, business, french, spanish, computer_science, accounting
+math, functions, advanced_functions, calculus, data_management, english, science, chemistry, physics, biology, civics, careers, history, geography, business, french, spanish, computer_science, accounting

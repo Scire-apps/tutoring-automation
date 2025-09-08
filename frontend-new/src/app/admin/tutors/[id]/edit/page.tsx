@@ -176,7 +176,7 @@ export default function EditTutorPage() {
     }
   };
 
-  const updateTutorStatus = async (status: 'active' | 'pending' | 'suspended') => {
+  const updateTutorStatus = async (status: 'active' | 'suspended') => {
     try {
       console.log('🔍 TUTOR EDIT DEBUG: Updating tutor status:', { tutorId, status });
       setUpdating('status');
@@ -381,7 +381,7 @@ export default function EditTutorPage() {
                 </span>
               </div>
               <div className="mt-4 flex space-x-3">
-                {['active', 'pending', 'suspended'].map((status) => (
+                {['active', 'suspended'].map((status) => (
                   <button
                     key={status}
                     onClick={() => updateTutorStatus(status as any)}
@@ -390,8 +390,6 @@ export default function EditTutorPage() {
                       tutor.status === status
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : status === 'active'
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : status === 'pending'
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : 'bg-blue-600 text-white hover:bg-blue-700'
                     }`}

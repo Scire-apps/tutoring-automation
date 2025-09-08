@@ -1143,7 +1143,7 @@ export default function TutorDashboard() {
         {/* Subject Approvals */}
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Subject Approvals
+            Subjects That You have been Certified to Tutor.
           </h3>
               {subjectApprovals.length > 0 ? (
               <div className="bg-white border-2 border-gray-100 overflow-hidden sm:rounded-md">

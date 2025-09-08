@@ -240,8 +240,11 @@ export default function TuteeRequestPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium">
-              More Details/Information (Please include any specific details or information about your request, such as the specific topic you need help with, the specific questions you have, or the specific assignments you need help with, etc).
+            <label className="block text-sm font-medium" htmlFor="notes">
+              More Details/Information
+              <span className="block text-xs font-normal mt-1">
+                Please include any specific details or information about your request, such as the specific topic you need help with, the specific questions you have, or the specific assignments you need help with, etc.
+              </span>
             </label>
             <textarea
               className="mt-1 border border-gray-200 rounded-xl px-3 py-2 w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"

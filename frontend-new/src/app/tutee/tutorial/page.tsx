@@ -11,7 +11,8 @@ export default function TuteeTutorialPage() {
     {
       title: "Create a tutoring request",
       desc:
-        "From your dashboard, open Request Tutoring. Select the subject, type (Academic/ALP/IB), grade, and add notes if needed.",
+        "From your dashboard, open Request Tutoring. Select the subject, type (Academic/ALP/IB), grade, and add notes if needed.\n\n" +
+        "**Please note:** Tutoring sessions are now scheduled one at a time—each request is for a single session, making it simpler to coordinate and confirm each meeting individually.",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v12m6-6H6" />
@@ -92,7 +93,7 @@ export default function TuteeTutorialPage() {
               <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Tutee Guide</h1>
             </div>
             <p className="text-gray-600 max-w-3xl">
-              A quick, beautiful walkthrough of how to request tutoring, set availability, and get scheduled.
+              A quick walkthrough of how to request tutoring, set availability, and get scheduled.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/tutee/dashboard" className="inline-flex items-center px-4 py-2 rounded-full text-blue-700 bg-blue-100 hover:bg-blue-200">

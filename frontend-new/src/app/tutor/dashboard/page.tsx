@@ -316,7 +316,7 @@ export default function TutorDashboard() {
 
       // Show success message
       setSuccessMessage(
-        "Tutoring job cancelled successfully. The opportunity has been returned to the board."
+        "Tutoring job cancelled successfully."
       );
     } catch (err) {
       console.error("Error in handleCancelJob:", err);
@@ -1264,7 +1264,7 @@ export default function TutorDashboard() {
                       prev.filter((j) => j.id !== showRecordingModalFor)
                     );
                     setSuccessMessage(
-                      "Recording link saved and session moved to awaiting verification."
+                      "The session recording link has been saved, and will be verified by an executive. You will receive your volunteer hours shortly."
                     );
                   } catch (e: any) {
                     console.error("Complete job error:", e);

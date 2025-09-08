@@ -626,12 +626,6 @@ class MailjetEmailService(EmailService):
         try:
             # Prepare recipients
             to_email_clean = self._scrub_hdsb_role_tag(to_email) or to_email
-            recipients = [{"Email": to_email_clean}]
-            
-            # Add CC recipients if provided
-            if cc:
-                for cc_email in cc:
-                    recipients.append({"Email": (self._scrub_hdsb_role_tag(cc_email) or cc_email)})
             
             # Prepare email data
             email_data = {
@@ -652,9 +646,13 @@ class MailjetEmailService(EmailService):
             if body_text:
                 email_data['Messages'][0]["TextPart"] = body_text
             
-            # Add CC if provided
+            # Add CC recipients if provided
             if cc:
-                email_data['Messages'][0]["Cc"] = [{"Email": email} for email in cc]
+                cc_recipients = []
+                for cc_email in cc:
+                    cc_email_clean = self._scrub_hdsb_role_tag(cc_email) or cc_email
+                    cc_recipients.append({"Email": cc_email_clean})
+                email_data['Messages'][0]["Cc"] = cc_recipients
             
             # Send email
             result = self.mailjet.send.create(data=email_data)

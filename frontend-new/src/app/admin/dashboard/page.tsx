@@ -193,7 +193,7 @@ export default function AdminDashboardPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tutor.school?.name || 'Not assigned'}</td>
                     <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${tutor.status === 'active' ? 'bg-green-100 text-green-800' : tutor.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>{tutor.status === 'active' ? 'Active' : tutor.status === 'pending' ? 'Pending' : 'Suspended'}</span></td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tutor.volunteer_hours || 0}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><a href={`/admin/tutors/${tutor.id}`} className="text-blue-600 hover:text-blue-800 hover:underline mr-4">View history</a><a href={`/admin/tutors/${tutor.id}/edit`} className="text-blue-600 hover:text-blue-800 hover:underline">Edit certifications</a></td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><a href={`/admin/tutors/${tutor.id}/edit`} className="text-blue-600 hover:text-blue-800 hover:underline">Manage</a></td>
                   </tr>
                 ))}
                 {tutors.length === 0 && (

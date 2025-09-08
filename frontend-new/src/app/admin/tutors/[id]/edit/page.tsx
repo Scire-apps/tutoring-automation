@@ -55,6 +55,8 @@ export default function EditTutorPage() {
   const [selectedSubjectGrade, setSelectedSubjectGrade] = useState('');
   // IB level (HL/SL) when admin selects IB type
   const [selectedIbLevel, setSelectedIbLevel] = useState('');
+  // Past jobs and history
+  const [pastJobs, setPastJobs] = useState<any[]>([]);
   
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -103,6 +105,12 @@ export default function EditTutorPage() {
           : [],
       };
       setTutorData(structuredData);
+
+      // Load past jobs (history) for this tutor
+      try {
+        const hist = await api.getTutorHistoryForAdmin(tutorId);
+        setPastJobs(hist.jobs || []);
+      } catch (_) {}
       
     } catch (err) {
       console.error('🔍 TUTOR EDIT DEBUG: Error loading tutor data:', err);
@@ -380,6 +388,9 @@ export default function EditTutorPage() {
                   {tutor.status}
                 </span>
               </div>
+              <div className="mt-2 text-sm text-gray-700">
+                Volunteer Hours: <span className="font-medium">{tutor.volunteer_hours || 0}</span>
+              </div>
               <div className="mt-4 flex space-x-3">
                 {['active', 'suspended'].map((status) => (
                   <button
@@ -502,6 +513,37 @@ export default function EditTutorPage() {
                     ))}
                   </div>
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* Past Jobs */}
+          <div className="bg-white shadow-xl ring-1 ring-gray-200 overflow-hidden rounded-2xl mt-8">
+            <div className="px-4 py-5 sm:px-6">
+              <h3 className="text-lg leading-6 font-semibold text-gray-900">
+                Past Jobs
+              </h3>
+              <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                Verified jobs completed by this tutor
+              </p>
+            </div>
+            <div className="border-t border-gray-200">
+              {pastJobs.length === 0 ? (
+                <div className="px-4 py-8 text-center text-gray-500">No past jobs.</div>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {pastJobs.map((j: any) => (
+                    <li key={j.id} className="px-4 py-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{j.subject_name} • {j.subject_type} • Grade {j.subject_grade}</div>
+                          <div className="text-xs text-gray-500">{j.scheduled_time ? new Date(j.scheduled_time).toLocaleString() : ''}{j.duration_minutes ? ` • ${j.duration_minutes} minutes` : ''}</div>
+                        </div>
+                        <div className="text-xs text-gray-500">Awarded: {j.awarded_volunteer_hours || 0}h</div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
           </div>

@@ -494,7 +494,7 @@ export default function OpportunitiesPage() {
                                   disabled
                                   className="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-full text-gray-500 bg-gray-100 cursor-not-allowed"
                                 >
-                                  Not Approved
+                                  You are not certified to tutor this subject.
                                 </button>
                               )}
                               <button

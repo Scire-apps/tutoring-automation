@@ -266,7 +266,7 @@ export default function TuteeDashboardPage() {
               </div>
               <div className="ml-4 text-left">
                 <h4 className="text-lg font-medium text-gray-900 group-hover:text-blue-900">Ask for Help</h4>
-                <p className="text-sm text-gray-500 group-hover:text-blue-700">Contact your school help desk</p>
+                <p className="text-sm text-gray-500 group-hover:text-blue-700">Request help from Tutoring Executives</p>
               </div>
             </button>
           </div>
@@ -661,7 +661,7 @@ export default function TuteeDashboardPage() {
             <div className="absolute -inset-2 rounded-3xl bg-gradient-to-tr from-blue-400 via-indigo-400 to-purple-400 opacity-30 blur-2xl animate-pulse" />
             <div className="relative bg-white/90 backdrop-blur shadow-xl ring-1 ring-gray-200 rounded-2xl p-6">
               <h3 className="text-lg font-semibold mb-2">Ask for Help</h3>
-              <p className="text-sm text-gray-600 mb-4">Submit a help request to your school's help desk.</p>
+              <p className="text-sm text-gray-600 mb-4">Request help from Tutoring Executives.</p>
               <div className="grid grid-cols-1 gap-3 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Urgency</label>

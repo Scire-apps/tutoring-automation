@@ -102,6 +102,21 @@ export default function TutorTutorialPage() {
               A concise, end-to-end walkthrough of how to succeed on the platform—from certification to
               verified volunteer hours.
             </p>
+            {/* Session Scheduling Note */}
+            <div className="mt-6 mb-2">
+              <div className="flex items-center gap-3">
+                <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h8M12 8v8" />
+                </svg>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 w-full">
+                  <span className="font-semibold text-blue-700">Important:</span>{" "}
+                  Tutoring requests are now scheduled <span className="font-semibold">one session at a time</span>. 
+                  Each time a tutee wants to meet, they submit a new request for a single session. 
+                  This means every session is coordinated and confirmed individually—making scheduling simpler and more flexible for both tutors and students.
+                </div>
+              </div>
+            </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/tutor/dashboard" className="inline-flex items-center px-4 py-2 rounded-full text-blue-700 bg-blue-100 hover:bg-blue-200">
                 ← Back to Dashboard
@@ -153,5 +168,4 @@ export default function TutorTutorialPage() {
     </TutorLayout>
   );
 }
-
 

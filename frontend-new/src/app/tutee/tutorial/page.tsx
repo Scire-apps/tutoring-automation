@@ -11,8 +11,7 @@ export default function TuteeTutorialPage() {
     {
       title: "Create a tutoring request",
       desc:
-        "From your dashboard, open Request Tutoring. Select the subject, type (Academic/ALP/IB), grade, and add notes if needed.\n\n" +
-        "**Please note:** Tutoring sessions are now scheduled one at a time—each request is for a single session, making it simpler to coordinate and confirm each meeting individually.",
+        "From your dashboard, open Request Tutoring. Select the subject, type (Academic/ALP/IB), grade, and add notes if needed.",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v12m6-6H6" />
@@ -95,6 +94,20 @@ export default function TuteeTutorialPage() {
             <p className="text-gray-600 max-w-3xl">
               A quick walkthrough of how to request tutoring, set availability, and get scheduled.
             </p>
+            {/* Visually distinct note about per-session scheduling */}
+            <div className="mt-6 mb-2">
+              <div className="rounded-lg border-l-4 border-blue-500 bg-blue-50 p-4 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" />
+                  </svg>
+                  <span className="font-semibold text-blue-700">Important:</span>
+                </div>
+                <div className="mt-1 text-blue-900 text-sm">
+                  Tutoring requests are now made <span className="font-semibold">one session at a time</span>. Each time you want a session, simply submit a new request—only that session will be scheduled. This makes it easier to coordinate and confirm each meeting individually.
+                </div>
+              </div>
+            </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/tutee/dashboard" className="inline-flex items-center px-4 py-2 rounded-full text-blue-700 bg-blue-100 hover:bg-blue-200">
                 ← Back to Dashboard
@@ -146,5 +159,3 @@ export default function TuteeTutorialPage() {
     </TuteeLayout>
   );
 }
-
-

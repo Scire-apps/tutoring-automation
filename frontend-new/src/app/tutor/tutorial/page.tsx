@@ -101,9 +101,8 @@ export default function TutorTutorialPage() {
                 </svg>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 w-full">
                   <span className="font-semibold text-blue-700">Important:</span>{" "}
-                  Tutoring requests are now scheduled <span className="font-semibold">one session at a time</span>. 
-                  Each time a tutee wants to meet, they submit a new request for a single session. 
-                  This means every session is coordinated and confirmed individually—making scheduling simpler and more flexible for both tutors and students.
+                  Tutoring requests now schedule <span className="font-semibold">one session at a time</span>. 
+                  Tutoring requests are now made one session at a time. Each time a tutee wants a session, they simply submit a new request—only that session will be scheduled. This makes it easier to coordinate and confirm each meeting individually.
                 </div>
               </div>
             </div>

@@ -62,7 +62,7 @@ const navigation = [
     href: "/tutor/tutorial",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="w-5 h-5 text-blue-500 group-hover:text-blue-600 transition-colors"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -75,6 +75,7 @@ const navigation = [
         />
       </svg>
     ),
+    highlight: true,
   },
 ];
 

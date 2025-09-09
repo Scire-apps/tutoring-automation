@@ -95,12 +95,7 @@ export default function TutorTutorialPage() {
             {/* Session Scheduling Note */}
             <div className="mt-6 mb-2">
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h8M12 8v8" />
-                  </svg>
-                </div>
+                {/* Removed the "+" icon */}
                 <div className="relative w-full">
                   <div className="absolute -inset-1 rounded-xl bg-gradient-to-tr from-blue-200/40 via-blue-100/30 to-blue-50/40 blur-sm opacity-70 pointer-events-none" />
                   <div className="relative bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 w-full">

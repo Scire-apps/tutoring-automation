@@ -11,19 +11,38 @@ export default function Home() {
 
     // Cleanup script on unmount
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
   return (
-    <div className="flex min-h-screen min-w-screen items-center justify-center bg-white p-0 m-0" style={{ width: "100vw", height: "100vh" }}>
+    <div 
+      style={{ 
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100vw", 
+        height: "100vh",
+        overflow: "hidden",
+        backgroundColor: "#000",
+        margin: 0,
+        padding: 0
+      }}
+    >
       <div
         className="tenor-gif-embed"
         data-postid="15167809337439398898"
         data-share-method="host"
         data-aspect-ratio="1.77857"
         data-width="100%"
-        style={{ width: "100vw", maxWidth: "100vw" }}
+        style={{ 
+          width: "100vw", 
+          height: "100vh",
+          maxWidth: "100vw",
+          maxHeight: "100vh"
+        }}
       >
         <a href="https://tenor.com/view/67-6-7-six-seven-sixty-seven-67-kid-gif-15167809337439398898">
           67 6 7 GIF

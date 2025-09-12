@@ -1,18 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-import Providers from "./providers";
-import SupabaseListener from "./supabase-listener";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
-  title: "Tutoring Automation",
-  description:
-    "A platform for managing tutoring opportunities and volunteer hours",
+  title: "67 GIF",
+  description: "A simple GIF display",
   icons: {
     icon: [
       { url: "/favicon.png", rel: "icon", type: "image/png" },
@@ -28,11 +19,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>
-        <Providers>
-          <SupabaseListener />
-          {children}
-        </Providers>
+      <body>
+        {children}
       </body>
     </html>
   );

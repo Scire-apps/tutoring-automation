@@ -171,6 +171,7 @@ export default function TutorDashboard() {
     string | null
   >(null);
   const [recordingUrlInput, setRecordingUrlInput] = useState<string>("");
+  const [savingRecording, setSavingRecording] = useState(false);
   const [pastJobs, setPastJobs] = useState<any[]>([]);
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
   const [helpUrgency, setHelpUrgency] = useState<'urgent'|'non-urgent'>('non-urgent');
@@ -1247,34 +1248,38 @@ export default function TutorDashboard() {
                 Cancel
               </button>
             <button
-              className="px-3 py-1.5 bg-purple-600 text-white rounded"
+              className="px-3 py-1.5 bg-purple-600 text-white rounded disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={savingRecording || !recordingUrlInput}
               onClick={async () => {
+                if (savingRecording) return;
                 try {
+                  setSavingRecording(true);
                   if (!recordingUrlInput) return;
-                    await apiService.upsertRecordingLink(
-                      showRecordingModalFor,
-                      recordingUrlInput
-                    );
+                  await apiService.upsertRecordingLink(
+                    showRecordingModalFor,
+                    recordingUrlInput
+                  );
                   // After link saved, allow completion
                   await apiService.completeJob(showRecordingModalFor, {});
                   setShowRecordingModalFor(null);
                   setRecordingUrlInput("");
                   // Remove job from active list
-                    setActiveJobs((prev) =>
-                      prev.filter((j) => j.id !== showRecordingModalFor)
-                    );
-                    setSuccessMessage(
-                      "The session recording link has been saved, and will be verified by an executive. You will receive your volunteer hours shortly."
-                    );
-                  } catch (e: any) {
-                    console.error("Complete job error:", e);
-                    setError(
-                      e?.message || "Failed to save recording link or complete session."
-                    );
+                  setActiveJobs((prev) =>
+                    prev.filter((j) => j.id !== showRecordingModalFor)
+                  );
+                  setSuccessMessage(
+                    "The session recording link has been saved, and will be verified by an executive. You will receive your volunteer hours shortly."
+                  );
+                } catch (e: any) {
+                  console.error("Complete job error:", e);
+                  setError(
+                    e?.message || "Failed to save recording link or complete session."
+                  );
+                  setSavingRecording(false);
                 }
               }}
             >
-              Save & Complete Session
+              {savingRecording ? 'Saving...' : 'Save & Complete Session'}
             </button>
           </div>
         </div>

@@ -6,8 +6,8 @@ export const metadata: Metadata = {
   description: "A simple GIF display",
   icons: {
     icon: [
-      { url: "/favicon.png", rel: "icon", type: "image/png" },
-      { url: "/favicon.png", rel: "shortcut icon", type: "image/png" },
+      { url: "/favicon.ico", rel: "icon", type: "image/x-icon" },
+      { url: "/favicon.ico", rel: "shortcut icon", type: "image/x-icon" },
     ],
   },
 };

@@ -175,18 +175,4 @@ def get_db_manager() -> DatabaseManager:
     return mgr
 
 
-def get_supabase_admin_client() -> Optional[Client]:
-    """Return a Supabase client using the service role key (bypasses RLS).
-
-    Requires SUPABASE_SERVICE_ROLE_KEY to be set in the environment. Returns
-    None if not configured.
-    """
-    try:
-        url = os.environ.get("SUPABASE_URL")
-        service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-        if not url or not service_key:
-            return None
-        admin_client: Client = create_client(url, service_key)
-        return admin_client
-    except Exception:
-        return None
+# Removed service-role admin client to avoid bypassing RLS.

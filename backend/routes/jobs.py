@@ -136,25 +136,30 @@ def cancel_job_as_tutee(job_id: str):
     if not tutee_res.data or tutee_res.data['id'] != job_res.data['tutee_id']:
         return jsonify({'error': 'Forbidden'}), 403
 
-    # Prefer admin client for hard delete (bypasses RLS)
+    # First, attempt delete using the user's RLS-bound client (now permitted by RLS)
+    try:
+        _ = supabase.table('tutoring_jobs').delete().eq('id', job_id).execute()
+        return jsonify({'message': 'Job deleted'}), 200
+    except Exception:
+        pass
+
+    # If that fails, attempt using service-role client (bypass RLS)
     admin = get_supabase_admin_client()
     try:
         if admin is not None:
-            del_res = admin.table('tutoring_jobs').delete().eq('id', job_id).execute()
-            # No need to check del_res.data strictly; delete may return empty
+            _ = admin.table('tutoring_jobs').delete().eq('id', job_id).execute()
             return jsonify({'message': 'Job deleted'}), 200
-        else:
-            # Fallback: attempt to mark as cancelled via user client if delete is not allowed
-            # (tutee can update per RLS but cannot delete)
-            try:
-                upd = supabase.table('tutoring_jobs').update({'status': 'cancelled'}).eq('id', job_id).execute()
-                if upd is None or getattr(upd, 'data', None) is None:
-                    return jsonify({'error': 'failed_to_cancel_job'}), 500
-                return jsonify({'message': 'Job cancelled'}), 200
-            except Exception as e2:
-                return jsonify({'error': 'failed_to_cancel_job', 'details': str(e2)}), 500
-    except Exception as e:
-        return jsonify({'error': 'failed_to_delete_job', 'details': str(e)}), 500
+    except Exception:
+        pass
+
+    # Final fallback: mark as cancelled (should be allowed by RLS)
+    try:
+        upd = supabase.table('tutoring_jobs').update({'status': 'cancelled'}).eq('id', job_id).execute()
+        if upd is None or getattr(upd, 'data', None) is None:
+            return jsonify({'error': 'failed_to_cancel_job'}), 500
+        return jsonify({'message': 'Job cancelled'}), 200
+    except Exception as e2:
+        return jsonify({'error': 'failed_to_cancel_job', 'details': str(e2)}), 500
 
 @jobs_bp.route('/api/tutor/jobs/<job_id>/complete', methods=['POST'])
 @require_auth

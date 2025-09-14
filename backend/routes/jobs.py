@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from utils.auth import require_auth
-from utils.db import get_supabase_client
+from utils.db import get_supabase_client, get_supabase_admin_client
 
 jobs_bp = Blueprint('jobs', __name__)
 
@@ -120,16 +120,15 @@ def cancel_job(job_id: str):
 @jobs_bp.route('/api/tutee/jobs/<job_id>/cancel', methods=['POST'])
 @require_auth
 def cancel_job_as_tutee(job_id: str):
-    """Tutee cancels a job and returns it to the opportunities board.
+    """Tutee cancels a job: simply delete the tutoring_jobs row.
 
-    - Recreates an opportunity row (using snapshot when available or fields on the job)
-    - Deletes the job row
-    - Authorization: requester must be the job's tutee
+    Authorization: requester must be the job's tutee.
+    Uses service-role client when available to bypass RLS safely.
     """
     supabase = get_supabase_client()
 
     # Ensure requester is the assigned tutee
-    job_res = supabase.table('tutoring_jobs').select('*').eq('id', job_id).single().execute()
+    job_res = supabase.table('tutoring_jobs').select('id, tutee_id').eq('id', job_id).single().execute()
     if not job_res.data:
         return jsonify({'error': 'Job not found'}), 404
 
@@ -137,41 +136,25 @@ def cancel_job_as_tutee(job_id: str):
     if not tutee_res.data or tutee_res.data['id'] != job_res.data['tutee_id']:
         return jsonify({'error': 'Forbidden'}), 403
 
-    job = job_res.data
-
-    # Build new opportunity from snapshot or job fields
-    snap = job.get('opportunity_snapshot') or {}
-    opp_insert = {
-        'tutee_id': job.get('tutee_id') or snap.get('tutee_id'),
-        'subject_name': job.get('subject_name') or snap.get('subject_name'),
-        'subject_type': job.get('subject_type') or snap.get('subject_type'),
-        'subject_grade': str(job.get('subject_grade') or snap.get('subject_grade') or ''),
-        'language': job.get('language') or (snap.get('language') if isinstance(snap, dict) else None) or 'English',
-        'availability': None,
-        'location_preference': job.get('location') or (snap.get('location_preference') if isinstance(snap, dict) else None),
-        'additional_notes': (snap.get('additional_notes') if isinstance(snap, dict) else None),
-        'status': 'open',
-        'priority': (snap.get('priority') if isinstance(snap, dict) else None) or 'normal'
-    }
-
-    # Minimal required fields must be present
-    if not opp_insert['tutee_id'] or not opp_insert['subject_name'] or not opp_insert['subject_type'] or not opp_insert['subject_grade']:
-        return jsonify({'error': 'cannot_recreate_opportunity', 'details': 'Missing required fields to recreate opportunity'}), 500
-
-    new_opp = supabase.table('tutoring_opportunities').insert(opp_insert).execute()
-    if not new_opp.data:
-        return jsonify({'error': 'failed_to_recreate_opportunity'}), 500
-
-    # Best-effort cleanup communications
+    # Prefer admin client for hard delete (bypasses RLS)
+    admin = get_supabase_admin_client()
     try:
-        supabase.table('communications').delete().eq('job_id', job_id).execute()
-    except Exception:
-        pass
-
-    # Remove the job row entirely
-    supabase.table('tutoring_jobs').delete().eq('id', job_id).execute()
-
-    return jsonify({'message': 'Job cancelled', 'opportunity': new_opp.data[0]}), 200
+        if admin is not None:
+            del_res = admin.table('tutoring_jobs').delete().eq('id', job_id).execute()
+            # No need to check del_res.data strictly; delete may return empty
+            return jsonify({'message': 'Job deleted'}), 200
+        else:
+            # Fallback: attempt to mark as cancelled via user client if delete is not allowed
+            # (tutee can update per RLS but cannot delete)
+            try:
+                upd = supabase.table('tutoring_jobs').update({'status': 'cancelled'}).eq('id', job_id).execute()
+                if upd is None or getattr(upd, 'data', None) is None:
+                    return jsonify({'error': 'failed_to_cancel_job'}), 500
+                return jsonify({'message': 'Job cancelled'}), 200
+            except Exception as e2:
+                return jsonify({'error': 'failed_to_cancel_job', 'details': str(e2)}), 500
+    except Exception as e:
+        return jsonify({'error': 'failed_to_delete_job', 'details': str(e)}), 500
 
 @jobs_bp.route('/api/tutor/jobs/<job_id>/complete', methods=['POST'])
 @require_auth

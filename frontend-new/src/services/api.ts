@@ -92,7 +92,10 @@ async function apiRequest<T>(
   
   try {
     // Serve from cache for eligible GETs
-    if (method === 'GET' && (endpoint.startsWith('/api/admin/') || endpoint.startsWith('/api/public/') || endpoint.startsWith('/api/tutor/'))) {
+    if (
+      method === 'GET' &&
+      (endpoint.startsWith('/api/admin/') || endpoint.startsWith('/api/public/') || endpoint.startsWith('/api/tutor/') || endpoint.startsWith('/api/tutee/'))
+    ) {
       const cached = getCached(method, url, session?.access_token);
       if (cached != null) return cached as T;
     }
@@ -117,7 +120,10 @@ async function apiRequest<T>(
     
     const data = await response.json();
     // Store in cache for eligible GETs
-    if (method === 'GET' && (endpoint.startsWith('/api/admin/') || endpoint.startsWith('/api/public/') || endpoint.startsWith('/api/tutor/'))) {
+    if (
+      method === 'GET' &&
+      (endpoint.startsWith('/api/admin/') || endpoint.startsWith('/api/public/') || endpoint.startsWith('/api/tutor/') || endpoint.startsWith('/api/tutee/'))
+    ) {
       setCached(method, url, session?.access_token, data, pickTtlMs(endpoint));
     } else if (method !== 'GET') {
       // Invalidate caches on mutations
@@ -126,6 +132,9 @@ async function apiRequest<T>(
       }
       if (endpoint.startsWith('/api/tutor/')) {
         invalidateCacheByPrefix('/api/tutor');
+      }
+      if (endpoint.startsWith('/api/tutee/')) {
+        invalidateCacheByPrefix('/api/tutee');
       }
     }
     return data as T;

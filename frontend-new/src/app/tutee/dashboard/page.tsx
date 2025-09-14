@@ -440,7 +440,7 @@ export default function TuteeDashboardPage() {
                               try {
                                 // Optimistically remove from UI
                                 setData((prev: any) => prev ? { ...prev, jobs: (prev.jobs || []).filter((k: any) => k.id !== j.id) } : prev);
-                                await api.cancelJob(j.id);
+                                await api.cancelJobAsTutee(j.id);
                               } catch (err) {
                                 // Revert on failure
                                 setData((prev: any) => prev ? { ...prev, jobs: [j, ...(prev.jobs || [])] } : prev);

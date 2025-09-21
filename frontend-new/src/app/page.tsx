@@ -2,25 +2,61 @@ import styles from "./page.module.css";
 
 export default function Home() {
   return (
-    <main className={styles.wrap} role="main" aria-label="Under development">
-      <div className={styles.card} role="status">
-        <div className={styles.icon} aria-hidden>
-          <svg viewBox="0 0 24 24" width="56" height="56" strokeWidth="1.75" stroke="currentColor" fill="none">
-            <circle cx="12" cy="12" r="9" opacity="0.15" />
-            <path d="M8 12h8" strokeLinecap="round" />
-            <path d="M12 8v8" strokeLinecap="round" />
-          </svg>
+    <main className={styles.container}>
+      {/* Top Tagline */}
+      <div className={styles.tagline}>
+        Simple • Fast • Secure
+      </div>
+
+      {/* Main Heading */}
+      <h1 className={styles.mainHeading}>Match. Learn. Excel.</h1>
+
+      {/* Description */}
+      <p className={styles.description}>
+        Join as a tutor or request help as a tutee. Get matched, schedule sessions, and track progress — all in one place.
+      </p>
+
+      {/* Call-to-Action Boxes */}
+      <div className={styles.actionBoxes}>
+        {/* Tutor Box */}
+        <div className={`${styles.actionBox} ${styles.tutorBox}`}>
+          <div className={styles.boxIcon}>
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+          </div>
+          <div className={styles.boxContent}>
+            <h3 className={styles.boxTitle}>Sign up as Tutor</h3>
+            <p className={styles.boxDescription}>Browse opportunities and start tutoring.</p>
+          </div>
         </div>
-        <h1 className={styles.title}>Under Development</h1>
-        <p className={styles.text}>
-          We&apos;re building something great. Thanks for your patience — please check back soon.
+
+        {/* Tutee Box */}
+        <div className={`${styles.actionBox} ${styles.tuteeBox}`}>
+          <div className={styles.boxIcon}>
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+              <path d="M7 14l5-5 5 5z"/>
+            </svg>
+          </div>
+          <div className={styles.boxContent}>
+            <h3 className={styles.boxTitle}>Sign up as Tutee</h3>
+            <p className={styles.boxDescription}>Request help for subjects and schedule sessions.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Email Information Box */}
+      <div className={styles.emailBox}>
+        <h4 className={styles.emailTitle}>Use your @hdsb.ca email</h4>
+        <p className={styles.emailDescription}>
+          You can create two separate accounts with the same school email — one as a Tutor and one as a Tutee. 
+          Just sign up for each role using your @hdsb.ca address.
         </p>
-        <div className={styles.dots} aria-hidden>
-          <span className={styles.dot} />
-          <span className={styles.dot} />
-          <span className={styles.dot} />
-        </div>
-        <small className={styles.hint}>Status: active • last updated just now</small>
+      </div>
+
+      {/* Login Link */}
+      <div className={styles.loginLink}>
+        Already have an account? Log in →
       </div>
     </main>
   );

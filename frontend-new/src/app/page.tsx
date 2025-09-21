@@ -1,46 +1,111 @@
-"use client";
-
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-lg w-full text-center">
-        {/* Main Icon */}
-        <div className="mb-8">
-          <div className="mx-auto w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center shadow-lg">
-            <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
-            </svg>
-          </div>
+    <main className="wrap" role="main" aria-label="Under development">
+      <div className="card" role="status">
+        <div className="icon" aria-hidden>
+          <svg viewBox="0 0 24 24" width="56" height="56" strokeWidth="1.75" stroke="currentColor" fill="none">
+            <circle cx="12" cy="12" r="9" opacity="0.15" />
+            <path d="M8 12h8" strokeLinecap="round" />
+            <path d="M12 8v8" strokeLinecap="round" />
+          </svg>
         </div>
-
-        {/* Main Message */}
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">
-          Under Development
-        </h1>
-        
-        <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-          We&apos;re working hard to bring you something amazing. 
-          Our team is crafting an exceptional experience that will be ready soon.
+        <h1>Under Development</h1>
+        <p>
+          We&apos;re building something great. Thanks for your patience — please check back soon.
         </p>
-
-        {/* Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex justify-center space-x-2 mb-4">
-            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
-            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          </div>
-          <p className="text-sm text-gray-500">
-            Building something special...
-          </p>
+        <div className="dots" aria-hidden>
+          <span />
+          <span />
+          <span />
         </div>
-
-        {/* Coming Soon Badge */}
-        <div className="inline-flex items-center px-4 py-2 bg-white rounded-full shadow-md border border-gray-200">
-          <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-          <span className="text-sm font-medium text-gray-700">Coming Soon</span>
-        </div>
+        <small className="hint">Status: active • last updated just now</small>
       </div>
-    </div>
+
+      <style jsx>{`
+        .wrap {
+          min-height: 100vh;
+          display: grid;
+          place-items: center;
+          padding: 24px;
+          background: radial-gradient(1200px 600px at 10% -10%, #e0f2fe 0%, transparent 60%),
+                      radial-gradient(1200px 600px at 110% 110%, #e9d5ff 0%, transparent 60%),
+                      linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+          color: #0f172a;
+        }
+
+        .card {
+          width: min(680px, 100%);
+          background: #ffffffcc;
+          backdrop-filter: saturate(160%) blur(6px);
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          padding: 32px 28px;
+          box-shadow: 0 10px 30px rgba(2, 6, 23, 0.08), 0 1px 0 rgba(2, 6, 23, 0.04) inset;
+          text-align: center;
+        }
+
+        .icon {
+          width: 88px;
+          height: 88px;
+          margin: 0 auto 12px;
+          display: grid;
+          place-items: center;
+          color: #2563eb;
+          background: conic-gradient(from 210deg at 50% 50%, #93c5fd, #c4b5fd, #93c5fd);
+          border-radius: 999px;
+          box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+        }
+
+        h1 {
+          margin: 8px 0 8px;
+          font-size: 28px;
+          line-height: 1.2;
+          letter-spacing: -0.01em;
+        }
+
+        p {
+          margin: 0 auto 18px;
+          max-width: 48ch;
+          color: #334155;
+          font-size: 16px;
+          line-height: 1.6;
+        }
+
+        .dots {
+          display: inline-flex;
+          gap: 8px;
+          margin: 8px 0 14px;
+        }
+        .dots span {
+          width: 8px;
+          height: 8px;
+          background: #2563eb;
+          border-radius: 999px;
+          animation: bounce 1.2s infinite ease-in-out;
+        }
+        .dots span:nth-child(2) { animation-delay: 0.15s; }
+        .dots span:nth-child(3) { animation-delay: 0.3s; }
+
+        .hint {
+          color: #64748b;
+        }
+
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); opacity: 0.6; }
+          40% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        @media (prefers-color-scheme: dark) {
+          .wrap { color: #e5e7eb; }
+          .card {
+            background: rgba(2, 6, 23, 0.6);
+            border-color: rgba(148, 163, 184, 0.25);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.02) inset;
+          }
+          p { color: #cbd5e1; }
+          .icon { box-shadow: 0 10px 24px rgba(37, 99, 235, 0.35); }
+        }
+      `}</style>
+    </main>
   );
 }

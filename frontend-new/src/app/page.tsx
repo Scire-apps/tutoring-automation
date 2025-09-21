@@ -11,7 +11,9 @@ export default function Home() {
             <path d="M12 8v8" strokeLinecap="round" />
           </svg>
         </div>
-        <h1 className={styles.title}>Tutoring App by Learnova is under development</h1>
+        <h1 className={styles.title}>
+          <span className={styles.highlightTutoring}>Tutoring App</span> by <span className={styles.highlightLearnova}>Learnova</span> is under development
+        </h1>
         <p className={styles.text}>
           We&apos;re building something great. Thanks for your patience — please check back soon.
         </p>

@@ -12,7 +12,7 @@ export default function Home() {
           </svg>
         </div>
         <h1 className={styles.title}>
-          <span className={styles.highlightTutoring}>Tutoring App</span> by <span className={styles.highlightLearnova}>Learnova</span> is under development
+          <span className={styles.highlightTutoring}>Tutoring App</span> by <span className={styles.highlightLearnova}>Scire</span> is under development
         </h1>
         <p className={styles.text}>
           We&apos;re building something great. Thanks for your patience — please check back soon.

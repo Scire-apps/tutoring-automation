@@ -33,6 +33,9 @@ yarn-error.log*
 .env.production.local
 !.env.example
 
+# seed-generated admin credentials (scripts/seed-admins.ts)
+.admin-credentials.local
+
 # vercel
 .vercel
 

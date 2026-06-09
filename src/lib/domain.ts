@@ -1,44 +1,8 @@
 /**
- * Domain business rules shared across API routes, ported verbatim from the
- * old Flask backend so behavior is preserved exactly.
+ * Domain business rules shared across API routes. The session scheduling
+ * validators below are kept verbatim from the prior implementation so the
+ * availability / duration / ISO time arithmetic stays bit-for-bit identical.
  */
-
-/**
- * Remove +tutor/+tutee tagging from @hdsb.ca emails (for delivery and display).
- *   1abouaitaadh+tutor@hdsb.ca -> 1abouaitaadh@hdsb.ca
- *   1smithj+tutee@HDSB.CA      -> 1smithj@HDSB.CA
- * Non-hdsb domains are returned unchanged.
- */
-export function scrubHdsbRoleTag(address: string | null | undefined): string | null | undefined {
-  if (typeof address !== "string") return address;
-  const at = address.indexOf("@");
-  if (at < 0) return address;
-  const local = address.slice(0, at);
-  const domain = address.slice(at + 1);
-  if (domain.toLowerCase() !== "hdsb.ca") return address;
-  const cleaned = local.replace(/\+(?:tutor|tutee)$/i, "");
-  return `${cleaned}@${domain}`;
-}
-
-/**
- * Whether an approval's subject_name matches an opportunity's subject_name.
- * Match = the approved (base) name, lowercased/trimmed, is a SUBSTRING of the
- * opportunity name (handles HL/SL and "(ELL)" suffixes). Caller must have already
- * filtered approvals by subject_type, subject_grade and status='approved'.
- */
-export function matchApprovalName(approvalSubjectName: string | null | undefined, opportunitySubjectName: string | null | undefined): boolean {
-  const base = String(approvalSubjectName ?? "").trim().toLowerCase();
-  const oppName = String(opportunitySubjectName ?? "").trim().toLowerCase();
-  return base.length > 0 && oppName.includes(base);
-}
-
-/** True if any approval (already filtered by type/grade/status) matches the opportunity name. */
-export function isApprovedForOpportunity(
-  approvals: Array<{ subject_name?: string | null }>,
-  opportunitySubjectName: string | null | undefined
-): boolean {
-  return (approvals || []).some((a) => matchApprovalName(a?.subject_name, opportunitySubjectName));
-}
 
 /** Tutee desired duration: an integer multiple of 30, between 60 and 180 inclusive. */
 export function isValidDesiredDuration(n: unknown): boolean {

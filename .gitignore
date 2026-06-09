@@ -41,8 +41,6 @@ yarn-error.log*
 
 # supabase
 /supabase/.temp/
-# seed-admins prints generated admin credentials here (never commit)
-.admin-credentials.local
 
 # python (legacy backend, being removed)
 __pycache__/

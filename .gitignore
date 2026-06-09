@@ -1,54 +1,44 @@
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# next.js
+/.next/
+/out/
+next-env.d.ts
 
-# Virtual environments
-venv/
-env/
-ENV/
+# production
+/build
 
-# Node.js
-node_modules/
+# testing
+/coverage
+
+# misc
+.DS_Store
+*.pem
+*.tsbuildinfo
+
+# debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
-# Next.js
-.next/
-out/
+# env files (keep .env.example tracked)
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.production.local
+!.env.example
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# vercel
+.vercel
 
-# OS
-.DS_Store
-Thumbs.db
+# python (legacy backend, being removed)
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.rebuild-ref/

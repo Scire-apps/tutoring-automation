@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import SupabaseListener from "./supabase-listener";
+import { BRAND } from "@/lib/brand";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -10,14 +11,16 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Tutoring Automation",
-  description:
-    "A platform for managing tutoring opportunities and volunteer hours",
-  icons: {
-    icon: [
-      { url: "/favicon.png", rel: "icon", type: "image/png" },
-      { url: "/favicon.png", rel: "shortcut icon", type: "image/png" },
-    ],
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  ),
+  title: {
+    default: "Scire — Peer tutoring, organized",
+    template: "%s · Scire",
+  },
+  description: BRAND.description,
+  openGraph: {
+    siteName: "Scire",
   },
 };
 

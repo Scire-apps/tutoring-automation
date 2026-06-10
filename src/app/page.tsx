@@ -1,133 +1,330 @@
-"use client";
-import Link from 'next/link';
-import Image from 'next/image';
+import type { Metadata } from "next";
+import Link from "next/link";
+import {
+  GraduationCap,
+  ShieldCheck,
+  Clock3,
+  UserPlus,
+  ClipboardList,
+  CalendarDays,
+  BadgeCheck,
+} from "lucide-react";
+import { BRAND } from "@/lib/brand";
+import { BrandMark, BrandWordmark } from "@/components/brand";
+import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+export const metadata: Metadata = {
+  title: "Scire — Peer tutoring, organized",
+  description: BRAND.description,
+};
+
+const WHY_CARDS = [
+  {
+    icon: GraduationCap,
+    title: "Learn and tutor with one account",
+    body: "No separate logins. Post a request when you need help, and tutor the subjects you're approved for — all from the same place.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Quality your school controls",
+    body: "Managers admit members and approve which subjects each tutor can teach, so help comes from people your organization trusts.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "Volunteer hours, verified",
+    body: "Every completed session is reviewed by a manager and logged as verified volunteer hours you can actually report.",
+  },
+];
+
+const STEPS = [
+  {
+    icon: UserPlus,
+    title: "Join your organization",
+    body: "Sign up with any email and pick your school or club. A manager admits you to unlock tutoring.",
+  },
+  {
+    icon: ClipboardList,
+    title: "Post or claim a request",
+    body: "Need help? Post a request. Want to tutor? Claim an open request in a subject you're approved for.",
+  },
+  {
+    icon: CalendarDays,
+    title: "Schedule it",
+    body: "Share your availability, pick a time that fits, and meet online or in person.",
+  },
+  {
+    icon: Clock3,
+    title: "Meet, learn, log hours",
+    body: "Run the session, submit the recording, and a manager verifies it — banking your volunteer hours.",
+  },
+];
+
+const FAQ = [
+  {
+    q: "Who can join Scire?",
+    a: "Anyone at an organization that's on Scire. Sign up with any email address and choose your school or club from the list — there's no domain restriction.",
+  },
+  {
+    q: "Why is my account pending after I sign up?",
+    a: "New accounts start inactive until a manager at your organization admits you. This keeps each organization's space limited to its own members. You'll get access as soon as you're admitted.",
+  },
+  {
+    q: "How do I become a tutor?",
+    a: "Every member can tutor — you just need a manager to approve you for the specific subjects you want to teach. Request approval from your dashboard with a bit of evidence (like a grade), and a manager reviews it.",
+  },
+  {
+    q: "How do volunteer hours work?",
+    a: "After a session, the tutor submits the recording link and marks it complete. A manager at your organization verifies the session and awards the hours, which are tracked in your account.",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white">
-      {/* Animated gradient background */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-32 -left-32 w-[40rem] h-[40rem] rounded-full bg-gradient-to-tr from-blue-200 via-indigo-200 to-purple-200 blur-3xl opacity-70 animate-pulse" />
-        <div className="absolute -bottom-32 -right-32 w-[40rem] h-[40rem] rounded-full bg-gradient-to-tr from-indigo-200 via-purple-200 to-pink-200 blur-3xl opacity-70 animate-pulse" />
+    <div className="relative min-h-screen overflow-hidden bg-white text-gray-900">
+      {/* Decorative background */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-32 -left-32 h-[40rem] w-[40rem] rounded-full bg-gradient-to-tr from-blue-200 via-indigo-200 to-purple-200 opacity-70 blur-3xl motion-safe:animate-pulse" />
+        <div className="absolute -bottom-32 -right-32 h-[40rem] w-[40rem] rounded-full bg-gradient-to-tr from-indigo-200 via-purple-200 to-pink-200 opacity-70 blur-3xl motion-safe:animate-pulse" />
       </div>
-
-      {/* Subtle grid */}
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-40" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] opacity-40 [background-size:16px_16px]"
+      />
 
       {/* Header */}
       <header className="relative z-10">
-        <div className="mx-auto max-w-7xl px-6 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image src="/logo.png" alt="Tutoring Logo" width={40} height={40} className="rounded-md shadow" />
-            <span className="text-xl font-bold tracking-tight text-gray-900">WOSS Tutoring</span>
+        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            <BrandMark className="h-8 w-8" />
+            <BrandWordmark className="text-xl" />
+          </Link>
+          <div className="flex items-center gap-2">
+            <div className="mr-2 hidden items-center gap-6 text-sm font-medium text-gray-600 md:flex">
+              <a
+                href="#how-it-works"
+                className="rounded-md transition-colors hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                How it works
+              </a>
+              <a
+                href="#for-schools"
+                className="rounded-md transition-colors hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                For schools
+              </a>
+            </div>
+            <Button asChild variant="ghost">
+              <Link href="/auth/login">Log in</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/auth/register">Get started</Link>
+            </Button>
           </div>
-          {/* Top-right navigation removed per request */}
-        </div>
+        </nav>
       </header>
 
-      {/* Hero */}
       <main className="relative z-10">
-        <section className="mx-auto max-w-7xl px-6 pt-10 pb-8 grid grid-cols-1 place-items-center gap-10">
-          <div className="order-2 lg:order-1 flex flex-col items-center text-center w-full max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 text-blue-700 px-3 py-1 text-xs font-semibold ring-1 ring-inset ring-blue-200">
-              Simple • Fast • Secure
-            </div>
-            <h1 className="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900">
-              Match. Learn. Excel.
-            </h1>
-            <p className="mt-4 text-gray-600 leading-7">
-              Join as a tutor or request help as a tutee. Get matched, schedule sessions, and track progress — all in one place.
-            </p>
-
-            {/* CTA Cards */}
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 justify-items-center">
-              <Link href="/auth/register/tutor" className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 p-0.5 shadow-lg transition-transform hover:scale-[1.01] focus:outline-none">
-                <div className="relative h-full w-full rounded-[1rem] bg-white p-5">
-                  <div className="absolute -inset-20 bg-gradient-to-r from-blue-400/20 via-indigo-400/20 to-purple-400/20 blur-3xl group-hover:opacity-100 opacity-0 transition-opacity" />
-                  <div className="relative flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M12 14.5c2.485 0 4.5-2.015 4.5-4.5S14.485 5.5 12 5.5 7.5 7.515 7.5 10s2.015 4.5 4.5 4.5z"/><path fillRule="evenodd" d="M4.5 19.5a7.5 7.5 0 1115 0V21a.75.75 0 01-.75.75h-13.5A.75.75 0 014.5 21v-1.5z" clipRule="evenodd"/></svg>
-                    </div>
-                    <div className="flex-1">
-                      <h2 className="text-lg font-semibold text-gray-900">Sign up as Tutor</h2>
-                      <p className="mt-1 text-sm text-gray-600">Browse opportunities and start tutoring.</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/auth/register/tutee" className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 p-0.5 shadow-lg transition-transform hover:scale-[1.01] focus:outline-none">
-                <div className="relative h-full w-full rounded-[1rem] bg-white p-5">
-                  <div className="absolute -inset-20 bg-gradient-to-r from-purple-400/20 via-pink-400/20 to-red-400/20 blur-3xl group-hover:opacity-100 opacity-0 transition-opacity" />
-                  <div className="relative flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center shadow-inner">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M11.7 2.3a1 1 0 0 1 1.6 0l8 10a1 1 0 0 1-.8 1.7H3.5a1 1 0 0 1-.8-1.7l8-10z"/><path d="M12 14a5 5 0 0 0-5 5v1h10v-1a5 5 0 0 0-5-5z"/></svg>
-                    </div>
-                    <div className="flex-1">
-                      <h2 className="text-lg font-semibold text-gray-900">Sign up as Tutee</h2>
-                      <p className="mt-1 text-sm text-gray-600">Request help for subjects and schedule sessions.</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </div>
-
-            {/* Note about @hdsb.ca */}
-            <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-800">
-              <p className="font-semibold">Use your @hdsb.ca email</p>
-              <p className="mt-1">You can create two separate accounts with the same school email — one as a Tutor and one as a Tutee. Just sign up for each role using your @hdsb.ca address.</p>
-            </div>
-
-            {/* Secondary link */}
-            <div className="mt-5">
-              <Link href="/auth/login" className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium group">
-                Already have an account? Log in
-                <svg className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 11-1.414-1.414L13.586 11H4a1 1 0 110-2h9.586l-3.293-3.293a1 1 0 010-1.414z" clipRule="evenodd"/></svg>
-              </Link>
-            </div>
+        {/* Hero */}
+        <section className="mx-auto max-w-4xl px-6 pb-16 pt-12 text-center sm:pt-20">
+          <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">
+            One account. Learn and tutor.
+          </span>
+          <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-6xl">
+            Peer tutoring, organized.
+          </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-gray-600">
+            Scire runs your school or club&apos;s tutoring program: post a
+            request when you need help, tutor the subjects you&apos;re approved
+            for, and get every volunteer hour verified — all in one place.
+          </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button asChild size="lg">
+              <Link href="/auth/register">Create your account</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link href="/auth/login">Log in</Link>
+            </Button>
           </div>
-
-          {/* Hero visual removed per request */}
+          <p className="mt-4 text-sm text-gray-500">
+            Free for students. Any email address works.
+          </p>
         </section>
 
-        {/* Secondary sections */}
-        <section id="features" className="mx-auto max-w-7xl px-6 py-10">
-          <h2 className="text-2xl font-bold text-gray-900">Why WOSS Tutoring?</h2>
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { title: 'Fast matching', desc: 'Smart filters and approvals to match students with the right tutors quickly.' },
-              { title: 'Seamless scheduling', desc: 'Share availability, confirm times, and stay on top of sessions.' },
-              { title: 'Track progress', desc: 'Admins verify sessions and award hours. Students get consistent support.' },
-            ].map((f) => (
-              <div key={f.title} className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:shadow-md">
-                <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
-                  <span>✨</span>
+        {/* Why Scire? */}
+        <section className="mx-auto max-w-7xl px-6 py-16">
+          <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900">
+            Why Scire?
+          </h2>
+          <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {WHY_CARDS.map(({ icon: Icon, title, body }) => (
+              <li
+                key={title}
+                className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <Icon aria-hidden className="h-6 w-6" />
                 </div>
-                <h3 className="mt-3 text-lg font-semibold text-gray-900">{f.title}</h3>
-                <p className="mt-1 text-sm text-gray-600">{f.desc}</p>
-                <div className="mt-3 h-1 w-0 group-hover:w-16 transition-all bg-blue-200 rounded-full" />
-              </div>
+                <h3 className="mt-4 text-lg font-semibold text-gray-900">
+                  {title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-gray-600">{body}</p>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
 
-        <section id="how" className="mx-auto max-w-7xl px-6 pb-14">
-          <h2 className="text-2xl font-bold text-gray-900">How it works</h2>
-          <ol className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[ 'Sign up', 'Get matched', 'Schedule & learn' ].map((s, i) => (
-              <li key={s} className="relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <div className="absolute -top-3 -left-3 h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shadow">{i+1}</div>
-                <h3 className="ml-6 text-lg font-semibold text-gray-900">{s}</h3>
-                <p className="mt-2 ml-6 text-sm text-gray-600">{[
-                  'Use your @hdsb.ca email and choose Tutor or Tutee to get started.',
-                  'Admins validate tutor subjects. Students see eligible tutors and open requests.',
-                  'Pick times that work, meet up, and track sessions effortlessly.',
-                ][i]}</p>
+        {/* How it works */}
+        <section
+          id="how-it-works"
+          className="mx-auto max-w-7xl scroll-mt-20 px-6 py-16"
+        >
+          <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900">
+            How it works
+          </h2>
+          <ol className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map(({ icon: Icon, title, body }, i) => (
+              <li
+                key={title}
+                className="relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+                    {i + 1}
+                  </span>
+                  <Icon aria-hidden className="h-5 w-5 text-blue-600" />
+                </div>
+                <h3 className="mt-4 text-base font-semibold text-gray-900">
+                  {title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-gray-600">{body}</p>
               </li>
             ))}
           </ol>
         </section>
+
+        {/* For schools & tutoring clubs */}
+        <section
+          id="for-schools"
+          className="scroll-mt-20 bg-gradient-to-b from-blue-50/60 to-indigo-50/60 py-20"
+        >
+          <div className="mx-auto max-w-4xl px-6 text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+              Run your program on Scire
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-gray-600">
+              Each organization is its own private space — the members you admit,
+              a subject catalog you define, and the hours you verify.
+            </p>
+            <ul className="mx-auto mt-6 grid max-w-2xl grid-cols-1 gap-3 text-left sm:grid-cols-3">
+              <li className="rounded-xl bg-white/70 px-4 py-3 text-sm font-medium text-gray-700 ring-1 ring-inset ring-blue-100">
+                Members you admit
+              </li>
+              <li className="rounded-xl bg-white/70 px-4 py-3 text-sm font-medium text-gray-700 ring-1 ring-inset ring-blue-100">
+                A subject catalog you define
+              </li>
+              <li className="rounded-xl bg-white/70 px-4 py-3 text-sm font-medium text-gray-700 ring-1 ring-inset ring-blue-100">
+                Hours you verify
+              </li>
+            </ul>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Button asChild size="lg">
+                <Link href="/auth/register/manager">Register as a manager</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/auth/login/manager">Manager sign in</Link>
+              </Button>
+            </div>
+            <p className="mx-auto mt-6 max-w-xl text-sm text-gray-500">
+              New organizations are set up by the Scire team. Want your school or
+              club on Scire? Email{" "}
+              <a
+                href={`mailto:${BRAND.contactEmail}`}
+                className="font-medium text-blue-600 underline-offset-4 hover:underline"
+              >
+                {BRAND.contactEmail}
+              </a>
+              .
+            </p>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="mx-auto max-w-3xl px-6 py-20">
+          <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900">
+            Frequently asked questions
+          </h2>
+          <Accordion type="single" collapsible className="mt-8 w-full">
+            {FAQ.map(({ q, a }) => (
+              <AccordionItem key={q} value={q}>
+                <AccordionTrigger className="text-left text-base font-semibold">
+                  {q}
+                </AccordionTrigger>
+                <AccordionContent className="text-sm leading-6 text-gray-600">
+                  {a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </section>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-100 bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-12 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-sm">
+            <BrandWordmark className="text-lg" />
+            <p className="mt-2 text-sm italic text-gray-500">
+              Scire — from the Latin <span className="italic">scire</span>, &quot;to
+              know.&quot;
+            </p>
+            <p className="mt-3 text-sm text-gray-500">
+              <a
+                href={`mailto:${BRAND.contactEmail}`}
+                className="font-medium text-blue-600 underline-offset-4 hover:underline"
+              >
+                {BRAND.contactEmail}
+              </a>
+            </p>
+          </div>
+          <nav aria-label="Footer">
+            <ul className="flex flex-col gap-2 text-sm text-gray-600 sm:items-end">
+              <li>
+                <Link
+                  href="/auth/login"
+                  className="rounded transition-colors hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  Log in
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/auth/register"
+                  className="rounded transition-colors hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  Create account
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/auth/register/manager"
+                  className="rounded transition-colors hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  Manager registration
+                </Link>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </footer>
     </div>
   );
 }

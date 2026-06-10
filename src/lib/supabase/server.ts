@@ -1,4 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import type { Database } from "@/types/database";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
@@ -25,6 +27,19 @@ export function createUserClient(accessToken: string): SupabaseClient<Database> 
 }
 
 /**
+ * Anonymous (anon key, no user token) client for public route handlers.
+ *
+ * RLS still applies — anon may only read what the anon policies allow (active
+ * organizations' id+name for the signup/login dropdowns). Use for `/api/public/*`
+ * endpoints that must work with no session.
+ */
+export function createAnonClient(): SupabaseClient<Database> {
+  return createClient<Database>(SUPABASE_URL, ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
+
+/**
  * Service-role (secret key) client that BYPASSES RLS. Server-only.
  *
  * Use only where there is no user context or elevation is genuinely required:
@@ -38,5 +53,35 @@ export function createServiceClient(): SupabaseClient<Database> {
   }
   return createClient<Database>(SUPABASE_URL, SECRET_KEY, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
+
+/**
+ * Cookie-backed @supabase/ssr server client for React Server Components and
+ * server layouts (`getServerProfile()` reads through this for no-flash gating).
+ *
+ * The session lives in the request's auth cookies (set by the @supabase/ssr
+ * browser client). Cookie writes are attempted but tolerated to fail: in a pure
+ * RSC render context Next forbids mutating cookies, and the proxy already
+ * refreshes/rotates them per request, so a no-op there is correct and safe.
+ */
+export async function createRSCClient(): Promise<SupabaseClient<Database>> {
+  const cookieStore = await cookies();
+  return createServerClient<Database>(SUPABASE_URL, ANON_KEY, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          for (const { name, value, options } of cookiesToSet) {
+            cookieStore.set(name, value, options);
+          }
+        } catch {
+          // RSC render context: cookie mutation is not allowed. The proxy
+          // refreshes the session cookie per request, so ignoring is safe.
+        }
+      },
+    },
   });
 }

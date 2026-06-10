@@ -12,8 +12,8 @@ let browserClient: SupabaseClient<Database> | undefined;
 /**
  * Cookie-native browser Supabase client (@supabase/ssr). Sessions are stored in
  * cookies so the proxy and server layouts read the same auth state — this
- * replaces the deleted `src/services/supabase.ts` localStorage client and kills
- * the stale-cookie bug class (§3.5).
+ * replaces the deleted legacy `src/services/supabase.ts` client (which kept the
+ * session in browser storage) and kills the stale-cookie bug class (§3.5).
  *
  * Returns a singleton per browser tab; never instantiate `createBrowserClient`
  * directly in components.
@@ -24,3 +24,12 @@ export function getBrowserClient(): SupabaseClient<Database> {
   }
   return browserClient;
 }
+
+/**
+ * The shared browser client instance. Equivalent to `getBrowserClient()` but
+ * usable as a value import (`import { supabase } from "@/lib/supabase/client"`)
+ * by the AuthContext, the auth-state listener, and the auth pages. Because this
+ * module is client-only and `getBrowserClient()` memoizes, `supabase` and every
+ * `getBrowserClient()` call resolve to the same singleton.
+ */
+export const supabase: SupabaseClient<Database> = getBrowserClient();

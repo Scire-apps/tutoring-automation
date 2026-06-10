@@ -7,9 +7,16 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
-import { ACCOUNT_SELECT, type ProfileWithOrg } from "@/lib/admin/dtos";
+import { ACCOUNT_SELECT, type ProfileWithOrg, type AccountAggregates } from "@/lib/admin/dtos";
 
 type AccountKind = Database["public"]["Enums"]["account_kind"];
+
+/** Sessions that count as "active" for the per-account aggregate (non-terminal, post-open). */
+const ACTIVE_SESSION_STATUSES: Database["public"]["Enums"]["session_status"][] = [
+  "claimed",
+  "availability_set",
+  "scheduled",
+];
 
 /** Read a single account (any kind) with its org by id, RLS-bound (admin sees all). */
 export async function readAccount(
@@ -44,4 +51,53 @@ export async function accountHoursTotal(
   const { data } = await supabase.from("volunteer_hours_ledger").select("hours").eq("profile_id", profileId);
   const sum = (data ?? []).reduce((acc, r) => acc + Number(r.hours ?? 0), 0);
   return Math.round(sum * 100) / 100;
+}
+
+/**
+ * The four per-account aggregates (`total_hours`, approved subjects, open
+ * requests, active sessions) for a set of profile ids, in four RLS-bound reads
+ * tallied in-app (PostgREST has no GROUP BY). Bounded by the caller's page size.
+ * Returns a map id → aggregates (every requested id present, zero-filled).
+ */
+export async function accountAggregatesFor(
+  supabase: SupabaseClient<Database>,
+  profileIds: string[],
+): Promise<Map<string, AccountAggregates>> {
+  const map = new Map<string, AccountAggregates>();
+  for (const id of profileIds) {
+    map.set(id, { total_hours: 0, approved_subjects_count: 0, open_requests_count: 0, active_sessions_count: 0 });
+  }
+  if (!profileIds.length) return map;
+
+  const [ledger, approvals, openRequests, activeSessions] = await Promise.all([
+    supabase.from("volunteer_hours_ledger").select("profile_id, hours").in("profile_id", profileIds),
+    supabase.from("subject_approvals").select("profile_id").in("profile_id", profileIds).eq("status", "approved"),
+    supabase.from("sessions").select("requester_id").in("requester_id", profileIds).eq("status", "open"),
+    supabase
+      .from("sessions")
+      .select("requester_id, tutor_id")
+      .or(`requester_id.in.(${profileIds.join(",")}),tutor_id.in.(${profileIds.join(",")})`)
+      .in("status", ACTIVE_SESSION_STATUSES),
+  ]);
+
+  for (const r of (ledger.data as Array<{ profile_id: string; hours: number | string }>) ?? []) {
+    const a = map.get(r.profile_id);
+    if (a) a.total_hours += Number(r.hours ?? 0);
+  }
+  for (const a of map.values()) a.total_hours = Math.round(a.total_hours * 100) / 100;
+
+  for (const r of (approvals.data as Array<{ profile_id: string }>) ?? []) {
+    const a = map.get(r.profile_id);
+    if (a) a.approved_subjects_count += 1;
+  }
+  for (const r of (openRequests.data as Array<{ requester_id: string }>) ?? []) {
+    const a = map.get(r.requester_id);
+    if (a) a.open_requests_count += 1;
+  }
+  for (const r of (activeSessions.data as Array<{ requester_id: string; tutor_id: string | null }>) ?? []) {
+    // A session can touch the same person only once as requester XOR tutor here.
+    const a = map.get(r.requester_id) ?? (r.tutor_id ? map.get(r.tutor_id) : undefined);
+    if (a) a.active_sessions_count += 1;
+  }
+  return map;
 }

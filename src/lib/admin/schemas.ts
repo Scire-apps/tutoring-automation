@@ -118,12 +118,15 @@ export const patchSubjectSchema = z.object({
 });
 export type PatchSubjectBody = z.infer<typeof patchSubjectSchema>;
 
-/** Decide a pending subject-approval as an admin override (§6.4). */
-export const decideApprovalSchema = z.object({
-  action: z.enum(["approve", "reject"]),
+/**
+ * Decide a pending subject-approval as an admin override (§6.4). The decision
+ * verb (approve|reject) is the URL segment per the §6.4 inventory
+ * (`POST .../[id]/approve|reject`); the body carries only the optional note.
+ */
+export const decisionNoteSchema = z.object({
   note: z.string().trim().max(500).optional().nullable(),
 });
-export type DecideApprovalBody = z.infer<typeof decideApprovalSchema>;
+export type DecisionNoteBody = z.infer<typeof decisionNoteSchema>;
 
 /** A reason-required session intervention (cancel; §6.4). */
 export const reasonSchema = z.object({

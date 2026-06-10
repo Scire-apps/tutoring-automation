@@ -1,19 +1,18 @@
 import { requireAdmin } from "@/lib/auth";
 import { json, conflict, notFound, serverError } from "@/lib/http";
 import { deleteAuthUser } from "@/lib/auth-admin";
-import { readAccount, accountHoursTotal } from "@/lib/admin/accounts";
+import { readAccount, accountAggregatesFor } from "@/lib/admin/accounts";
 import {
   toAdminAccountDTO,
   type AdminAccountApproval,
   type AdminAccountSession,
+  type AdminLedgerEntry,
   type AdminAccountDetail,
   type SubjectRef,
   type PersonRef,
 } from "@/lib/admin/dtos";
 
 export const dynamic = "force-dynamic";
-
-const UNKNOWN_SUBJECT = (id: string): SubjectRef => ({ id, name: "Unknown subject", category: null, grade_level: null });
 
 type ApprovalRow = {
   id: string;
@@ -40,11 +39,22 @@ type SessionRow = {
   tutor: PersonRef;
 };
 
+type LedgerRow = {
+  id: number;
+  kind: AdminLedgerEntry["kind"];
+  hours: number | string;
+  note: string | null;
+  session_id: string | null;
+  created_at: string;
+  awarded_by: { first_name: string; last_name: string } | null;
+};
+
 /**
- * GET /api/admin/accounts/[id] — full account detail (§6.4): profile (with org) +
- * the member's subject approvals + a session summary (as requester AND tutor) +
- * hours total (ledger SUM). Manager/admin accounts simply carry empty
- * approvals/sessions. Cross-org admin read. requireAdmin gates.
+ * GET /api/admin/accounts/[id] — full account detail (§6.4): the flat account row
+ * (profile + org + the four aggregates) plus the member's subject approvals, a
+ * session summary (as requester AND tutor), and the ledger. Manager/admin
+ * accounts simply carry empty approvals/sessions/ledger. Cross-org admin read.
+ * requireAdmin gates.
  */
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin(req);
@@ -55,7 +65,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const account = await readAccount(supabase, id);
   if (!account) return notFound("not_found", "Account not found");
 
-  const [approvalsRes, sessionsRes, totalHours] = await Promise.all([
+  const [approvalsRes, sessionsRes, ledgerRes, aggregates] = await Promise.all([
     supabase
       .from("subject_approvals")
       .select(
@@ -75,16 +85,27 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       .or(`requester_id.eq.${id},tutor_id.eq.${id}`)
       .order("created_at", { ascending: false })
       .limit(50),
-    accountHoursTotal(supabase, id),
+    supabase
+      .from("volunteer_hours_ledger")
+      .select(
+        `id, kind, hours, note, session_id, created_at,
+         awarded_by:profiles!volunteer_hours_ledger_awarded_by_fkey ( first_name, last_name )`,
+      )
+      .eq("profile_id", id)
+      .order("id", { ascending: false }),
+    accountAggregatesFor(supabase, [id]),
   ]);
 
-  if (approvalsRes.error || sessionsRes.error) {
+  if (approvalsRes.error || sessionsRes.error || ledgerRes.error) {
     return serverError("server_error", "Failed to load account detail");
   }
 
   const approvals: AdminAccountApproval[] = ((approvalsRes.data as unknown as ApprovalRow[]) ?? []).map((a) => ({
     id: a.id,
-    subject: a.subject ?? UNKNOWN_SUBJECT(a.org_subject_id),
+    org_subject_id: a.org_subject_id,
+    name: a.subject?.name ?? "Unknown subject",
+    category: a.subject?.category ?? null,
+    grade_level: a.subject?.grade_level ?? null,
     status: a.status,
     evidence: a.evidence,
     decision_note: a.decision_note,
@@ -93,15 +114,13 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     created_at: a.created_at,
   }));
 
-  let sessionsTutored = 0;
-  let sessionsReceived = 0;
   const sessions: AdminAccountSession[] = ((sessionsRes.data as unknown as SessionRow[]) ?? []).map((s) => {
     const role: "requester" | "tutor" = s.requester_id === id ? "requester" : "tutor";
-    if (role === "tutor") sessionsTutored += 1;
-    else sessionsReceived += 1;
     return {
       id: s.id,
-      subject: s.subject ?? UNKNOWN_SUBJECT(s.org_subject_id),
+      name: s.subject?.name ?? "Unknown subject",
+      category: s.subject?.category ?? null,
+      grade_level: s.subject?.grade_level ?? null,
       status: s.status,
       role,
       counterpart: role === "requester" ? s.tutor : s.requester,
@@ -110,16 +129,21 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     };
   });
 
+  const ledger: AdminLedgerEntry[] = ((ledgerRes.data as unknown as LedgerRow[]) ?? []).map((l) => ({
+    id: l.id,
+    kind: l.kind,
+    hours: Number(l.hours ?? 0),
+    note: l.note,
+    session_id: l.session_id,
+    awarded_by_name: l.awarded_by ? `${l.awarded_by.first_name} ${l.awarded_by.last_name}`.trim() : null,
+    created_at: l.created_at,
+  }));
+
   const detail: AdminAccountDetail = {
-    account: toAdminAccountDTO(account),
-    total_hours: totalHours,
+    ...toAdminAccountDTO(account, aggregates.get(id)),
     approvals,
     sessions,
-    counts: {
-      approved_subjects: approvals.filter((a) => a.status === "approved").length,
-      sessions_tutored: sessionsTutored,
-      sessions_received: sessionsReceived,
-    },
+    ledger,
   };
   return json(detail);
 }

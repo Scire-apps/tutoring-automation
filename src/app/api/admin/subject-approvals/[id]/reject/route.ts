@@ -2,7 +2,7 @@ import { after } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { json, conflict, notFound, serverError } from "@/lib/http";
 import { parseBody } from "@/lib/validation";
-import { decideApprovalSchema } from "@/lib/admin/schemas";
+import { decisionNoteSchema } from "@/lib/admin/schemas";
 import { readAdminApproval, readAdminApprovalWithJoins } from "@/lib/admin/sessions";
 import { resolveRecipient } from "@/lib/admin/recipients";
 import { toAdminApprovalDTO } from "@/lib/admin/dtos";
@@ -11,11 +11,11 @@ import { approvalDecision } from "@/lib/email";
 export const dynamic = "force-dynamic";
 
 /**
- * POST /api/admin/subject-approvals/[id]/decide {action, note?} — decide a PENDING
- * subject-approval as an admin override (§6.4). Guarded UPDATE pending→approved|
- * rejected, stamping decided_by/at + decision_note. The approvals_audit trigger
- * records the decision; the member is emailed. Cross-org (admin RLS grants the
- * write). A re-decide hits the status guard → 409.
+ * POST /api/admin/subject-approvals/[id]/reject {note?} — reject a PENDING
+ * subject-approval as an admin override (§6.4 `POST .../[id]/approve|reject`).
+ * Guarded UPDATE pending→rejected, stamping decided_by/at + decision_note. The
+ * approvals_audit trigger records the decision; the member is emailed. Cross-org
+ * (admin RLS grants the write). A re-decide hits the status guard → 409.
  */
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin(req);
@@ -23,9 +23,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const { supabase, user } = auth;
   const { id } = await ctx.params;
 
-  const parsed = await parseBody(req, decideApprovalSchema);
+  const parsed = await parseBody(req, decisionNoteSchema);
   if (!parsed.ok) return parsed.response;
-  const newStatus = parsed.data.action === "approve" ? "approved" : "rejected";
   const note = parsed.data.note ?? null;
 
   const before = await readAdminApproval(supabase, id);
@@ -37,7 +36,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const { data: updated, error } = await supabase
     .from("subject_approvals")
     .update({
-      status: newStatus,
+      status: "rejected",
       decision_note: note,
       decided_by: user.id,
       decided_at: new Date().toISOString(),
@@ -60,7 +59,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
   const recipient = await resolveRecipient(supabase, before.profile_id);
   if (recipient) {
-    after(() => approvalDecision(recipient, dto.subject.name, newStatus, note, { org_id: before.org_id }));
+    after(() => approvalDecision(recipient, dto.subject.name, "rejected", note, { org_id: before.org_id }));
   }
 
   return json(dto, 200);

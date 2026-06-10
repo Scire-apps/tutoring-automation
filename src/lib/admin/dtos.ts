@@ -26,11 +26,11 @@ export function refName(p: PersonRef): string {
 
 // --- Organizations -----------------------------------------------------------
 
-/** Per-org membership counts the orgs list + detail header carry (§6.3). */
+/** Per-org counts the orgs list + detail header carry (§6.3). */
 export type OrgCounts = {
   members: number;
   managers: number;
-  pending: number;
+  sessions: number;
 };
 
 /** An org row for the admin orgs list/detail (§6.3): identity + archive + counts. */
@@ -39,12 +39,10 @@ export type AdminOrgDTO = {
   name: string;
   slug: string;
   archived_at: string | null;
-  is_archived: boolean;
   created_at: string;
-  updated_at: string;
-  member_count: number;
-  manager_count: number;
-  pending_count: number;
+  members_count: number;
+  managers_count: number;
+  sessions_count: number;
 };
 
 export function toAdminOrgDTO(o: OrgRow, counts: OrgCounts): AdminOrgDTO {
@@ -53,34 +51,47 @@ export function toAdminOrgDTO(o: OrgRow, counts: OrgCounts): AdminOrgDTO {
     name: o.name,
     slug: o.slug,
     archived_at: o.archived_at,
-    is_archived: o.archived_at != null,
     created_at: o.created_at,
-    updated_at: o.updated_at,
-    member_count: counts.members,
-    manager_count: counts.managers,
-    pending_count: counts.pending,
+    members_count: counts.members,
+    managers_count: counts.managers,
+    sessions_count: counts.sessions,
   };
 }
 
 /** Full platform-level stats for one org (`GET /api/admin/orgs/[id]/stats`). */
 export type AdminOrgStats = {
-  members_active: number;
-  members_pending: number;
-  members_suspended: number;
-  members_rejected: number;
-  managers_active: number;
-  managers_pending: number;
-  open_sessions: number;
-  scheduled_sessions: number;
+  active_members: number;
+  pending_members: number;
+  active_managers: number;
+  pending_managers: number;
+  open_requests: number;
+  scheduled: number;
   awaiting_verification: number;
-  verified_sessions: number;
+  hours_awarded: number;
   subjects_active: number;
-  total_hours_awarded: number;
 };
 
 // --- Accounts (unified members + managers + admins) --------------------------
 
-/** An account row for the unified directory (`GET /api/admin/accounts`). */
+/** Per-account aggregates the unified directory + detail carry (§6.4). */
+export type AccountAggregates = {
+  total_hours: number;
+  approved_subjects_count: number;
+  open_requests_count: number;
+  active_sessions_count: number;
+};
+
+const ZERO_AGGREGATES: AccountAggregates = {
+  total_hours: 0,
+  approved_subjects_count: 0,
+  open_requests_count: 0,
+  active_sessions_count: 0,
+};
+
+/**
+ * An account row for the unified directory (`GET /api/admin/accounts`). Flat
+ * profile fields + the four per-account aggregates the panel renders.
+ */
 export type AdminAccountDTO = {
   id: string;
   kind: Database["public"]["Enums"]["account_kind"];
@@ -92,8 +103,11 @@ export type AdminAccountDTO = {
   pronouns: string | null;
   status_note: string | null;
   org: { id: string; name: string } | null;
+  total_hours: number;
+  approved_subjects_count: number;
+  open_requests_count: number;
+  active_sessions_count: number;
   created_at: string;
-  activated_at: string | null;
 };
 
 type ProfileWithOrg = ProfileRow & { org: { id: string; name: string } | null };
@@ -103,7 +117,10 @@ export const ACCOUNT_SELECT = `
   org:organizations!profiles_org_id_fkey ( id, name )
 ` as const;
 
-export function toAdminAccountDTO(p: ProfileWithOrg): AdminAccountDTO {
+export function toAdminAccountDTO(
+  p: ProfileWithOrg,
+  aggregates: AccountAggregates = ZERO_AGGREGATES,
+): AdminAccountDTO {
   return {
     id: p.id,
     kind: p.kind,
@@ -115,15 +132,21 @@ export function toAdminAccountDTO(p: ProfileWithOrg): AdminAccountDTO {
     pronouns: p.pronouns,
     status_note: p.status_note,
     org: p.org ?? null,
+    total_hours: aggregates.total_hours,
+    approved_subjects_count: aggregates.approved_subjects_count,
+    open_requests_count: aggregates.open_requests_count,
+    active_sessions_count: aggregates.active_sessions_count,
     created_at: p.created_at,
-    activated_at: p.activated_at,
   };
 }
 
-/** A single account's subject-approval row (account detail, §6.4). */
+/** A single account's subject-approval row (account detail, §6.4). FLAT subject triple. */
 export type AdminAccountApproval = {
   id: string;
-  subject: SubjectRef;
+  org_subject_id: string;
+  name: string;
+  category: string | null;
+  grade_level: number | null;
   status: Database["public"]["Enums"]["approval_status"];
   evidence: string | null;
   decision_note: string | null;
@@ -132,10 +155,12 @@ export type AdminAccountApproval = {
   created_at: string;
 };
 
-/** A single account's session summary row (account detail, §6.4). */
+/** A single account's session summary row (account detail, §6.4). FLAT subject triple. */
 export type AdminAccountSession = {
   id: string;
-  subject: SubjectRef;
+  name: string;
+  category: string | null;
+  grade_level: number | null;
   status: Database["public"]["Enums"]["session_status"];
   role: "requester" | "tutor";
   counterpart: PersonRef;
@@ -143,17 +168,26 @@ export type AdminAccountSession = {
   created_at: string;
 };
 
-/** Account detail (`GET /api/admin/accounts/[id]`): profile + approvals + sessions + hours. */
-export type AdminAccountDetail = {
-  account: AdminAccountDTO;
-  total_hours: number;
+/** A single account's ledger row (account detail, §6.4). */
+export type AdminLedgerEntry = {
+  id: number;
+  kind: Database["public"]["Enums"]["ledger_kind"];
+  hours: number;
+  note: string | null;
+  session_id: string | null;
+  awarded_by_name: string | null;
+  created_at: string;
+};
+
+/**
+ * Account detail (`GET /api/admin/accounts/[id]`): the flat account row plus its
+ * approvals, session summary, and ledger. `AdminAccountDetail = AdminAccount &
+ * { approvals, sessions, ledger }` on the client — this is the same flat shape.
+ */
+export type AdminAccountDetail = AdminAccountDTO & {
   approvals: AdminAccountApproval[];
   sessions: AdminAccountSession[];
-  counts: {
-    approved_subjects: number;
-    sessions_tutored: number;
-    sessions_received: number;
-  };
+  ledger: AdminLedgerEntry[];
 };
 
 // --- Sessions ----------------------------------------------------------------
@@ -287,13 +321,15 @@ export function toAdminApprovalDTO(row: ApprovalWithJoins): AdminApprovalDTO {
 
 // --- Audit -------------------------------------------------------------------
 
-/** A human-readable audit entry (viewer + session timeline): actor flattened, org named. */
+/** A human-readable audit entry (viewer + session timeline): actor + org flattened. */
 export type AdminAuditDTO = {
   id: number;
   action: string;
+  actor_id: string | null;
   actor_name: string | null;
   actor_kind: Database["public"]["Enums"]["account_kind"] | null;
-  org: { id: string; name: string } | null;
+  org_id: string | null;
+  org_name: string | null;
   target_table: string | null;
   target_id: string | null;
   metadata: AuditRow["metadata"];
@@ -306,7 +342,7 @@ type AuditWithJoins = AuditRow & {
 };
 
 export const ADMIN_AUDIT_SELECT = `
-  id, action, actor_kind, target_table, target_id, metadata, created_at,
+  id, action, actor_id, actor_kind, org_id, target_table, target_id, metadata, created_at,
   actor:profiles!audit_log_actor_id_fkey ( id, first_name, last_name ),
   org:organizations!audit_log_org_id_fkey ( id, name )
 ` as const;
@@ -316,9 +352,11 @@ export function toAdminAuditDTO(row: AuditWithJoins): AdminAuditDTO {
   return {
     id: row.id,
     action: row.action,
+    actor_id: row.actor_id,
     actor_name: name || null,
     actor_kind: row.actor_kind,
-    org: row.org ?? null,
+    org_id: row.org_id,
+    org_name: row.org?.name ?? null,
     target_table: row.target_table,
     target_id: row.target_id,
     metadata: row.metadata,

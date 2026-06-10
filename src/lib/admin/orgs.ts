@@ -13,13 +13,14 @@ import type { OrgCounts } from "@/lib/admin/dtos";
 type AccountKind = Database["public"]["Enums"]["account_kind"];
 type AccountStatus = Database["public"]["Enums"]["account_status"];
 
-const EMPTY_COUNTS: OrgCounts = { members: 0, managers: 0, pending: 0 };
+const EMPTY_COUNTS: OrgCounts = { members: 0, managers: 0, sessions: 0 };
 
 /**
- * Membership counts for a set of org ids in ONE profiles read (kind + status per
- * row, tallied in-app — PostgREST has no GROUP BY). members = active members;
- * managers = active managers; pending = pending members + pending managers.
- * Returns a map id → counts (every requested id present, zero-filled).
+ * Counts for a set of org ids the orgs list/detail header carry. Two RLS-bound
+ * reads (admin sees every row via `private.is_admin()`), tallied in-app —
+ * PostgREST has no GROUP BY. members = active members; managers = active
+ * managers; sessions = every session row for the org. Returns a map id → counts
+ * (every requested id present, zero-filled).
  */
 export async function orgCountsFor(
   supabase: SupabaseClient<Database>,
@@ -29,18 +30,22 @@ export async function orgCountsFor(
   for (const id of orgIds) map.set(id, { ...EMPTY_COUNTS });
   if (!orgIds.length) return map;
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("org_id, kind, status")
-    .in("org_id", orgIds);
+  const [{ data: profiles }, { data: sessions }] = await Promise.all([
+    supabase.from("profiles").select("org_id, kind, status").in("org_id", orgIds),
+    supabase.from("sessions").select("org_id").in("org_id", orgIds),
+  ]);
 
-  for (const row of (data as Array<{ org_id: string | null; kind: AccountKind; status: AccountStatus }>) ?? []) {
+  for (const row of (profiles as Array<{ org_id: string | null; kind: AccountKind; status: AccountStatus }>) ?? []) {
     if (!row.org_id) continue;
     const c = map.get(row.org_id);
     if (!c) continue;
-    if (row.status === "pending") c.pending += 1;
-    else if (row.status === "active" && row.kind === "member") c.members += 1;
+    if (row.status === "active" && row.kind === "member") c.members += 1;
     else if (row.status === "active" && row.kind === "manager") c.managers += 1;
+  }
+  for (const row of (sessions as Array<{ org_id: string | null }>) ?? []) {
+    if (!row.org_id) continue;
+    const c = map.get(row.org_id);
+    if (c) c.sessions += 1;
   }
   return map;
 }

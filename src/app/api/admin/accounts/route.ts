@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { listResponse, parseListParams, serverError } from "@/lib/http";
 import { ACCOUNT_SELECT, toAdminAccountDTO, type ProfileWithOrg, type AdminAccountDTO } from "@/lib/admin/dtos";
+import { accountAggregatesFor } from "@/lib/admin/accounts";
 import type { Database } from "@/types/database";
 
 type AccountKind = Database["public"]["Enums"]["account_kind"];
@@ -52,6 +53,8 @@ export async function GET(req: Request) {
   const { data, error, count } = await query;
   if (error) return serverError("server_error", "Failed to load accounts");
 
-  const items: AdminAccountDTO[] = ((data as unknown as ProfileWithOrg[]) ?? []).map(toAdminAccountDTO);
+  const rows = (data as unknown as ProfileWithOrg[]) ?? [];
+  const aggregates = await accountAggregatesFor(supabase, rows.map((r) => r.id));
+  const items: AdminAccountDTO[] = rows.map((p) => toAdminAccountDTO(p, aggregates.get(p.id)));
   return listResponse(items, count ?? 0, { limit, offset });
 }

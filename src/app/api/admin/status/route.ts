@@ -13,7 +13,7 @@ type Check = { name: "database" | "email" | "cron"; status: "ok" | "degraded" | 
  *   - database: a trivial RLS-bound read;
  *   - email: whether Mailjet + sender are configured (or dry-run mode);
  *   - cron: whether CRON_SECRET is set (the reminder job's auth).
- * `overall` is the worst of the three. requireAdmin gates the whole route.
+ * `status` is the worst of the three. requireAdmin gates the whole route.
  */
 export async function GET(req: Request) {
   const auth = await requireAdmin(req);
@@ -47,11 +47,11 @@ export async function GET(req: Request) {
     : { name: "cron", status: "down", detail: "CRON_SECRET not set" };
 
   const checks: Check[] = [database, email, cron];
-  const overall: Check["status"] = checks.some((c) => c.status === "down")
+  const status: Check["status"] = checks.some((c) => c.status === "down")
     ? "down"
     : checks.some((c) => c.status === "degraded")
       ? "degraded"
       : "ok";
 
-  return json({ overall, checks });
+  return json({ status, checks });
 }

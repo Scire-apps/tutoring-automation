@@ -5,6 +5,7 @@ import { parseBody } from "@/lib/validation";
 import { adjustHoursSchema } from "@/lib/admin/schemas";
 import { readAccount } from "@/lib/admin/accounts";
 import { resolveRecipient } from "@/lib/admin/recipients";
+import type { AdminLedgerEntry } from "@/lib/admin/dtos";
 import { adjustmentNotice, siteUrl } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin(req);
   if (!auth.ok) return auth.response;
-  const { supabase, user } = auth;
+  const { supabase, user, profile } = auth;
   const { id } = await ctx.params;
 
   const parsed = await parseBody(req, adjustHoursSchema);
@@ -45,7 +46,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       note,
       awarded_by: user.id,
     })
-    .select("id")
+    .select("id, created_at")
     .maybeSingle();
 
   if (error) {
@@ -63,5 +64,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     );
   }
 
-  return json({ id: data.id, profile_id: id, kind: "adjustment" as const, hours: delta_hours, note }, 201);
+  const entry: AdminLedgerEntry = {
+    id: data.id,
+    kind: "adjustment",
+    hours: delta_hours,
+    note,
+    session_id: null,
+    awarded_by_name: `${profile.first_name} ${profile.last_name}`.trim() || null,
+    created_at: data.created_at,
+  };
+  return json(entry, 201);
 }

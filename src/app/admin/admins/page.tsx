@@ -51,8 +51,12 @@ export default function AdminAdminsPage() {
       <Alert>
         <Info className="size-4" />
         <AlertDescription>
-          Admins are seeded directly in the database. Add a new one via{" "}
-          <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">scripts/seed-admins.ts</code>.
+          Admins are created directly by the Scire team via the Supabase Admin API (
+          <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+            createUser
+          </code>{" "}
+          with <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">app_metadata.kind = &quot;admin&quot;</code>
+          ) — there is no signup path.
         </AlertDescription>
       </Alert>
 

@@ -44,20 +44,28 @@ Schema, RLS policies, helper functions, and seed/reference data are managed enti
 - **Template-snapshot semantics.** New organizations get their subject catalog (`org_subjects`) **copied** from the default template (`subject_templates`) at creation time — it is a point-in-time snapshot, not a live link. Editing the template afterward affects **future** org creations only; existing orgs are untouched and managers curate their own catalog from then on.
 - **Org-purge caveat.** There is **no organization hard-delete in v1** — orgs are archived (`archived_at`), which hides them from signup dropdowns and freezes new activity while retaining logins and hours history. The console-level cascade escape hatch deletes an org's `profiles` rows but does **NOT** delete the corresponding `auth.users` rows (there is no `public → auth.users` FK), so a true purge also needs an Admin-API pass to delete those auth users. A proper purge script is a post-v1 concern.
 
-## Seeding
+## Seeding & admin accounts
 
-Three separate seed paths, by design:
+Two seed paths, by design:
 
 1. **Default subject template** — shipped as the final rebuild migration (reference data, idempotent `ON CONFLICT DO NOTHING`). It is not a script.
-2. **Scire admins** — `npm run seed:admins` (`scripts/seed-admins.ts`). Reads the Supabase URL + secret key and `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` / `SEED_ADMIN_FIRST` / `SEED_ADMIN_LAST` from the environment at runtime (never committed — the password may be omitted and is then generated and printed once). It creates an email-confirmed auth user with `app_metadata.kind = 'admin'`; the `handle_new_user` trigger materializes the admin profile, and the script verifies/repairs idempotently.
-3. **Dev fixtures** — `npm run seed:dev` (`scripts/seed-dev-fixtures.ts`). Refuses to run without `ALLOW_DEV_SEED=1`. Creates two organizations and the canonical persona matrix (active managers, active/pending members with and without subject approvals, a pending manager, and a couple of open requests) for local testing. Never a migration.
+2. **Scire admins** — created by the Scire team via the **Supabase Admin API**; there is no signup path and no committed credentials. One call against the GoTrue admin endpoint (`POST {SUPABASE_URL}/auth/v1/admin/users`, authorized with the secret key from the environment) with a body of the shape:
 
-> **Bootstrap dependency.** At least **one admin AND at least one active organization** must exist before any public signup works — the `handle_new_user` trigger raises if a member/manager signs up against a missing or non-active org. The runbook order is: **apply migrations → register the Supabase auth hook (manual) → `seed:admins` → smoke `/admin-login` → create an org from the admin panel (or `seed:dev`)**.
+   ```json
+   {
+     "email": "<admin email>",
+     "password": "<strong password — supplied out of band, never committed>",
+     "email_confirm": true,
+     "app_metadata": { "kind": "admin" },
+     "user_metadata": { "first_name": "…", "last_name": "…" }
+   }
+   ```
 
-Run scripts with the local env file, e.g.:
-```bash
-node --env-file=.env.local --import tsx scripts/seed-admins.ts
-```
+   The `handle_new_user` trigger materializes the admin profile (`kind = admin`, `status = active`, no org) from `app_metadata` — `app_metadata` is service-role-only, so this path cannot be reached from public signup.
+
+All other data is created through the application itself: admins create organizations from the admin panel (each gets a snapshot of the subject template), managers and members register through the public flows.
+
+> **Bootstrap dependency.** At least **one admin AND at least one active organization** must exist before any public signup works — the `handle_new_user` trigger raises if a member/manager signs up against a missing or non-active org. The runbook order is: **apply migrations → register the Supabase auth hook (manual) → create an admin (Admin API, above) → sign in at `/admin-login` → create the first organization from the admin panel**.
 
 ## Scripts
 
@@ -65,8 +73,6 @@ node --env-file=.env.local --import tsx scripts/seed-admins.ts
 - `npm run build` — production build (type-checked + linted)
 - `npm run start` — run the production build
 - `npm run lint` — ESLint
-- `npm run seed:admins` — seed Scire admin accounts (env-supplied creds)
-- `npm run seed:dev` — seed local dev fixtures (requires `ALLOW_DEV_SEED=1`)
 - `npm run gen:types` — regenerate `src/types/database.ts` from the live schema
 
 ## Deployment

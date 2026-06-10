@@ -22,7 +22,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Toaster } from "@/components/ui/sonner";
 import { ApiError } from "@/services/api";
 import { claimSession, listBoard, type BoardItem } from "@/services/api/member";
 
@@ -138,7 +137,6 @@ export default function MemberBoardPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8">
-      <Toaster />
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>

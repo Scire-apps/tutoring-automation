@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Toaster } from "@/components/ui/sonner";
 import {
   TwoWeekTimeGrid,
   compressSelectionToDateMap,
@@ -122,7 +121,6 @@ export default function MemberAvailabilityPage({
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <Toaster />
       <Link
         href="/member/dashboard"
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"

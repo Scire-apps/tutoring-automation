@@ -694,7 +694,7 @@ function PastSessions({
                   {s.subject_label}
                 </p>
                 <p className="truncate text-sm text-muted-foreground">
-                  {s.status === "cancelled" && s.cancelled_by === "manager"
+                  {s.status === "cancelled" && s.cancelled_by_role === "manager"
                     ? `Cancelled by your organization${
                         s.cancel_reason ? `: ${s.cancel_reason}` : ""
                       }`

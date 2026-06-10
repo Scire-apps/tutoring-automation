@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Toaster } from "@/components/ui/sonner";
 import { ApiError } from "@/services/api";
 import { createRequest, listSubjects, type MemberSubject } from "@/services/api/member";
 
@@ -154,7 +153,6 @@ export default function MemberRequestPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
-      <Toaster />
       <Link
         href="/member/dashboard"
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"

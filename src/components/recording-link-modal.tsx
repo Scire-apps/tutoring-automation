@@ -28,19 +28,21 @@ import { saveRecording } from "@/services/api/member";
  */
 export function RecordingLinkModal({
   sessionId,
-  status,
+  status = "scheduled",
   currentUrl,
   open,
   onOpenChange,
   onSaved,
 }: {
   sessionId: string;
-  status: string;
+  /** Session status; the modal only opens for editable rows, so it defaults to
+   * an editable state when the caller (e.g. the dashboard) doesn't pass one. */
+  status?: string;
   currentUrl: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Called with the saved URL so the parent can update its row optimistically. */
-  onSaved?: (url: string) => void;
+  /** Called after a successful save so the parent can refetch its rows. */
+  onSaved?: (url: string) => void | Promise<void>;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

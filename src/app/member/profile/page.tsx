@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/app/providers";
 import type { AuthProfile } from "@/app/providers";
 import { supabase } from "@/lib/supabase/client";
@@ -31,7 +30,6 @@ export default function MemberProfilePage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
-      <Toaster />
 
       <h1 className="mb-6 flex items-center gap-2 text-2xl font-bold tracking-tight">
         <UserCircle className="size-6 text-blue-600" aria-hidden="true" />

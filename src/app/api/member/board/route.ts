@@ -13,6 +13,8 @@ export const dynamic = "force-dynamic";
  *
  * RLS already restricts SELECT to open org rows; the `requester_id != self`
  * filter drops the caller's own requests (self-claim is server-blocked anyway).
+ * `?eligible_only=1` narrows the board to subjects the caller is approved for
+ * (the §4.6 escape hatch) — done server-side so pagination counts stay correct.
  */
 export async function GET(req: Request) {
   const auth = await requireActiveMember(req);
@@ -21,13 +23,16 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const { limit, offset } = parseListParams(url);
   const subjectId = url.searchParams.get("subject_id");
+  const eligibleOnly = url.searchParams.get("eligible_only") === "1";
 
-  // The caller's approved subject ids (drives can_claim).
-  const approvedP = supabase
+  // The caller's approved subject ids (drives can_claim + the eligible_only filter).
+  const { data: approvedRows, error: approvedErr } = await supabase
     .from("subject_approvals")
     .select("org_subject_id")
     .eq("profile_id", user.id)
     .eq("status", "approved");
+  if (approvedErr) return serverError("server_error", "Failed to load the board");
+  const approvedSet = new Set((approvedRows ?? []).map((a) => a.org_subject_id));
 
   let query = supabase
     .from("sessions")
@@ -40,17 +45,16 @@ export async function GET(req: Request) {
     .range(offset, offset + limit - 1);
 
   if (subjectId) query = query.eq("org_subject_id", subjectId);
+  // Restrict to approved subjects when asked. An empty approved set means no rows.
+  if (eligibleOnly) query = query.in("org_subject_id", approvedSet.size ? [...approvedSet] : [""]);
 
-  const [approved, board] = await Promise.all([approvedP, query]);
-  if (approved.error || board.error) {
-    return serverError("server_error", "Failed to load the board");
-  }
+  const { data, error, count } = await query;
+  if (error) return serverError("server_error", "Failed to load the board");
 
-  const approvedSet = new Set((approved.data ?? []).map((a) => a.org_subject_id));
-  const items = ((board.data as unknown as SessionWithJoins[]) ?? []).map((row) => ({
+  const items = ((data as unknown as SessionWithJoins[]) ?? []).map((row) => ({
     ...toMemberSessionDTO(row, user.id),
     can_claim: approvedSet.has(row.org_subject_id),
   }));
 
-  return listResponse(items, board.count ?? 0, { limit, offset });
+  return listResponse(items, count ?? 0, { limit, offset });
 }

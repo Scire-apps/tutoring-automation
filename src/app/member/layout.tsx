@@ -5,6 +5,7 @@ import { getServerProfile } from "@/lib/auth";
 import { createRSCClient } from "@/lib/supabase/server";
 import { homeFor } from "@/lib/routes";
 import { MemberLayout } from "@/components/member-layout";
+import { Toaster } from "@/components/ui/sonner";
 
 /**
  * Member zone layout (§4.1). The single guard for all `/member/**` pages — the
@@ -62,5 +63,12 @@ export default async function MemberZoneLayout({
     created_at: profile.created_at,
   };
 
-  return <MemberLayout initialProfile={initialProfile}>{children}</MemberLayout>;
+  return (
+    <MemberLayout initialProfile={initialProfile}>
+      {children}
+      {/* Single Toaster for the whole member zone (toasts fire from the flow
+          pages, the recording modal, and the complete button). */}
+      <Toaster />
+    </MemberLayout>
+  );
 }

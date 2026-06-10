@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Toaster } from "@/components/ui/sonner";
 import type { ApprovalStatus } from "@/types/api";
 import { ApiError } from "@/services/api";
 import {
@@ -156,7 +155,6 @@ function ApprovalsInner() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
-      <Toaster />
 
       <h1 className="mb-1 flex items-center gap-2 text-2xl font-bold tracking-tight">
         <ShieldCheck className="size-6 text-blue-600" aria-hidden="true" />

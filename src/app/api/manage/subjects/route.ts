@@ -22,20 +22,24 @@ export async function GET(req: Request) {
   const { supabase, orgId } = auth;
   const url = new URL(req.url);
   const includeUsage = url.searchParams.get("include") === "usage";
+  const q = (url.searchParams.get("q") || "").trim();
 
-  const { data, error } = await supabase
+  let listQuery = supabase
     .from("org_subjects")
     .select("*")
     .eq("org_id", orgId)
     .order("name", { ascending: true })
     .order("category", { ascending: true, nullsFirst: true })
     .order("grade_level", { ascending: true, nullsFirst: true });
+  if (q) listQuery = listQuery.ilike("name", `%${q.replace(/[%,()]/g, " ")}%`);
+
+  const { data, error } = await listQuery;
 
   if (error) return serverError("server_error", "Failed to load subjects");
   const rows = (data as SubjectRow[]) ?? [];
 
   if (!includeUsage) {
-    return json({ items: rows as SubjectDTO[] });
+    return json({ items: rows as SubjectDTO[], total: rows.length, limit: rows.length, offset: 0 });
   }
 
   // Per-subject usage: open sessions referencing it + approved members holding it.
@@ -66,7 +70,7 @@ export async function GET(req: Request) {
     open_sessions: openBySubject.get(r.id) ?? 0,
     approved_members: approvedBySubject.get(r.id) ?? 0,
   }));
-  return json({ items });
+  return json({ items, total: items.length, limit: items.length, offset: 0 });
 }
 
 /**

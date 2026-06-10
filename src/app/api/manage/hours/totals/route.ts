@@ -19,7 +19,12 @@ export async function GET(req: Request) {
 
   try {
     const all = await computeMemberTotals(supabase, orgId, q);
-    const page = all.slice(offset, offset + limit);
+    // Shape into the UI's nested {member, total_hours} row (the CSV export keeps
+    // the flat shape; the lib is the single source for both).
+    const page = all.slice(offset, offset + limit).map((t) => ({
+      member: { id: t.profile_id, first_name: t.first_name, last_name: t.last_name, email: t.email },
+      total_hours: t.total_hours,
+    }));
     return listResponse(page, all.length, { limit, offset });
   } catch {
     return serverError("server_error", "Failed to load hours totals");

@@ -39,30 +39,50 @@ export async function orgNameFor(
   return data?.name ?? "your organization";
 }
 
-export type MemberAggregate = { approved_subjects: number; hours_total: number };
+export type MemberAggregate = {
+  approved_subjects: number;
+  hours_total: number;
+  open_requests: number;
+  active_sessions: number;
+};
 
-/** Approved-subjects count + ledger SUM for one member (RLS-bound). */
+/**
+ * Approved-subjects count + ledger SUM + activity counts for one member
+ * (RLS-bound). open_requests = the member's own `open` sessions; active_sessions
+ * = in-flight rows (claimed→scheduled) where the member is either party.
+ */
 export async function memberAggregate(
   supabase: SupabaseClient<Database>,
   orgId: string,
   memberId: string,
 ): Promise<MemberAggregate> {
-  const [approvals, ledger] = await Promise.all([
+  const ACTIVE: Database["public"]["Enums"]["session_status"][] = ["claimed", "availability_set", "scheduled"];
+  const [approvals, ledger, openReq, activeSess] = await Promise.all([
     supabase
       .from("subject_approvals")
       .select("id", { count: "exact", head: true })
       .eq("org_id", orgId)
       .eq("profile_id", memberId)
       .eq("status", "approved"),
+    supabase.from("volunteer_hours_ledger").select("hours").eq("org_id", orgId).eq("profile_id", memberId),
     supabase
-      .from("volunteer_hours_ledger")
-      .select("hours")
+      .from("sessions")
+      .select("id", { count: "exact", head: true })
       .eq("org_id", orgId)
-      .eq("profile_id", memberId),
+      .eq("requester_id", memberId)
+      .eq("status", "open"),
+    supabase
+      .from("sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("org_id", orgId)
+      .in("status", ACTIVE)
+      .or(`requester_id.eq.${memberId},tutor_id.eq.${memberId}`),
   ]);
   const hours = (ledger.data ?? []).reduce((sum, r) => sum + Number(r.hours ?? 0), 0);
   return {
     approved_subjects: approvals.count ?? 0,
     hours_total: Math.round(hours * 100) / 100,
+    open_requests: openReq.count ?? 0,
+    active_sessions: activeSess.count ?? 0,
   };
 }

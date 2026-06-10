@@ -8,15 +8,15 @@ import type { Database } from "@/types/database";
 
 export type ManageCounts = {
   /** Pending member admissions. */
-  pending_members: number;
+  pending_admissions: number;
   /** Pending subject-approval requests. */
-  pending_subject_approvals: number;
+  approval_requests: number;
   /** Sessions awaiting verification (completed + needs_changes). */
-  completed_sessions: number;
-  /** Open help requests. */
-  open_help: number;
+  verification_queue: number;
   /** Pending peer managers awaiting activation. */
   pending_managers: number;
+  /** Open help requests. */
+  open_help: number;
 };
 
 /** Compute the five badge counts for an org (head-only count queries). */
@@ -56,10 +56,10 @@ export async function computeCounts(
   ]);
 
   return {
-    pending_members: members.count ?? 0,
-    pending_subject_approvals: approvals.count ?? 0,
-    completed_sessions: sessions.count ?? 0,
-    open_help: help.count ?? 0,
+    pending_admissions: members.count ?? 0,
+    approval_requests: approvals.count ?? 0,
+    verification_queue: sessions.count ?? 0,
     pending_managers: managers.count ?? 0,
+    open_help: help.count ?? 0,
   };
 }

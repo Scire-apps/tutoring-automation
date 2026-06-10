@@ -13,8 +13,13 @@ type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type LedgerRow = Database["public"]["Tables"]["volunteer_hours_ledger"]["Row"];
 type AuditRow = Database["public"]["Tables"]["audit_log"]["Row"];
 
-export type PersonRef = { id: string; first_name: string; last_name: string } | null;
+export type PersonRef = { id: string; first_name: string; last_name: string; email?: string } | null;
 export type SubjectRef = { id: string; name: string; category: string | null; grade_level: number | null };
+
+/** Human display name from a party ref, or "" when null (UI helper mirror). */
+export function refName(p: PersonRef): string {
+  return p ? `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() : "";
+}
 
 // --- Sessions ----------------------------------------------------------------
 
@@ -89,12 +94,18 @@ export function toManageSessionDTO(row: SessionWithJoins): ManageSessionDTO {
   };
 }
 
-/** An audit timeline entry for the session detail view (§5.8). */
+/**
+ * A human-readable audit entry for the overview feed + session timeline
+ * (§5.4 / §5.8). The actor is FLATTENED to a display name (`actor_name`) — the UI
+ * renders strings, never the nested profile ref.
+ */
 export type AuditEntryDTO = {
   id: number;
   action: string;
-  actor: PersonRef;
+  actor_name: string | null;
   actor_kind: Database["public"]["Enums"]["account_kind"] | null;
+  target_table: string | null;
+  target_id: string | null;
   metadata: AuditRow["metadata"];
   created_at: string;
 };
@@ -102,16 +113,19 @@ export type AuditEntryDTO = {
 type AuditWithActor = AuditRow & { actor: PersonRef };
 
 export const AUDIT_SELECT = `
-  id, action, actor_kind, metadata, created_at,
+  id, action, actor_kind, target_table, target_id, metadata, created_at,
   actor:profiles!audit_log_actor_id_fkey ( id, first_name, last_name )
 ` as const;
 
 export function toAuditEntryDTO(row: AuditWithActor): AuditEntryDTO {
+  const name = row.actor ? `${row.actor.first_name ?? ""} ${row.actor.last_name ?? ""}`.trim() : "";
   return {
     id: row.id,
     action: row.action,
-    actor: row.actor,
+    actor_name: name || null,
     actor_kind: row.actor_kind,
+    target_table: row.target_table,
+    target_id: row.target_id,
     metadata: row.metadata,
     created_at: row.created_at,
   };
@@ -122,7 +136,7 @@ export function toAuditEntryDTO(row: AuditWithActor): AuditEntryDTO {
 export const MANAGE_APPROVAL_SELECT = `
   *,
   subject:org_subjects!subject_approvals_subject_fk ( id, name, category, grade_level ),
-  member:profiles!subject_approvals_profile_fk ( id, first_name, last_name ),
+  member:profiles!subject_approvals_profile_fk ( id, first_name, last_name, email ),
   decider:profiles!subject_approvals_decided_by_fkey ( id, first_name, last_name )
 ` as const;
 
@@ -165,7 +179,15 @@ export function toManageApprovalDTO(row: ApprovalWithJoins): ManageApprovalDTO {
 
 // --- Members -----------------------------------------------------------------
 
-/** A member directory row (§5.5): profile + derived counts. */
+/** Per-member activity counts the directory + detail carry (§5.5). */
+export type MemberCounts = {
+  approved_subjects: number;
+  hours_total: number;
+  open_requests: number;
+  active_sessions: number;
+};
+
+/** A member directory row (§5.5): profile + derived counts (UI field names). */
 export type ManageMemberDTO = {
   id: string;
   first_name: string;
@@ -175,18 +197,16 @@ export type ManageMemberDTO = {
   pronouns: string | null;
   status: Database["public"]["Enums"]["account_status"];
   status_note: string | null;
-  approved_subjects: number;
-  hours_total: number;
+  approved_subjects_count: number;
+  total_hours: number;
+  open_requests_count: number;
+  active_sessions_count: number;
   created_at: string;
   activated_at: string | null;
 };
 
 /** Shape a profile row into the directory DTO with its aggregate counts. */
-export function toManageMemberDTO(
-  p: ProfileRow,
-  approvedSubjects: number,
-  hoursTotal: number,
-): ManageMemberDTO {
+export function toManageMemberDTO(p: ProfileRow, counts: MemberCounts): ManageMemberDTO {
   return {
     id: p.id,
     first_name: p.first_name,
@@ -196,8 +216,10 @@ export function toManageMemberDTO(
     pronouns: p.pronouns,
     status: p.status,
     status_note: p.status_note,
-    approved_subjects: approvedSubjects,
-    hours_total: roundHours(hoursTotal),
+    approved_subjects_count: counts.approved_subjects,
+    total_hours: roundHours(counts.hours_total),
+    open_requests_count: counts.open_requests,
+    active_sessions_count: counts.active_sessions,
     created_at: p.created_at,
     activated_at: p.activated_at,
   };
@@ -228,7 +250,11 @@ export function toManageManagerDTO(p: ProfileRow): ManageManagerDTO {
 
 // --- Hours -------------------------------------------------------------------
 
-/** A ledger row for the hours tabs (§5.10): signed delta, kind, session, note. */
+/**
+ * A ledger row for the hours tabs (§5.10): signed delta, kind, session, note. The
+ * member is nested; the awarder + the award's subject are flattened to display
+ * names (`awarded_by_name`, `subject_name`) — the UI renders strings.
+ */
 export type LedgerEntryDTO = {
   id: number;
   profile_id: string;
@@ -237,16 +263,22 @@ export type LedgerEntryDTO = {
   hours: number;
   note: string | null;
   session_id: string | null;
-  awarded_by: PersonRef;
+  awarded_by_name: string | null;
+  subject_name: string | null;
   created_at: string;
 };
 
-type LedgerWithJoins = LedgerRow & { member: PersonRef; awarder: PersonRef };
+type LedgerWithJoins = LedgerRow & {
+  member: PersonRef;
+  awarder: PersonRef;
+  session: { org_subject: { name: string } | null } | null;
+};
 
 export const LEDGER_SELECT = `
   *,
   member:profiles!volunteer_hours_ledger_profile_fk ( id, first_name, last_name ),
-  awarder:profiles!volunteer_hours_ledger_awarded_by_fkey ( id, first_name, last_name )
+  awarder:profiles!volunteer_hours_ledger_awarded_by_fkey ( id, first_name, last_name ),
+  session:sessions!volunteer_hours_ledger_session_id_fkey ( org_subject:org_subjects!sessions_subject_fk ( name ) )
 ` as const;
 
 export function toLedgerEntryDTO(row: LedgerWithJoins): LedgerEntryDTO {
@@ -258,7 +290,8 @@ export function toLedgerEntryDTO(row: LedgerWithJoins): LedgerEntryDTO {
     hours: Number(row.hours),
     note: row.note,
     session_id: row.session_id,
-    awarded_by: row.awarder,
+    awarded_by_name: refName(row.awarder) || null,
+    subject_name: row.session?.org_subject?.name ?? null,
     created_at: row.created_at,
   };
 }

@@ -13,17 +13,20 @@ type HelpDTO = {
   urgency: Database["public"]["Enums"]["urgency_level"];
   description: string;
   status: HelpStatus;
+  resolved_by_name: string | null;
   resolved_at: string | null;
   created_at: string;
 };
 
 const HELP_SELECT = `
   *,
-  member:profiles!help_requests_profile_id_fkey ( id, first_name, last_name )
+  member:profiles!help_requests_profile_id_fkey ( id, first_name, last_name ),
+  resolver:profiles!help_requests_resolved_by_fkey ( first_name, last_name )
 ` as const;
 
 type HelpWithMember = HelpRow & {
   member: { id: string; first_name: string; last_name: string } | null;
+  resolver: { first_name: string; last_name: string } | null;
 };
 
 /**
@@ -58,6 +61,7 @@ export async function GET(req: Request) {
     urgency: r.urgency,
     description: r.description,
     status: r.status,
+    resolved_by_name: r.resolver ? `${r.resolver.first_name} ${r.resolver.last_name}`.trim() || null : null,
     resolved_at: r.resolved_at,
     created_at: r.created_at,
   }));

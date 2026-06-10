@@ -554,17 +554,19 @@ function BatchDetail({ batchId, onBack }: { batchId: string; onBack: () => void 
 }
 
 /** Human label for a stored batch scope value. */
-function audienceLabel(scope: string): string {
+function audienceLabel(scope: string | undefined): string {
   switch (scope) {
     case "all_active":
       return "All active members";
     case "pending":
       return "Pending members";
     case "approved_for_subject":
+    case "subject":
       return "Approved for a subject";
     case "member_ids":
+    case "selected":
       return "Selected members";
     default:
-      return scope;
+      return "Broadcast";
   }
 }

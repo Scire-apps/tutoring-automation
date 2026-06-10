@@ -382,7 +382,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function person(p: { first_name: string; last_name: string; email: string } | null): string {
+function person(p: { first_name: string; last_name: string; email?: string } | null): string {
   if (!p) return "—";
   return `${p.first_name} ${p.last_name}`.trim();
 }

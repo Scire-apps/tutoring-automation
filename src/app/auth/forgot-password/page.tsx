@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/services/supabase';
+import { supabase } from '@/lib/supabase/client';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -16,8 +16,10 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
+      // Recovery links land on /auth/confirm, which verifies the token_hash and
+      // routes type=recovery → /auth/reset-password (§3.3).
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `${window.location.origin}/auth/confirm`,
       });
 
       if (error) {

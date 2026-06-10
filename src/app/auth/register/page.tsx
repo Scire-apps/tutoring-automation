@@ -1,38 +1,39 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthShell } from "@/components/auth-shell";
-import { LoginForm } from "@/components/auth/login-form";
+import { RegisterForm } from "@/components/auth/register-form";
 
-export const metadata: Metadata = { title: "Log in" };
+export const metadata: Metadata = { title: "Create your account" };
 
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <AuthShell
-      title="Log in"
-      subtitle="Welcome back to Scire."
+      title="Create your account"
+      subtitle="Join your school or club's tutoring program."
       footer={
         <div className="space-y-1">
           <p>
-            New to Scire?{" "}
+            Already have an account?{" "}
             <Link
-              href="/auth/register"
+              href="/auth/login"
               className="font-medium text-blue-600 underline-offset-4 hover:underline"
             >
-              Create an account
+              Log in
             </Link>
           </p>
           <p>
+            Are you a teacher or club exec?{" "}
             <Link
-              href="/auth/login/manager"
+              href="/auth/register/manager"
               className="font-medium text-blue-600 underline-offset-4 hover:underline"
             >
-              Manager sign in →
+              Register as a manager
             </Link>
           </p>
         </div>
       }
     >
-      <LoginForm />
+      <RegisterForm kind="member" />
     </AuthShell>
   );
 }

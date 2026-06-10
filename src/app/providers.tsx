@@ -1,451 +1,171 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { Session, User } from "@supabase/supabase-js";
-import { supabase, getCurrentUser, getSession } from "@/services/supabase";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase/client";
 
-// Define user role type
-type UserRole = "tutor" | "tutee" | "admin" | null;
+/** Account kind/status mirror the Scire enums (see src/types/database.ts). */
+export type AccountKind = "member" | "manager" | "admin";
+export type AccountStatus = "pending" | "active" | "suspended" | "rejected";
 
-// Define the auth context type
+/**
+ * Identity profile as served by `GET /api/auth/me` (§7.2). This is the single
+ * client-side source of truth for who the user is and what state they are in;
+ * the proxy's JWT claims are routing hints only and are never trusted for authz.
+ */
+export type AuthProfile = {
+  id: string;
+  kind: AccountKind;
+  status: AccountStatus;
+  org: { id: string; name: string } | null;
+  first_name: string;
+  last_name: string;
+  grade?: number | null;
+  pronouns?: string | null;
+  status_note?: string | null;
+  volunteer_hours_total?: number;
+  created_at: string;
+};
+
+type SignUpArgs = {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  orgId: string;
+  kind?: "member" | "manager";
+};
+
 type AuthContextType = {
   user: User | null;
   session: Session | null;
+  profile: AuthProfile | null;
   isLoading: boolean;
-  userRole: UserRole;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (
-    email: string,
-    password: string,
-    firstName: string,
-    lastName: string,
-    schoolId?: string,
-    accountType?: "tutor" | "tutee"
-  ) => Promise<{ error: any }>;
-  signOut: () => Promise<{ error: any }>;
-  isAdmin: () => boolean;
-  isSuperAdmin: () => boolean;
+  signIn: (email: string, password: string) => Promise<{ error: { message: string } | null }>;
+  signUp: (args: SignUpArgs) => Promise<{ error: { message: string } | null }>;
+  signOut: () => Promise<{ error: { message: string } | null }>;
+  /** Re-fetch the profile from /api/auth/me (admission polling, post-mutation refresh). */
+  refreshProfile: () => Promise<AuthProfile | null>;
+  /** Re-mint the JWT so routing-hint claims (kind/status/org_id) reflect a status flip. */
+  refreshClaims: () => Promise<void>;
 };
 
-// Create the auth context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Auth provider component
+/** Fetch the identity profile with the caller's bearer token. */
+async function fetchMe(accessToken: string | null | undefined): Promise<AuthProfile | null> {
+  if (!accessToken) return null;
+  try {
+    const res = await fetch("/api/auth/me", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { profile?: AuthProfile };
+    return json.profile ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<AuthProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [userRole, setUserRole] = useState<UserRole>(null);
 
-  // Scrub +tutor/+tutee for @hdsb.ca emails for display purposes
-  const scrubHdsbRoleTag = (email: string | null | undefined): string | undefined => {
-    try {
-      if (typeof email !== "string") return email as any;
-      const m = email.match(/^([^@\s]+?)(?:\+(?:tutor|tutee))@([Hh][Dd][Ss][Bb]\.ca)$/);
-      if (!m) return email;
-      const [, local, domain] = m;
-      return `${local}@${domain}`;
-    } catch {
-      return email as any;
-    }
-  };
+  // Latest access token, read inside async callbacks without re-subscribing.
+  const tokenRef = useRef<string | null>(null);
 
-  // Function to determine user role via backend (avoids direct DB queries from frontend)
-  const determineUserRole = async (
-    accessToken: string | null
-  ): Promise<UserRole> => {
-    try {
-      if (!accessToken) return null;
-      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? ""; // same-origin in the monolith
-      const resp = await fetch(`${apiBase}/api/auth/role`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        credentials: "include",
-      });
-      if (!resp.ok) return null;
-      const json = await resp.json();
-      return (json.role as UserRole) ?? null;
-    } catch (error) {
-      console.error(
-        "Auth context: Error determining user role via backend:",
-        error
-      );
-      return null;
-    }
-  };
-
-  // Ensure a tutor/tutee row exists after verification/login
-  const ensureBackendAccount = async (
-    accessToken: string,
-    accountType: "tutor" | "tutee",
-    firstName?: string,
-    lastName?: string,
-    schoolId?: string
-  ) => {
-    try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? ""; // same-origin in the monolith
-      // Build body with core fields
-      const body: any = {
-        account_type: accountType,
-        first_name: firstName,
-        last_name: lastName,
-        school_id: schoolId,
-      };
-      // For tutee, include extras from localStorage if present
-      if (typeof window !== "undefined" && accountType === "tutee") {
-        try {
-          const grade = window.localStorage.getItem("tutee_grade");
-          const pr = window.localStorage.getItem("tutee_pronouns");
-          const subsRaw = window.localStorage.getItem("tutee_subjects");
-          if (grade && grade.trim()) body.grade = String(grade);
-          if (pr && pr.trim()) body.pronouns = pr;
-          if (subsRaw) {
-            try {
-              const arr = JSON.parse(subsRaw);
-              if (Array.isArray(arr)) body.subjects = arr;
-            } catch {}
-          }
-        } catch {}
-      }
-      await fetch(`${apiBase}/api/account/ensure`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-        credentials: "include",
-      });
-    } catch (e) {
-      console.error("Error ensuring account via backend:", e);
-    }
-  };
-
-  // Initialize auth state - only get the initial session, no listeners
-  useEffect(() => {
-    const initAuth = async () => {
-      setIsLoading(true);
-
-      try {
-        // Clean up any stale Supabase auth storage entries that can cause JSON parse errors
-        if (typeof window !== "undefined") {
-          try {
-            const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-            const refMatch = url.match(/https?:\/\/([^.]+)\.supabase\.co/i);
-            const projectRef = refMatch ? refMatch[1] : undefined;
-            const candidateKeys = [
-              "supabase.auth.token",
-              projectRef ? `sb-${projectRef}-auth-token` : undefined,
-            ].filter(Boolean) as string[];
-            for (const key of candidateKeys) {
-              const raw = window.localStorage.getItem(key);
-              if (!raw) continue;
-              const looksJson = raw.trim().startsWith("{");
-              const looksBase64 = raw.startsWith("base64-");
-              if (!looksJson || looksBase64) {
-                window.localStorage.removeItem(key);
-              } else {
-                try {
-                  JSON.parse(raw);
-                } catch {
-                  window.localStorage.removeItem(key);
-                }
-              }
-            }
-          } catch {}
-        }
-
-        // Get current session
-        const { session: currentSession } = await getSession();
-        setSession(currentSession);
-
-        // Get current user
-        if (currentSession) {
-          const { user: currentUser } = await getCurrentUser();
-          const sanitizedUser = currentUser ? ({ ...currentUser, email: scrubHdsbRoleTag(currentUser.email) } as User) : null;
-          setUser(sanitizedUser);
-
-          // Determine role via backend, and ensure account if pending
-          const token = currentSession?.access_token || null;
-          let role = await determineUserRole(token);
-          if (!role && token) {
-            let pendingType: "tutor" | "tutee" | null = null;
-            let firstName: string | undefined;
-            let lastName: string | undefined;
-            let schoolId: string | undefined;
-            if (typeof window !== "undefined") {
-              pendingType = localStorage.getItem("signup_account_type") as
-                | "tutor"
-                | "tutee"
-                | null;
-              firstName =
-                localStorage.getItem("signup_first_name") || undefined;
-              lastName = localStorage.getItem("signup_last_name") || undefined;
-              schoolId = localStorage.getItem("signup_school_id") || undefined;
-            }
-            // Fall back to metadata if local storage not present
-            if (!pendingType && currentUser?.user_metadata?.account_type) {
-              const metaType = String(currentUser.user_metadata.account_type);
-              if (metaType === "tutor" || metaType === "tutee")
-                pendingType = metaType;
-              firstName = firstName || currentUser.user_metadata.first_name;
-              lastName = lastName || currentUser.user_metadata.last_name;
-              schoolId = schoolId || currentUser.user_metadata.school_id;
-            }
-            if (pendingType) {
-              await ensureBackendAccount(
-                token,
-                pendingType,
-                firstName,
-                lastName,
-                schoolId
-              );
-              if (typeof window !== "undefined") {
-                localStorage.removeItem("signup_account_type");
-                localStorage.removeItem("signup_first_name");
-                localStorage.removeItem("signup_last_name");
-                localStorage.removeItem("signup_school_id");
-                // keep tutee extras keys for this ensure; they can be left or cleared later as needed
-              }
-              role = await determineUserRole(token);
-            }
-          }
-          setUserRole(role);
-        }
-      } catch (error) {
-        console.error("Auth context: Error initializing auth state:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initAuth();
+  const refreshProfile = useCallback(async () => {
+    const next = await fetchMe(tokenRef.current);
+    setProfile(next);
+    return next;
   }, []);
 
-  // Sign in function
-  const signIn = async (email: string, password: string) => {
-    console.log("Auth context: Starting sign in...", { email });
+  const refreshClaims = useCallback(async () => {
+    await supabase.auth.refreshSession();
+  }, []);
 
-    try {
-      console.log("Auth context: Calling supabase.auth.signInWithPassword...");
+  // Single onAuthStateChange subscription drives session + profile hydration.
+  // INITIAL_SESSION fires on mount (replaces the old manual getSession bootstrap).
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, nextSession: Session | null) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+      tokenRef.current = nextSession?.access_token ?? null;
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      if (
+        event === "INITIAL_SESSION" ||
+        event === "SIGNED_IN" ||
+        event === "TOKEN_REFRESHED"
+      ) {
+        setProfile(await fetchMe(nextSession?.access_token));
+      } else if (event === "SIGNED_OUT") {
+        setProfile(null);
+      }
+
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error ? { message: error.message } : null };
+  }, []);
+
+  const signUp = useCallback(
+    async ({ email, password, firstName, lastName, orgId, kind = "member" }: SignUpArgs) => {
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const { error } = await supabase.auth.signUp({
         email,
         password,
-      });
-
-      console.log("Auth context: Sign in response received:", {
-        hasData: !!data,
-        hasUser: !!data?.user,
-        hasSession: !!data?.session,
-        error: error?.message || "No error",
-      });
-
-      if (!error && data.user) {
-        console.log("Auth context: Setting user and session...");
-        const sanitizedUser = data.user ? ({ ...data.user, email: scrubHdsbRoleTag(data.user.email) } as User) : null;
-        setUser(sanitizedUser);
-        setSession(data.session);
-
-        // Determine role via backend and ensure account if pending
-        console.log("Auth context: Determining user role...");
-        try {
-          const token = data.session?.access_token || null;
-          if (token && typeof window !== "undefined") {
-            const pendingType = localStorage.getItem("signup_account_type") as
-              | "tutor"
-              | "tutee"
-              | null;
-            const firstName =
-              localStorage.getItem("signup_first_name") || undefined;
-            const lastName =
-              localStorage.getItem("signup_last_name") || undefined;
-            const schoolId =
-              localStorage.getItem("signup_school_id") || undefined;
-            if (pendingType) {
-              await ensureBackendAccount(
-                token,
-                pendingType,
-                firstName,
-                lastName,
-                schoolId
-              );
-              localStorage.removeItem("signup_account_type");
-              localStorage.removeItem("signup_first_name");
-              localStorage.removeItem("signup_last_name");
-              localStorage.removeItem("signup_school_id");
-            }
-            const role = await determineUserRole(token);
-            console.log("Auth context: User role determined:", role);
-            setUserRole(role);
-          } else {
-            setUserRole(null);
-          }
-        } catch (err) {
-          console.error("Auth context: Error determining role:", err);
-          setUserRole(null);
-        }
-      }
-
-      return { error };
-    } catch (err) {
-      console.error("Auth context: Exception during sign in:", err);
-      return { error: { message: "Sign in failed with exception" } };
-    }
-  };
-
-  // Sign up function
-  const signUp = async (
-    email: string,
-    password: string,
-    firstName: string,
-    lastName: string,
-    schoolId?: string,
-    accountType: "tutor" | "tutee" = "tutor"
-  ) => {
-    // Append +tutor/+tutee tag to the local part of @hdsb.ca emails before signup
-    const transformEmailForRole = (raw: string, role: "tutor" | "tutee"): string => {
-      try {
-        const trimmed = (raw || '').trim();
-        const atIdx = trimmed.indexOf('@');
-        if (atIdx <= 0) return trimmed;
-        const local = trimmed.slice(0, atIdx);
-        const domain = trimmed.slice(atIdx + 1);
-        if (!/^[Hh][Dd][Ss][Bb]\.ca$/.test(domain)) return trimmed; // only tag hdsb.ca
-        const tag = role.toLowerCase();
-        // Avoid duplicate role suffix
-        const lowerLocal = local.toLowerCase();
-        if (lowerLocal.endsWith('+' + tag)) return trimmed;
-        return `${local}+${tag}@${domain}`;
-      } catch {
-        return raw;
-      }
-    };
-
-    const emailToUse = transformEmailForRole(email, accountType);
-    // Enforce HDSB email domain on signup (frontend-only restriction)
-    try {
-      const isHdsb = /^[^@\s]+@hdsb\.ca$/i.test((email || '').trim());
-      if (!isHdsb) {
-        return { error: { message: 'Please use your @hdsb.ca email address' } };
-      }
-    } catch {}
-    // Persist intent for post-verification login flow
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem("signup_account_type", accountType);
-        if (firstName) localStorage.setItem("signup_first_name", firstName);
-        if (lastName) localStorage.setItem("signup_last_name", lastName);
-        if (schoolId)
-          localStorage.setItem("signup_school_id", String(schoolId));
-      }
-    } catch {}
-
-    // Sign up with Supabase Auth
-    const { data, error } = await supabase.auth.signUp({
-      email: emailToUse,
-      password,
-      options: {
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-          school_id: schoolId,
-          account_type: accountType,
+        options: {
+          emailRedirectTo: `${origin}/auth/confirm`,
+          data: {
+            kind,
+            org_id: orgId,
+            first_name: firstName,
+            last_name: lastName,
+          },
         },
-      },
-    });
+      });
+      return { error: error ? { message: error.message } : null };
+    },
+    []
+  );
 
-    // Detect duplicate registrations (Supabase returns user with empty identities when email already exists)
-    if (!error && data.user && Array.isArray((data.user as any).identities) && (data.user as any).identities.length === 0) {
-      return { error: { message: 'This email is already registered. Please sign in or reset your password.' } };
-    }
-
-    if (!error && data.user) {
-      // Some projects have email confirmation; session may be null here.
-      // If we do have a token, we can proactively ensure now; otherwise it will happen on first login
-      try {
-        const token = data.session?.access_token;
-        if (token) {
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/ensure`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              account_type: accountType,
-              first_name: firstName,
-              last_name: lastName,
-              school_id: schoolId,
-            }),
-          });
-        }
-      } catch (e) {
-        console.error("Error ensuring account via backend (signup path):", e);
-      }
-
-      const sanitizedUser = data.user ? ({ ...data.user, email: scrubHdsbRoleTag(data.user.email) } as User) : null;
-      setUser(sanitizedUser);
-      setSession(data.session);
-    }
-
-    return { error };
-  };
-
-  // Sign out function
-  const signOut = async () => {
-    console.log("Auth context: Starting sign out...");
+  const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
-    console.log("Auth context: Sign out result:", {
-      error: error?.message || "No error",
-    });
+    return { error: error ? { message: error.message } : null };
+  }, []);
 
-    if (!error) {
-      console.log("Auth context: Clearing user and session state...");
-      setUser(null);
-      setSession(null);
-      setUserRole(null);
-    }
-
-    return { error };
-  };
-
-  // Helper functions for role checking
-  const isAdmin = () => {
-    return userRole === "admin";
-  };
-
-  const isSuperAdmin = () => {
-    return userRole === "admin"; // unified
-  };
-
-  // Auth context value
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
+    profile,
     isLoading,
-    userRole,
     signIn,
     signUp,
     signOut,
-    isAdmin,
-    isSuperAdmin,
+    refreshProfile,
+    refreshClaims,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Hook to use auth context
 export function useAuth() {
   const context = useContext(AuthContext);
-
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
-
   return context;
 }
 
-// Provider wrapper for the app
 export default function Providers({ children }: { children: React.ReactNode }) {
   return <AuthProvider>{children}</AuthProvider>;
 }

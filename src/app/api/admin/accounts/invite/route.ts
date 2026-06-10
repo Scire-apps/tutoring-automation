@@ -4,9 +4,9 @@ import { json, conflict, notFound, serverError } from "@/lib/http";
 import { parseBody } from "@/lib/validation";
 import { inviteManagerSchema } from "@/lib/admin/schemas";
 import { inviteManager } from "@/lib/auth-admin";
-import { createServiceClient } from "@/lib/supabase/server";
 import { orgNameFor } from "@/lib/admin/recipients";
 import { managerActivated, siteUrl } from "@/lib/email";
+import { logAudit } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +22,11 @@ const EMAIL_TAKEN_COPY =
  *   3. `inviteUserByEmail` sets {kind:'manager', org_id, names} in user_metadata
  *      with redirectTo /auth/confirm?next=/auth/accept-invite, so `handle_new_user`
  *      provisions a PENDING manager profile;
- *   4. the route then SERVICE-FLIPS that profile to active + activated_by (the
- *      profiles_guard service branch permits it) and emails an activation notice.
- * Only `inviteUserByEmail` itself is service-role; the promote uses a service
- * client per §2.6 (the trigger-created row carries the invite-promote exemption).
+ *   4. the route then flips that profile to active + activated_by using the
+ *      ADMIN'S OWN RLS-bound client (§2.6: only `inviteUserByEmail` itself is
+ *      service-role) — the profiles_guard admin branch permits the flip and the
+ *      profiles_audit trigger records the REAL admin as actor — then emails an
+ *      activation notice and writes the `manager.invite` audit row (§6.4).
  */
 export async function POST(req: Request) {
   const auth = await requireAdmin(req);
@@ -72,15 +73,27 @@ export async function POST(req: Request) {
   const newUserId = invited?.user?.id;
   if (!newUserId) return serverError("server_error", "Invite did not return a user");
 
-  // 4) Promote the trigger-created pending profile → active + activated_by (service
-  //    client; the profiles_guard service branch permits the status flip).
-  const service = createServiceClient();
-  const { error: promoteError } = await service
+  // 4) Promote the trigger-created pending profile → active + activated_by via the
+  //    admin's RLS-bound client (§2.6) — guard + policy admin branches permit it,
+  //    and the audit trigger attributes the activation to the real admin.
+  const { error: promoteError } = await supabase
     .from("profiles")
     .update({ status: "active", activated_at: new Date().toISOString(), activated_by: user.id })
     .eq("id", newUserId)
     .eq("kind", "manager");
   if (promoteError) return serverError("server_error", `Invited but activation failed: ${promoteError.message}`);
+
+  after(() =>
+    logAudit({
+      action: "manager.invite",
+      actor_id: user.id,
+      actor_kind: "admin",
+      org_id,
+      target_table: "profiles",
+      target_id: newUserId,
+      metadata: { email, inviter: user.id },
+    }),
+  );
 
   const orgName = await orgNameFor(supabase, org_id);
   after(() =>

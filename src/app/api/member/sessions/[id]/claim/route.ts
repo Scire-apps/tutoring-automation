@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  * The claim is ONE race-safe conditional UPDATE:
  *   SET status='claimed', tutor_id=self WHERE id=? AND status='open' RETURNING *
  * The sessions_guard trigger enforces the rest (`can_tutor`, tutor ≠ requester,
- * only status+tutor change). Mapping the outcome:
+ * only the status and tutor columns change). Mapping the outcome:
  *   - 1 row  → 201, notify the requester to set availability (via after()).
  *   - DB error → inspect: not approved → 403 `not_approved_for_subject`;
  *     tutor = requester → 403 `own_request`.

@@ -72,7 +72,7 @@ export default function MemberTutorialPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold tracking-tight">How it works</h1>
+      <h1 className="mb-1 font-display text-2xl font-bold tracking-tight">How it works</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         One account, two ways to take part — get help with your own work, and tutor the
         subjects you&apos;re approved for.
@@ -112,11 +112,11 @@ export default function MemberTutorialPage() {
           <li key={step.title}>
             <Card>
               <CardContent className="flex gap-4">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-subtle text-brand">
                   <step.icon className="size-5" aria-hidden="true" />
                 </span>
                 <div>
-                  <p className="font-medium text-foreground">
+                  <p className="font-display font-medium tracking-tight text-foreground">
                     {i + 1}. {step.title}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>

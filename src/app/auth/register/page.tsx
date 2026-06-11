@@ -16,7 +16,7 @@ export default function RegisterPage() {
             Already have an account?{" "}
             <Link
               href="/auth/login"
-              className="font-medium text-blue-600 underline-offset-4 hover:underline"
+              className="font-medium text-brand underline-offset-4 hover:underline"
             >
               Log in
             </Link>
@@ -25,7 +25,7 @@ export default function RegisterPage() {
             Are you a teacher or club exec?{" "}
             <Link
               href="/auth/register/manager"
-              className="font-medium text-blue-600 underline-offset-4 hover:underline"
+              className="font-medium text-brand underline-offset-4 hover:underline"
             >
               Register as a manager
             </Link>

@@ -100,18 +100,23 @@ export default function ManagerMembersPage() {
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Members</h1>
-          <p className="text-sm text-muted-foreground">
-            Everyone in your organization.
-          </p>
+        <div className="flex items-center gap-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-subtle text-brand">
+            <Users className="size-5" aria-hidden="true" />
+          </span>
+          <div>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Members</h1>
+            <p className="text-sm text-muted-foreground">
+              Everyone in your organization.
+            </p>
+          </div>
         </div>
         <Button asChild variant="outline">
           <Link href="/manager/members/admissions">
             <UserPlus className="size-4" aria-hidden="true" />
             Admissions
             {counts.pending_admissions > 0 ? (
-              <span className="ml-1 inline-flex min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white">
+              <span className="ml-1 inline-flex min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-xs font-semibold text-white">
                 {counts.pending_admissions}
               </span>
             ) : null}
@@ -282,7 +287,7 @@ function MemberTableRow({
       <td className="px-4 py-3">
         <Link
           href={`/manager/members/${member.id}`}
-          className="font-medium text-foreground hover:text-blue-700 hover:underline"
+          className="font-medium text-foreground hover:text-brand-strong hover:underline"
         >
           {personName(member)}
         </Link>

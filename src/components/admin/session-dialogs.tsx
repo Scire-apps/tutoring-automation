@@ -97,7 +97,7 @@ function VerifyForm({
   return (
     <form onSubmit={handleSubmit}>
       <DialogHeader>
-        <DialogTitle>Verify session</DialogTitle>
+        <DialogTitle className="font-display tracking-tight">Verify session</DialogTitle>
         <DialogDescription>
           Confirm the session happened and award volunteer hours to the tutor. This is final —
           corrections are made later as ledger adjustments.
@@ -127,7 +127,7 @@ function VerifyForm({
             href={session.recording_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"
           >
             <ExternalLink className="size-4" aria-hidden="true" />
             Open recording in a new tab
@@ -237,7 +237,7 @@ export function AdminCancelSessionDialog({
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Cancel this session</DialogTitle>
+            <DialogTitle className="font-display tracking-tight">Cancel this session</DialogTitle>
             <DialogDescription>
               Both the requester and the tutor will be emailed. This cannot be undone.
             </DialogDescription>

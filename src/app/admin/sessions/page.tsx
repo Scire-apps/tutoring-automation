@@ -49,8 +49,8 @@ export default function AdminSessionsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <CalendarRange className="size-6 text-blue-600" aria-hidden="true" />
+        <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
+          <CalendarRange className="size-6 text-brand" aria-hidden="true" />
           Sessions
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">

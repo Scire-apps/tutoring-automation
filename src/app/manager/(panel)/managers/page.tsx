@@ -58,8 +58,8 @@ export default function ManagerManagersPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Managers</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Managers</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Managers for {profile.org?.name ?? "your organization"}.
         </p>
       </header>
@@ -73,7 +73,7 @@ export default function ManagerManagersPage() {
 
       {/* Pending */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Pending activation</h2>
+        <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">Pending activation</h2>
         {loading && rows.length === 0 ? (
           <SkeletonList />
         ) : pending.length === 0 ? (
@@ -114,7 +114,7 @@ export default function ManagerManagersPage() {
 
       {/* Active (read-only) */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Active managers</h2>
+        <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">Active managers</h2>
         {loading && rows.length === 0 ? (
           <SkeletonList />
         ) : active.length === 0 ? (
@@ -130,7 +130,7 @@ export default function ManagerManagersPage() {
                 key={m.id}
                 className="flex flex-wrap items-center gap-3 rounded-lg border bg-card px-4 py-3"
               >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-subtle text-brand-strong">
                   <ShieldCheck className="size-4" aria-hidden="true" />
                 </span>
                 <div className="min-w-0 flex-1">

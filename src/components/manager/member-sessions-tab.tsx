@@ -96,13 +96,13 @@ function SessionGroup({
   if (sessions.length === 0) return null;
   return (
     <section className="space-y-2">
-      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      <h3 className="font-display text-sm font-semibold tracking-tight text-foreground">{title}</h3>
       <ul className="space-y-2">
         {sessions.map((s) => (
           <li key={s.id}>
             <Link
               href={`/manager/sessions/${s.id}`}
-              className="flex flex-wrap items-center gap-3 rounded-lg border bg-card px-4 py-3 transition-colors hover:border-blue-300"
+              className="flex flex-wrap items-center gap-3 rounded-lg border bg-card px-4 py-3 transition-colors hover:border-brand/40"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-foreground">{subjectLabel(s)}</p>

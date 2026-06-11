@@ -26,9 +26,9 @@ export function ForgotPasswordForm() {
 
   if (sentTo) {
     return (
-      <p className="text-center text-sm leading-6 text-gray-600">
+      <p className="text-center text-sm leading-6 text-muted-foreground">
         If an account exists for{" "}
-        <span className="font-medium text-gray-900">{sentTo}</span>, a reset link
+        <span className="font-medium text-foreground">{sentTo}</span>, a reset link
         is on its way.
       </p>
     );

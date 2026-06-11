@@ -185,7 +185,7 @@ export function AdminLoginForm() {
         <CardContent className="space-y-6">
           <div className="flex flex-col items-center gap-3 text-center">
             <BrandMark size={40} />
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">Sign in</h1>
+            <h1 className="font-display text-xl font-semibold tracking-tight text-foreground">Sign in</h1>
           </div>
 
           {step === "credentials" ? (

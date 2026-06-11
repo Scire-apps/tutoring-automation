@@ -156,7 +156,7 @@ export default function ManagerSessionDetailPage({
 
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
             {subjectLabel(session.subject)}
           </h1>
           <div className="mt-1.5 flex items-center gap-2">
@@ -171,7 +171,7 @@ export default function ManagerSessionDetailPage({
       {/* --- Interventions --- */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Manager actions</CardTitle>
+          <CardTitle className="font-display text-base tracking-tight">Manager actions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {canCancel || canReopen || canRequestChanges || canVerify ? (
@@ -236,7 +236,7 @@ export default function ManagerSessionDetailPage({
       {/* --- Record --- */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Record</CardTitle>
+          <CardTitle className="font-display text-base tracking-tight">Record</CardTitle>
         </CardHeader>
         <CardContent>
           <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
@@ -274,7 +274,7 @@ export default function ManagerSessionDetailPage({
                 href={session.recording_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:underline"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"
               >
                 <ExternalLink className="size-4" aria-hidden="true" />
                 Open recording
@@ -299,7 +299,7 @@ export default function ManagerSessionDetailPage({
       {/* --- Availability (read-only) --- */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Availability</CardTitle>
+          <CardTitle className="font-display text-base tracking-tight">Availability</CardTitle>
         </CardHeader>
         <CardContent>
           <AvailabilityView availability={session.availability} />
@@ -309,7 +309,7 @@ export default function ManagerSessionDetailPage({
       {/* --- Timeline --- */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="flex items-center gap-2 font-display text-base tracking-tight">
             <History className="size-4 text-muted-foreground" aria-hidden="true" />
             Timeline
           </CardTitle>
@@ -377,7 +377,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
       <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
-      <dd className="text-sm text-foreground">{value}</dd>
+      <dd className="text-sm text-foreground tabular-nums">{value}</dd>
     </div>
   );
 }
@@ -395,7 +395,7 @@ function Timeline({ entries }: { entries: SessionTimelineEntry[] }) {
     <ol className="space-y-3">
       {entries.map((e) => (
         <li key={e.id} className="flex gap-3">
-          <span className="mt-1.5 size-2 shrink-0 rounded-full bg-blue-500" aria-hidden="true" />
+          <span className="mt-1.5 size-2 shrink-0 rounded-full bg-brand" aria-hidden="true" />
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground">{humanizeAction(e.action)}</p>
             <p className="text-xs text-muted-foreground">

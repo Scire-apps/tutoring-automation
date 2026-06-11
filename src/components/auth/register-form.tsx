@@ -147,11 +147,11 @@ export function RegisterForm({ kind }: { kind: "member" | "manager" }) {
             ))}
           </SelectContent>
         </Select>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Don&apos;t see your organization? Email{" "}
           <a
             href={`mailto:${BRAND.contactEmail}`}
-            className="font-medium text-blue-600 underline-offset-4 hover:underline"
+            className="font-medium text-brand underline-offset-4 hover:underline"
           >
             {BRAND.contactEmail}
           </a>

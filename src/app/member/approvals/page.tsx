@@ -156,8 +156,8 @@ function ApprovalsInner() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
 
-      <h1 className="mb-1 flex items-center gap-2 text-2xl font-bold tracking-tight">
-        <ShieldCheck className="size-6 text-blue-600" aria-hidden="true" />
+      <h1 className="mb-1 flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
+        <ShieldCheck className="size-6 text-brand" aria-hidden="true" />
         Subject approvals
       </h1>
       <p className="mb-6 text-sm text-muted-foreground">
@@ -168,7 +168,7 @@ function ApprovalsInner() {
       {/* --- Request form --- */}
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle className="text-base">Request a new approval</CardTitle>
+          <CardTitle className="font-display tracking-tight text-base">Request a new approval</CardTitle>
         </CardHeader>
         <CardContent>
           {requestable.length === 0 && !loading ? (
@@ -230,7 +230,7 @@ function ApprovalsInner() {
       </Card>
 
       {/* --- My approvals --- */}
-      <h2 className="mb-3 text-lg font-semibold">My approvals</h2>
+      <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">My approvals</h2>
       {loading ? (
         <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -287,7 +287,7 @@ function ApprovalRow({
               <p className="font-medium text-foreground">{subjectLabel(approval)}</p>
               {approval.direct_grant ? (
                 <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <BadgeCheck className="size-3.5 text-blue-600" aria-hidden="true" />
+                  <BadgeCheck className="size-3.5 text-brand" aria-hidden="true" />
                   Granted by a manager
                 </p>
               ) : approval.evidence ? (

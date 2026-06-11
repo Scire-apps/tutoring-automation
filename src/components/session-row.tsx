@@ -37,8 +37,8 @@ function RoleChip({ role }: { role: SessionRole }) {
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
         tutoring
-          ? "bg-blue-50 text-blue-700 ring-blue-600/20"
-          : "bg-purple-50 text-purple-700 ring-purple-600/20",
+          ? "bg-brand-subtle text-brand-strong ring-brand/20"
+          : "bg-slate-100 text-slate-600 ring-slate-500/20",
       )}
     >
       {tutoring ? (
@@ -85,7 +85,7 @@ export function SessionRow({
       >
         <RoleChip role={role} />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium text-foreground">
+          <p className="truncate font-display font-medium tracking-tight text-foreground">
             {session.subject_label}
           </p>
           <p className="truncate text-sm text-muted-foreground">
@@ -158,7 +158,7 @@ export function SessionRow({
               href={session.recording_url}
               target="_blank"
               rel="noreferrer noopener"
-              className="inline-flex items-center gap-1.5 text-blue-600 hover:underline"
+              className="inline-flex items-center gap-1.5 text-brand hover:underline"
             >
               <Video className="size-4" aria-hidden="true" />
               Recording link
@@ -204,7 +204,7 @@ function Detail({
       <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
       <div>
         <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
-        <dd className="text-foreground">{value}</dd>
+        <dd className="text-foreground tabular-nums">{value}</dd>
       </div>
     </div>
   );

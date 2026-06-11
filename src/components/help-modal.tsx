@@ -90,8 +90,8 @@ export function HelpModal({
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <LifeBuoy className="size-5 text-blue-600" aria-hidden="true" />
+          <DialogTitle className="flex items-center gap-2 font-display tracking-tight">
+            <LifeBuoy className="size-5 text-brand" aria-hidden="true" />
             Ask for help
           </DialogTitle>
           <DialogDescription>

@@ -141,13 +141,13 @@ export function TwoWeekTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30,
 
   return (
     <div className={className} onMouseLeave={onMouseUpGrid}>
-      <div className="overflow-auto border rounded">
+      <div className="overflow-auto rounded-xl border bg-card shadow-sm">
         <table className="min-w-full border-collapse select-none">
           <thead>
             <tr>
-              <th className="sticky left-0 bg-white z-10 text-xs text-gray-500 font-medium px-2 py-1 border-b">Time</th>
+              <th className="sticky left-0 bg-card z-10 text-xs text-muted-foreground font-medium px-2 py-1 border-b">Time</th>
               {dateCols.map(date => (
-                <th key={date} className="text-xs text-gray-600 font-medium px-2 py-1 border-b">
+                <th key={date} className="text-xs text-muted-foreground font-medium px-2 py-1 border-b">
                   {new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' })}
                 </th>
               ))}
@@ -156,7 +156,7 @@ export function TwoWeekTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30,
           <tbody onMouseUp={onMouseUpGrid}>
             {rows.map((t, rowIdx) => (
               <tr key={t}>
-                <td className="sticky left-0 bg-white z-10 text-[11px] text-gray-500 px-2 py-1 border-b">{t}</td>
+                <td className="sticky left-0 bg-card z-10 text-[11px] tabular-nums text-muted-foreground px-2 py-1 border-b">{t}</td>
                 {dateCols.map((date) => {
                   const selected = isSelected(date, rowIdx);
                   const allowedHere = isAllowed(date, rowIdx);
@@ -166,19 +166,12 @@ export function TwoWeekTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30,
                       onMouseDown={() => onMouseDownCell(date, rowIdx)}
                       onMouseEnter={() => onMouseEnterCell(date, rowIdx)}
                       className={
-                        `h-6 border-b border-l cursor-pointer ` +
+                        `h-6 border-b border-l cursor-pointer transition-colors ` +
                         (selected
-                          ? 'bg-blue-500/80'
+                          ? 'bg-brand/80'
                           : allowedHere
-                            ? 'hover:bg-green-200'
-                            : 'bg-gray-100 cursor-not-allowed')
-                      }
-                      style={
-                        selected
-                          ? {}
-                          : allowedHere
-                            ? { backgroundColor: '#00ff44' }
-                            : {}
+                            ? 'bg-brand-subtle hover:bg-brand/30'
+                            : 'bg-muted cursor-not-allowed')
                       }
                       title={`${date} ${t}`}
                     />
@@ -189,7 +182,7 @@ export function TwoWeekTimeGrid({ startHour = 7, endHour = 22, stepMinutes = 30,
           </tbody>
         </table>
       </div>
-      <div className="mt-2 text-xs text-gray-500">Drag to select time blocks. Click again to remove.</div>
+      <div className="mt-2 text-xs text-muted-foreground">Drag to select time blocks. Click again to remove.</div>
     </div>
   );
 }

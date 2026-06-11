@@ -62,8 +62,8 @@ export default function ManagerOverviewPage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Overview</h1>
+      <header className="space-y-1">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Overview</h1>
         <p className="text-sm text-muted-foreground">{orgName}</p>
       </header>
 
@@ -110,14 +110,14 @@ function StatGrid({ data, loading }: { data: ManageOverview | null; loading: boo
         return (
           <Card key={s.key} className="gap-2 py-5">
             <CardContent className="space-y-2">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-brand-subtle text-brand">
                 <Icon className="size-5" aria-hidden="true" />
               </span>
               <p
                 className={
                   loading
-                    ? "text-2xl font-semibold text-muted-foreground"
-                    : "text-2xl font-semibold text-foreground"
+                    ? "font-display text-2xl font-semibold tabular-nums text-muted-foreground"
+                    : "font-display text-2xl font-semibold tabular-nums text-foreground"
                 }
               >
                 {value}
@@ -188,8 +188,8 @@ function NeedsAttention({
   if (loading && !data) {
     return (
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Needs attention</h2>
-        <div className="h-24 animate-pulse rounded-lg border bg-muted/40" />
+        <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Needs attention</h2>
+        <div className="h-24 animate-pulse rounded-xl border bg-muted/40" />
       </section>
     );
   }
@@ -201,11 +201,11 @@ function NeedsAttention({
 
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-foreground">Needs attention</h2>
+      <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Needs attention</h2>
       {groups.length === 0 ? (
         <Card className="py-8 text-center">
           <CardContent className="flex flex-col items-center gap-2">
-            <span className="flex size-10 items-center justify-center rounded-full bg-green-50 text-green-600">
+            <span className="flex size-10 items-center justify-center rounded-full bg-brand-subtle text-brand">
               <ClipboardCheck className="size-5" aria-hidden="true" />
             </span>
             <p className="text-sm text-muted-foreground">
@@ -220,7 +220,7 @@ function NeedsAttention({
               <CardContent className="space-y-3 py-5">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground">{g.title}</h3>
-                  <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white">
+                  <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-xs font-semibold tabular-nums text-white">
                     {items.length}
                   </span>
                 </div>
@@ -269,7 +269,7 @@ function RecentActivity({
 
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-foreground">Recent activity</h2>
+      <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Recent activity</h2>
       <Card>
         <CardContent className="py-2">
           <ul className="divide-y">

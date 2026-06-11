@@ -7,10 +7,10 @@ export type SessionRole = "requester" | "claimer";
 type ChipTone = "blue" | "amber" | "orange" | "green" | "red" | "neutral";
 
 const TONE_CLASS: Record<ChipTone, string> = {
-  blue: "bg-blue-50 text-blue-700 ring-blue-600/20",
+  blue: "bg-sky-50 text-sky-700 ring-sky-600/20",
   amber: "bg-amber-50 text-amber-700 ring-amber-600/20",
   orange: "bg-orange-50 text-orange-700 ring-orange-600/20",
-  green: "bg-green-50 text-green-700 ring-green-600/20",
+  green: "bg-brand-subtle text-brand-strong ring-brand/25",
   red: "bg-red-50 text-red-700 ring-red-600/20",
   neutral: "bg-muted text-muted-foreground ring-border",
 };

@@ -108,12 +108,12 @@ export default function ManagerMemberDetailPage({
       <Card>
         <CardContent className="flex flex-wrap items-start justify-between gap-4 py-6">
           <div className="flex items-start gap-4">
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-base font-semibold text-blue-700 uppercase">
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-subtle text-base font-semibold text-brand-strong uppercase">
               {(member.first_name[0] ?? "") + (member.last_name[0] ?? "") || "?"}
             </span>
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl font-semibold tracking-tight text-foreground">{name}</h1>
+                <h1 className="font-display text-xl font-semibold tracking-tight text-foreground">{name}</h1>
                 <AccountStatusChip status={member.status} />
               </div>
               <p className="flex items-center gap-1.5 text-sm text-muted-foreground">

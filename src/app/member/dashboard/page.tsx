@@ -185,7 +185,7 @@ function ActiveDashboard() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
           Welcome back, {profile.first_name}
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -206,10 +206,10 @@ function ActiveDashboard() {
       ) : null}
 
       {showNudge ? (
-        <Alert className="relative border-blue-200 bg-blue-50 text-blue-900">
-          <BadgeCheck className="size-4 text-blue-600" />
+        <Alert className="relative border-brand/30 bg-brand-subtle text-brand-strong">
+          <BadgeCheck className="size-4 text-brand" />
           <AlertTitle>Complete your profile</AlertTitle>
-          <AlertDescription className="text-blue-800">
+          <AlertDescription className="text-brand-strong">
             <span>
               Add your grade and pronouns so tutors know who they&apos;re helping.{" "}
               <Link
@@ -224,7 +224,7 @@ function ActiveDashboard() {
             type="button"
             onClick={dismissNudge}
             aria-label="Dismiss"
-            className="absolute top-2 right-2 rounded-md p-1 text-blue-700 hover:bg-blue-100"
+            className="absolute top-2 right-2 rounded-md p-1 text-brand-strong hover:bg-brand-subtle"
           >
             <X className="size-4" />
           </button>
@@ -236,7 +236,9 @@ function ActiveDashboard() {
 
       {/* Quick actions */}
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Quick actions</h2>
+        <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+          Quick actions
+        </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <ActionCard
             icon={HandHelping}
@@ -333,14 +335,14 @@ function StatGrid({
         return (
           <Card key={s.label} className="gap-2 py-5">
             <CardContent className="space-y-2">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-brand-subtle text-brand">
                 <Icon className="size-5" aria-hidden="true" />
               </span>
               <p
                 className={
                   loading
-                    ? "text-2xl font-semibold text-muted-foreground"
-                    : "text-2xl font-semibold text-foreground"
+                    ? "font-display text-2xl font-semibold tabular-nums tracking-tight text-muted-foreground"
+                    : "font-display text-2xl font-semibold tabular-nums tracking-tight text-foreground"
                 }
               >
                 {s.value}
@@ -373,7 +375,9 @@ function MyRequests({
 
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-foreground">My requests</h2>
+      <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+        My requests
+      </h2>
       {loading && sessions.length === 0 ? (
         <SkeletonRows />
       ) : sessions.length === 0 ? (
@@ -449,7 +453,9 @@ function MySessions({
 
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-foreground">My sessions</h2>
+      <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+        My sessions
+      </h2>
       {loading && sessions.length === 0 ? (
         <SkeletonRows />
       ) : sessions.length === 0 ? (
@@ -679,7 +685,9 @@ function PastSessions({
 
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-foreground">Past sessions</h2>
+      <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+        Past sessions
+      </h2>
       <ul className="space-y-2">
         {sessions.map((s) => {
           const counterpart =
@@ -704,7 +712,7 @@ function PastSessions({
                 </p>
               </div>
               {s.status === "verified" && s.awarded_hours != null ? (
-                <span className="text-sm font-medium text-green-700">
+                <span className="text-sm font-medium tabular-nums text-green-700">
                   +{formatHours(s.awarded_hours)} h
                 </span>
               ) : null}

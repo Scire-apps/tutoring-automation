@@ -45,7 +45,7 @@ export function ResetPasswordForm() {
   if (done) {
     return (
       <div className="space-y-4 text-center">
-        <p className="text-sm leading-6 text-gray-600">Password updated.</p>
+        <p className="text-sm leading-6 text-muted-foreground">Password updated.</p>
         <Button asChild className="w-full">
           <Link href="/auth/login">Log in</Link>
         </Button>

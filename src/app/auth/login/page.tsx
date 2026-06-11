@@ -16,7 +16,7 @@ export default function LoginPage() {
             New to Scire?{" "}
             <Link
               href="/auth/register"
-              className="font-medium text-blue-600 underline-offset-4 hover:underline"
+              className="font-medium text-brand underline-offset-4 hover:underline"
             >
               Create an account
             </Link>
@@ -24,7 +24,7 @@ export default function LoginPage() {
           <p>
             <Link
               href="/auth/login/manager"
-              className="font-medium text-blue-600 underline-offset-4 hover:underline"
+              className="font-medium text-brand underline-offset-4 hover:underline"
             >
               Manager sign in →
             </Link>

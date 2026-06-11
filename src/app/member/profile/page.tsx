@@ -31,8 +31,8 @@ export default function MemberProfilePage() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
 
-      <h1 className="mb-6 flex items-center gap-2 text-2xl font-bold tracking-tight">
-        <UserCircle className="size-6 text-blue-600" aria-hidden="true" />
+      <h1 className="mb-6 flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
+        <UserCircle className="size-6 text-brand" aria-hidden="true" />
         Profile
       </h1>
 
@@ -108,7 +108,7 @@ function DetailsForm({
   return (
     <Card className="mb-8">
       <CardHeader>
-        <CardTitle className="text-base">Your details</CardTitle>
+        <CardTitle className="font-display tracking-tight text-base">Your details</CardTitle>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleSave}>
@@ -228,7 +228,7 @@ function PasswordForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Change password</CardTitle>
+        <CardTitle className="font-display tracking-tight text-base">Change password</CardTitle>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleSave}>

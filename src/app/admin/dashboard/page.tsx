@@ -44,7 +44,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground">Scire platform overview.</p>
       </header>
 
@@ -90,12 +90,12 @@ function StatGrid({ data, loading }: { data: AdminOverview | null; loading: bool
         return (
           <Card key={s.key} className="gap-2 py-5">
             <CardContent className="space-y-2">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-brand-subtle text-brand">
                 <Icon className="size-5" aria-hidden="true" />
               </span>
               <p
                 className={cn(
-                  "text-2xl font-semibold",
+                  "text-2xl font-semibold tabular-nums",
                   loading ? "text-muted-foreground" : "text-foreground",
                 )}
               >
@@ -124,10 +124,10 @@ function ServiceHealth({ status }: { status: AdminStatus | null }) {
   const OverallIcon = overall.icon;
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-foreground">Service health</h2>
+      <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Service health</h2>
       <Card>
         <CardHeader className="flex-row items-center justify-between gap-2">
-          <CardTitle className="text-base">Status</CardTitle>
+          <CardTitle className="font-display text-base tracking-tight">Status</CardTitle>
           <span className={cn("inline-flex items-center gap-1.5 text-sm font-medium", overall.tone)}>
             <OverallIcon className="size-4" aria-hidden="true" />
             {overall.label}
@@ -169,7 +169,7 @@ function RecentActivity({ data, loading }: { data: AdminOverview | null; loading
 
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-foreground">Recent activity</h2>
+      <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Recent activity</h2>
       <Card>
         <CardContent className="py-2">
           <ul className="divide-y">

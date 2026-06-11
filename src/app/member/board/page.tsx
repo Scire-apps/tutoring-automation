@@ -140,8 +140,8 @@ export default function MemberBoardPage() {
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <ClipboardList className="size-6 text-blue-600" aria-hidden="true" />
+          <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
+            <ClipboardList className="size-6 text-brand" aria-hidden="true" />
             Tutoring board
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -151,7 +151,7 @@ export default function MemberBoardPage() {
         <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
           <input
             type="checkbox"
-            className="size-4 rounded border-input accent-blue-600"
+            className="size-4 rounded border-input accent-[oklch(0.56_0.114_159)]"
             checked={onlyClaimable}
             onChange={(e) => toggleOnlyClaimable(e.target.checked)}
           />
@@ -270,7 +270,7 @@ function BoardCard({
                 </Button>
                 <Link
                   href={`/member/approvals?subject=${encodeURIComponent(item.org_subject_id)}`}
-                  className="inline-flex items-center justify-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+                  className="inline-flex items-center justify-center gap-1 text-xs font-medium text-brand hover:text-brand-strong"
                 >
                   Request approval
                   <ArrowRight className="size-3" aria-hidden="true" />

@@ -41,8 +41,8 @@ export default function AdminAdminsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <KeyRound className="size-6 text-blue-600" aria-hidden="true" />
+        <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
+          <KeyRound className="size-6 text-brand" aria-hidden="true" />
           Admins
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">The Scire platform administrators.</p>
@@ -78,7 +78,7 @@ export default function AdminAdminsPage() {
           <ul className="divide-y">
             {admins.map((a) => (
               <li key={a.id} className="flex items-center gap-3 px-4 py-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700 uppercase">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-subtle text-sm font-semibold text-brand-strong uppercase">
                   {(a.first_name[0] ?? "") + (a.last_name[0] ?? "") || "?"}
                 </span>
                 <div className="min-w-0 flex-1">

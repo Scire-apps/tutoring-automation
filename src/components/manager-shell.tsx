@@ -188,14 +188,14 @@ export function ManagerShell({
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 active
-                  ? "bg-blue-50 text-blue-700"
+                  ? "bg-brand-subtle text-brand-strong"
                   : "text-foreground/80 hover:bg-accent hover:text-foreground",
               )}
             >
               <Icon className="size-4 shrink-0" aria-hidden="true" />
               <span className="flex-1">{item.label}</span>
               {item.badge && count > 0 ? (
-                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white">
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-xs font-semibold text-white">
                   {count}
                 </span>
               ) : null}
@@ -206,7 +206,7 @@ export function ManagerShell({
 
       <div className="border-t px-3 py-3">
         <div className="flex items-center gap-3 px-2 py-1">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700 uppercase">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-subtle text-sm font-semibold text-brand-strong uppercase">
             {(initialProfile.first_name[0] ?? "") + (initialProfile.last_name[0] ?? "") || "?"}
           </span>
           <div className="min-w-0 flex-1">

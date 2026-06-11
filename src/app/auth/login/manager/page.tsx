@@ -18,7 +18,7 @@ export default function ManagerLoginPage() {
             Need a manager account?{" "}
             <Link
               href="/auth/register/manager"
-              className="font-medium text-blue-600 underline-offset-4 hover:underline"
+              className="font-medium text-brand underline-offset-4 hover:underline"
             >
               Register as a manager
             </Link>
@@ -26,7 +26,7 @@ export default function ManagerLoginPage() {
           <p>
             <Link
               href="/auth/login"
-              className="font-medium text-blue-600 underline-offset-4 hover:underline"
+              className="font-medium text-brand underline-offset-4 hover:underline"
             >
               Member sign in →
             </Link>

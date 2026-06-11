@@ -99,7 +99,7 @@ function VerifyForm({
   return (
     <form onSubmit={handleSubmit}>
       <DialogHeader>
-        <DialogTitle>Verify session</DialogTitle>
+        <DialogTitle className="font-display tracking-tight">Verify session</DialogTitle>
         <DialogDescription>
           Confirm the session happened and award volunteer hours to the tutor. This is final —
           corrections are made later as ledger adjustments.
@@ -121,7 +121,7 @@ function VerifyForm({
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-muted-foreground">Duration</dt>
-            <dd className="text-right font-medium">
+            <dd className="text-right font-medium tabular-nums">
               {session.duration_minutes != null ? `${session.duration_minutes} min` : "—"}
             </dd>
           </div>
@@ -133,7 +133,7 @@ function VerifyForm({
             href={session.recording_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"
           >
             <ExternalLink className="size-4" aria-hidden="true" />
             Open recording in a new tab

@@ -65,11 +65,11 @@ export function MemberHoursTab({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="flex size-11 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+          <span className="flex size-11 items-center justify-center rounded-lg bg-brand-subtle text-brand">
             <Clock className="size-5" aria-hidden="true" />
           </span>
           <div>
-            <p className="text-2xl font-semibold text-foreground">{formatHoursTotal(total)}</p>
+            <p className="font-display text-2xl font-semibold tracking-tight tabular-nums text-foreground">{formatHoursTotal(total)}</p>
             <p className="text-sm text-muted-foreground">Total volunteer hours</p>
           </div>
         </div>
@@ -134,7 +134,7 @@ export function MemberHoursTab({
                         {e.session_id ? (
                           <Link
                             href={`/manager/sessions/${e.session_id}`}
-                            className="text-blue-700 hover:underline"
+                            className="text-brand-strong hover:underline"
                           >
                             {e.note ?? "Session award"}
                           </Link>
@@ -172,7 +172,7 @@ function KindChip({ kind }: { kind: "award" | "adjustment" }) {
         "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
         kind === "award"
           ? "bg-green-50 text-green-700 ring-green-600/20"
-          : "bg-blue-50 text-blue-700 ring-blue-600/20",
+          : "bg-brand-subtle text-brand-strong ring-brand/20",
       )}
     >
       {kind === "award" ? "Award" : "Adjustment"}

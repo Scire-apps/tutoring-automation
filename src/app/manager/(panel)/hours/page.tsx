@@ -67,8 +67,8 @@ export default function ManagerHoursPage() {
     <div className="space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <Clock className="size-6 text-blue-600" aria-hidden="true" />
+          <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
+            <Clock className="size-6 text-brand" aria-hidden="true" />
             Volunteer hours
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -223,7 +223,7 @@ function LedgerTab({ reloadToken }: { reloadToken: number }) {
                         {" · "}
                         <Link
                           href={`/manager/sessions/${r.session_id}`}
-                          className="text-blue-600 hover:underline"
+                          className="text-brand hover:underline"
                         >
                           {r.subject_name ? r.subject_name : "session"}
                         </Link>
@@ -258,7 +258,7 @@ function KindChip({ kind }: { kind: "award" | "adjustment" }) {
         "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset " +
         (kind === "award"
           ? "bg-green-50 text-green-700 ring-green-600/20"
-          : "bg-blue-50 text-blue-700 ring-blue-600/20")
+          : "bg-brand-subtle text-brand-strong ring-brand/20")
       }
     >
       {kind === "award" ? "Award" : "Adjustment"}

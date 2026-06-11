@@ -45,7 +45,7 @@ export default function ManagerApprovalsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Tutoring approvals</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Tutoring approvals</h1>
         <p className="text-sm text-muted-foreground">
           Decide who can tutor which subjects.
         </p>
@@ -115,7 +115,7 @@ function RequestsTab() {
     return (
       <Card className="py-10 text-center">
         <CardContent className="flex flex-col items-center gap-2">
-          <span className="flex size-11 items-center justify-center rounded-full bg-green-50 text-green-600">
+          <span className="flex size-11 items-center justify-center rounded-full bg-brand-subtle text-brand">
             <Inbox className="size-5" aria-hidden="true" />
           </span>
           <p className="text-sm text-muted-foreground">No pending approval requests.</p>
@@ -285,7 +285,7 @@ function BySubjectTab() {
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/manager/members/${m.member_id}`}
-                  className="font-medium text-foreground hover:text-blue-700 hover:underline"
+                  className="font-medium text-foreground hover:text-brand-strong hover:underline"
                 >
                   {personName(m)}
                 </Link>

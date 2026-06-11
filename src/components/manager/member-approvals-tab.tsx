@@ -79,7 +79,7 @@ export function MemberApprovalsTab({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-foreground">Subject approvals</h2>
+        <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">Subject approvals</h2>
         <Button size="sm" onClick={() => setGrantOpen(true)}>
           <Plus className="size-4" aria-hidden="true" />
           Grant subject
@@ -147,7 +147,7 @@ export function MemberApprovalsTab({
       {/* History from the audit timeline */}
       {history.length > 0 ? (
         <section className="space-y-2">
-          <h3 className="text-sm font-semibold text-foreground">History</h3>
+          <h3 className="font-display text-sm font-semibold tracking-tight text-foreground">History</h3>
           <Card>
             <CardContent className="py-2">
               <ul className="divide-y">
@@ -216,8 +216,8 @@ function SourceChip({ direct }: { direct: boolean }) {
       className={cn(
         "inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset",
         direct
-          ? "bg-purple-50 text-purple-700 ring-purple-600/20"
-          : "bg-blue-50 text-blue-700 ring-blue-600/20",
+          ? "bg-slate-100 text-slate-600 ring-slate-500/20"
+          : "bg-brand-subtle text-brand-strong ring-brand/20",
       )}
     >
       {direct ? "Direct" : "Request"}

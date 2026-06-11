@@ -111,8 +111,8 @@ export default function AdminOrgDetailPage({
 
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <Building2 className="size-6 text-blue-600" aria-hidden="true" />
+          <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
+            <Building2 className="size-6 text-brand" aria-hidden="true" />
             {org.name}
             {archived ? (
               <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border">
@@ -246,12 +246,12 @@ function OverviewTab({ orgId }: { orgId: string }) {
         return (
           <Card key={s.key} className="gap-2 py-4">
             <CardContent className="space-y-1.5">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+              <span className="flex size-8 items-center justify-center rounded-lg bg-brand-subtle text-brand">
                 <Icon className="size-4" aria-hidden="true" />
               </span>
               <p
                 className={cn(
-                  "text-xl font-semibold",
+                  "text-xl font-semibold tabular-nums",
                   loading ? "text-muted-foreground" : "text-foreground",
                 )}
               >
@@ -325,7 +325,7 @@ function SettingsTab({
       <Card>
         <CardContent className="space-y-4 py-5">
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Details</h3>
+            <h3 className="font-display text-sm font-semibold tracking-tight text-foreground">Details</h3>
             <p className="text-sm text-muted-foreground">
               Rename the organization or change its slug.
             </p>
@@ -349,7 +349,7 @@ function SettingsTab({
       <Card>
         <CardContent className="space-y-3 py-5">
           <div>
-            <h3 className="text-sm font-semibold text-foreground">
+            <h3 className="font-display text-sm font-semibold tracking-tight text-foreground">
               {archived ? "Restore organization" : "Archive organization"}
             </h3>
             <p className="text-sm text-muted-foreground">

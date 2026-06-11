@@ -106,8 +106,8 @@ function RecordingForm({
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          <Link2 className="size-5 text-blue-600" aria-hidden="true" />
+        <DialogTitle className="flex items-center gap-2 font-display tracking-tight">
+          <Link2 className="size-5 text-brand" aria-hidden="true" />
           Recording link
         </DialogTitle>
         <DialogDescription>

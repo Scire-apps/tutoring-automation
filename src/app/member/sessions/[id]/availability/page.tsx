@@ -131,8 +131,8 @@ export default function MemberAvailabilityPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarClock className="size-5 text-blue-600" aria-hidden="true" />
+          <CardTitle className="flex items-center gap-2 font-display tracking-tight">
+            <CalendarClock className="size-5 text-brand" aria-hidden="true" />
             Set your availability
           </CardTitle>
           {session ? (

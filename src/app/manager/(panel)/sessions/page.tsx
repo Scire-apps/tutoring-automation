@@ -131,8 +131,8 @@ export default function ManagerSessionsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <CalendarRange className="size-6 text-blue-600" aria-hidden="true" />
+        <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
+          <CalendarRange className="size-6 text-brand" aria-hidden="true" />
           Sessions
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -151,7 +151,7 @@ export default function ManagerSessionsPage() {
               <button
                 type="button"
                 onClick={resetStatuses}
-                className="text-xs font-medium text-blue-600 hover:underline"
+                className="text-xs font-medium text-brand hover:underline"
               >
                 Active only
               </button>
@@ -167,7 +167,7 @@ export default function ManagerSessionsPage() {
                     onClick={() => toggleStatus(s)}
                     className={
                       on
-                        ? "rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white"
+                        ? "rounded-full bg-brand px-3 py-1 text-xs font-medium text-white"
                         : "rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-accent"
                     }
                   >

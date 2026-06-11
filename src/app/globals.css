@@ -2,7 +2,9 @@
 @import "tw-animate-css";
 
 @theme inline {
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-schibsted), var(--font-hanken), ui-sans-serif, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -23,6 +25,13 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Brand accent layer — emerald. Use deliberately (active states, highlights). */
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-strong: var(--brand-strong);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -41,43 +50,75 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Crisp, low-spread tactile shadows (ink-tinted, not pure black). */
+  --shadow-2xs: 0 1px 2px 0 oklch(0.22 0.03 160 / 0.04);
+  --shadow-xs: 0 1px 2px 0 oklch(0.22 0.03 160 / 0.05), 0 1px 1px -1px oklch(0.22 0.03 160 / 0.04);
+  --shadow-sm: 0 1px 3px 0 oklch(0.22 0.03 160 / 0.07), 0 1px 2px -1px oklch(0.22 0.03 160 / 0.05);
+  --shadow-md: 0 4px 12px -2px oklch(0.22 0.03 160 / 0.08), 0 2px 4px -2px oklch(0.22 0.03 160 / 0.05);
+  --shadow-lg: 0 12px 28px -6px oklch(0.22 0.03 160 / 0.12), 0 4px 8px -4px oklch(0.22 0.03 160 / 0.06);
+  --shadow-xl: 0 24px 48px -12px oklch(0.22 0.03 160 / 0.16);
 }
 
-/* Light-only theme (new-york, neutral base). No dark variant ships in v1. */
+/*
+ * "Confident SaaS" — warm off-white canvas, rich ink text, a single confident
+ * emerald brand hue. Light-only (no dark variant ships in v1). All chroma is
+ * intentional: neutrals carry a faint warm cast so the page never reads as cold
+ * default-gray, and emerald is the only saturated brand color.
+ */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --radius: 0.7rem;
+
+  --background: oklch(0.985 0.004 106);
+  --foreground: oklch(0.22 0.012 160);
+
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.22 0.012 160);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.22 0.012 160);
+
+  /* Primary = emerald brand. */
+  --primary: oklch(0.56 0.114 159);
+  --primary-foreground: oklch(0.985 0.012 150);
+
+  --secondary: oklch(0.962 0.006 130);
+  --secondary-foreground: oklch(0.30 0.02 160);
+
+  --muted: oklch(0.965 0.005 120);
+  --muted-foreground: oklch(0.515 0.014 150);
+
+  --accent: oklch(0.955 0.028 160);
+  --accent-foreground: oklch(0.40 0.072 159);
+
+  --destructive: oklch(0.585 0.224 27.5);
+  --destructive-foreground: oklch(0.985 0.01 60);
+
+  --border: oklch(0.912 0.006 130);
+  --input: oklch(0.905 0.006 130);
+  --ring: oklch(0.56 0.114 159);
+
+  /* Brand accent layer. */
+  --brand: oklch(0.56 0.114 159);
+  --brand-foreground: oklch(0.985 0.012 150);
+  --brand-subtle: oklch(0.955 0.03 160);
+  --brand-strong: oklch(0.42 0.088 159);
+
+  /* Data viz — emerald-anchored, harmonized hues (no clashing primaries). */
+  --chart-1: oklch(0.56 0.114 159);
+  --chart-2: oklch(0.66 0.12 196);
+  --chart-3: oklch(0.70 0.13 85);
+  --chart-4: oklch(0.62 0.16 41);
+  --chart-5: oklch(0.55 0.13 300);
+
+  /* Sidebar — a hair warmer than the canvas so panels read as distinct. */
+  --sidebar: oklch(0.992 0.004 106);
+  --sidebar-foreground: oklch(0.22 0.012 160);
+  --sidebar-primary: oklch(0.56 0.114 159);
+  --sidebar-primary-foreground: oklch(0.985 0.012 150);
+  --sidebar-accent: oklch(0.955 0.028 160);
+  --sidebar-accent-foreground: oklch(0.40 0.072 159);
+  --sidebar-border: oklch(0.912 0.006 130);
+  --sidebar-ring: oklch(0.56 0.114 159);
 }
 
 @layer base {
@@ -86,6 +127,35 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-inter), system-ui, sans-serif;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Tabular figures for data-dense UI (tables, hours, counts). */
+  table,
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  /* One restrained page-load reveal for marketing surfaces. */
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-rise-in {
+    animation: rise-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-rise-in {
+      animation: none;
+    }
   }
 }

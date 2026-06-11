@@ -75,11 +75,16 @@ export default function ManagerAdmissionsPage() {
             Members
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Admissions</h1>
-          <p className="text-sm text-muted-foreground">
-            Members awaiting admission, oldest first.
-          </p>
+        <div className="flex items-center gap-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-subtle text-brand">
+            <UserCheck className="size-5" aria-hidden="true" />
+          </span>
+          <div>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Admissions</h1>
+            <p className="text-sm text-muted-foreground">
+              Members awaiting admission, oldest first.
+            </p>
+          </div>
         </div>
       </header>
 
@@ -116,7 +121,7 @@ export default function ManagerAdmissionsPage() {
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/manager/members/${m.id}`}
-                  className="font-medium text-foreground hover:text-blue-700 hover:underline"
+                  className="font-medium text-foreground hover:text-brand-strong hover:underline"
                 >
                   {personName(m)}
                 </Link>

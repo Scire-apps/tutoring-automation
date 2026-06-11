@@ -160,7 +160,7 @@ export function SessionList({
                 onClick={() => toggleStatus(s)}
                 className={
                   on
-                    ? "rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white"
+                    ? "rounded-full bg-brand px-3 py-1 text-xs font-medium text-white"
                     : "rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-accent"
                 }
               >
@@ -310,7 +310,7 @@ function SessionRow({
               href={session.recording_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"
             >
               <ExternalLink className="size-4" aria-hidden="true" />
               Open recording

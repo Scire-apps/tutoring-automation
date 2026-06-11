@@ -187,7 +187,7 @@ function CreateOrgForm({
   return (
     <form onSubmit={handleSubmit}>
       <DialogHeader>
-        <DialogTitle>Create organization</DialogTitle>
+        <DialogTitle className="font-display tracking-tight">Create organization</DialogTitle>
         <DialogDescription>
           The chosen template subjects are copied into the new org&apos;s catalog. Managers can edit
           the catalog afterward.
@@ -247,7 +247,7 @@ function CreateOrgForm({
           <div className="flex items-center gap-3 text-xs">
             <button
               type="button"
-              className="font-medium text-blue-600 hover:underline disabled:opacity-50"
+              className="font-medium text-brand hover:underline disabled:opacity-50"
               onClick={selectAllFiltered}
               disabled={pending || templateLoading}
             >

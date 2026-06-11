@@ -65,12 +65,12 @@ export function formatHours(n: number): string {
 type Tone = "blue" | "amber" | "orange" | "green" | "red" | "purple" | "neutral";
 
 const TONE_CLASS: Record<Tone, string> = {
-  blue: "bg-blue-50 text-blue-700 ring-blue-600/20",
+  blue: "bg-sky-50 text-sky-700 ring-sky-600/20",
   amber: "bg-amber-50 text-amber-700 ring-amber-600/20",
   orange: "bg-orange-50 text-orange-700 ring-orange-600/20",
-  green: "bg-green-50 text-green-700 ring-green-600/20",
+  green: "bg-brand-subtle text-brand-strong ring-brand/25",
   red: "bg-red-50 text-red-700 ring-red-600/20",
-  purple: "bg-purple-50 text-purple-700 ring-purple-600/20",
+  purple: "bg-slate-100 text-slate-600 ring-slate-500/20",
   neutral: "bg-muted text-muted-foreground ring-border",
 };
 
@@ -190,7 +190,7 @@ export function TabBar<T extends string>({
               <span
                 className={cn(
                   "inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold",
-                  active ? "bg-blue-600 text-white" : "bg-muted-foreground/15 text-foreground",
+                  active ? "bg-brand text-white" : "bg-muted-foreground/15 text-foreground",
                 )}
               >
                 {t.count}
@@ -238,7 +238,7 @@ export function AvailabilityView({ availability }: { availability: Record<string
                 windows.map((w) => (
                   <span
                     key={w}
-                    className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20"
+                    className="inline-flex items-center rounded-md bg-brand-subtle px-2 py-0.5 text-xs font-medium text-brand-strong ring-1 ring-inset ring-brand/25"
                   >
                     {w}
                   </span>

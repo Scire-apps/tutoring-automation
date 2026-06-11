@@ -121,7 +121,7 @@ export function GrantSubjectDialog({
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Grant a subject to {memberName}</DialogTitle>
+          <DialogTitle className="font-display tracking-tight">Grant a subject to {memberName}</DialogTitle>
           <DialogDescription>
             Approve {memberName} to tutor a subject directly, without a request.
           </DialogDescription>
@@ -164,7 +164,7 @@ export function GrantSubjectDialog({
                         disabled={pending}
                         className={cn(
                           "flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-accent",
-                          isSel && "bg-blue-50 text-blue-700",
+                          isSel && "bg-brand-subtle text-brand-strong",
                         )}
                       >
                         <span>{subjectLabel(s)}</span>

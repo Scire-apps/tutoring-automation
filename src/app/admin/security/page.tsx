@@ -125,8 +125,8 @@ export default function AdminSecurityPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <Lock className="size-6 text-blue-600" aria-hidden="true" />
+        <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
+          <Lock className="size-6 text-brand" aria-hidden="true" />
           Security
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -136,8 +136,8 @@ export default function AdminSecurityPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <ShieldCheck className="size-4 text-blue-600" aria-hidden="true" />
+          <CardTitle className="flex items-center gap-2 font-display text-base tracking-tight">
+            <ShieldCheck className="size-4 text-brand" aria-hidden="true" />
             Two-factor authentication
           </CardTitle>
         </CardHeader>
@@ -161,7 +161,7 @@ export default function AdminSecurityPage() {
                   width={180}
                   height={180}
                   unoptimized
-                  className="rounded-md border bg-white p-2"
+                  className="rounded-md border bg-card p-2"
                 />
                 <p className="text-center text-xs text-muted-foreground">
                   Can&apos;t scan? Enter this key manually:

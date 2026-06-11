@@ -35,11 +35,11 @@ export function ActionCard({
         "group h-full gap-3 px-5 py-5 text-left transition-shadow",
         disabled
           ? "cursor-not-allowed opacity-50"
-          : "hover:border-blue-300 hover:shadow-md",
+          : "hover:border-brand/40 hover:shadow-md",
         className,
       )}
     >
-      <span className="flex size-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+      <span className="flex size-10 items-center justify-center rounded-lg bg-brand-subtle text-brand">
         <Icon className="size-5" aria-hidden="true" />
       </span>
       <div className="space-y-1">

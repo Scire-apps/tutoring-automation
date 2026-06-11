@@ -150,8 +150,8 @@ export default function MemberSchedulePage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarCheck className="size-5 text-blue-600" aria-hidden="true" />
+          <CardTitle className="flex items-center gap-2 font-display tracking-tight">
+            <CalendarCheck className="size-5 text-brand" aria-hidden="true" />
             Schedule the session
           </CardTitle>
           {session ? (

@@ -100,7 +100,7 @@ export default function AcceptInvitePage() {
         <CardContent className="space-y-6">
           <div className="flex flex-col items-center gap-3 text-center">
             <BrandMark size={40} />
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            <h1 className="font-display text-xl font-semibold tracking-tight text-foreground">
               Set your password
             </h1>
             <p className="text-sm text-muted-foreground">

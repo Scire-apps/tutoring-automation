@@ -50,8 +50,8 @@ export default function ManagerEmailsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <Mail className="size-6 text-blue-600" aria-hidden="true" />
+        <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
+          <Mail className="size-6 text-brand" aria-hidden="true" />
           Emails
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -213,13 +213,13 @@ function ComposeTab({ onSent }: { onSent: () => void }) {
                   key={s.value}
                   className={
                     "flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 transition-colors " +
-                    (active ? "border-blue-400 bg-blue-50/60" : "hover:bg-accent/50")
+                    (active ? "border-brand/60 bg-brand-subtle/60" : "hover:bg-accent/50")
                   }
                 >
                   <input
                     type="radio"
                     name="audience"
-                    className="mt-0.5 size-4 accent-blue-600"
+                    className="mt-0.5 size-4 accent-[oklch(0.56_0.114_159)]"
                     checked={active}
                     onChange={() => setScope(s.value)}
                   />
@@ -366,7 +366,7 @@ function MemberMultiSelect({
       {selected.length > 0 ? (
         <p className="text-xs text-muted-foreground">
           {selected.length} selected ·{" "}
-          <button type="button" className="text-blue-600 hover:underline" onClick={() => onChange([])}>
+          <button type="button" className="text-brand hover:underline" onClick={() => onChange([])}>
             Clear
           </button>
         </p>
@@ -381,7 +381,7 @@ function MemberMultiSelect({
                 <label className="flex cursor-pointer items-center gap-2.5 px-3 py-2 hover:bg-accent/50">
                   <input
                     type="checkbox"
-                    className="size-4 accent-blue-600"
+                    className="size-4 accent-[oklch(0.56_0.114_159)]"
                     checked={selectedSet.has(m.id)}
                     onChange={() => toggle(m.id)}
                   />
@@ -496,7 +496,7 @@ function BatchDetail({ batchId, onBack }: { batchId: string; onBack: () => void 
         <>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">{detail.batch.subject}</CardTitle>
+              <CardTitle className="font-display text-base tracking-tight">{detail.batch.subject}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-xs text-muted-foreground">
@@ -514,7 +514,7 @@ function BatchDetail({ batchId, onBack }: { batchId: string; onBack: () => void 
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">
+              <CardTitle className="font-display text-base tracking-tight">
                 Recipients
                 <span className="ml-2 text-sm font-normal text-muted-foreground">
                   ({detail.recipients.length})

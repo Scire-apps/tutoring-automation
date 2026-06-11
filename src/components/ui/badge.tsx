@@ -18,6 +18,14 @@ const badgeVariants = cva(
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
+        // Brand + status semantics (soft fill + ring). Use `brand`/`success`
+        // for verified/approved, `warning` for pending, `destructive` for errors.
+        brand:
+          "bg-brand-subtle text-brand-strong ring-1 ring-inset ring-brand/20 [a&]:hover:bg-brand-subtle/70",
+        success:
+          "bg-brand-subtle text-brand-strong ring-1 ring-inset ring-brand/20",
+        warning:
+          "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20",
       },
     },
     defaultVariants: {

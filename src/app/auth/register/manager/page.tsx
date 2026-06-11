@@ -19,7 +19,7 @@ export default function ManagerRegisterPage() {
             Already a manager?{" "}
             <Link
               href="/auth/login/manager"
-              className="font-medium text-blue-600 underline-offset-4 hover:underline"
+              className="font-medium text-brand underline-offset-4 hover:underline"
             >
               Manager sign in
             </Link>
@@ -28,7 +28,7 @@ export default function ManagerRegisterPage() {
             Looking to get tutored or tutor?{" "}
             <Link
               href="/auth/register"
-              className="font-medium text-blue-600 underline-offset-4 hover:underline"
+              className="font-medium text-brand underline-offset-4 hover:underline"
             >
               Create a member account
             </Link>

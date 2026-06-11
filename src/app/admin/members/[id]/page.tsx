@@ -108,7 +108,7 @@ export default function AdminAccountDetailPage({
 
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
             {name}
             <AccountStatusChip status={account.status} />
           </h1>
@@ -146,7 +146,7 @@ export default function AdminAccountDetailPage({
       {/* Actions */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Actions</CardTitle>
+          <CardTitle className="font-display text-base tracking-tight">Actions</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
           {account.status === "pending" ? (
@@ -350,7 +350,7 @@ function SessionsTab({ account }: { account: AdminAccountDetail }) {
                 <span
                   className={cn(
                     "inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium",
-                    s.role === "tutor" ? "bg-blue-50 text-blue-700" : "bg-purple-50 text-purple-700",
+                    s.role === "tutor" ? "bg-brand-subtle text-brand-strong" : "bg-slate-100 text-slate-600",
                   )}
                 >
                   {s.role === "tutor" ? "Tutoring" : "Learning"}
@@ -373,7 +373,7 @@ function HoursTab({ account }: { account: AdminAccountDetail }) {
     <div className="space-y-4">
       <Card className="gap-2 py-4">
         <CardContent className="space-y-1">
-          <p className="text-2xl font-semibold text-foreground">{formatHours(account.total_hours)} h</p>
+          <p className="font-display text-2xl font-semibold tabular-nums tracking-tight text-foreground">{formatHours(account.total_hours)} h</p>
           <p className="text-sm text-muted-foreground">Total volunteer hours</p>
         </CardContent>
       </Card>
@@ -401,7 +401,7 @@ function HoursTab({ account }: { account: AdminAccountDetail }) {
                 </div>
                 <span
                   className={cn(
-                    "text-sm font-semibold",
+                    "text-sm font-semibold tabular-nums",
                     l.hours < 0 ? "text-red-600" : "text-green-600",
                   )}
                 >

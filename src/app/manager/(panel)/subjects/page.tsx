@@ -114,8 +114,8 @@ export default function ManagerSubjectsPage() {
     <div className="space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <BookMarked className="size-6 text-blue-600" aria-hidden="true" />
+          <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
+            <BookMarked className="size-6 text-brand" aria-hidden="true" />
             Subjects
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -159,7 +159,7 @@ export default function ManagerSubjectsPage() {
         <div className="space-y-5">
           {groups.map((group) => (
             <section key={group.name}>
-              <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{group.name}</h2>
+              <h2 className="mb-2 font-display text-sm font-semibold tracking-tight text-muted-foreground">{group.name}</h2>
               <Card className="overflow-hidden p-0">
                 <ul className="divide-y">
                   {group.items.map((s) => (
@@ -236,7 +236,7 @@ function SubjectRow({
             </span>
           ) : null}
         </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
           {subject.open_sessions} open · {subject.approved_members} approved
         </p>
       </div>

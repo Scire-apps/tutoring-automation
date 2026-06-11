@@ -163,8 +163,8 @@ export default function MemberRequestPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <HelpCircle className="size-5 text-blue-600" aria-hidden="true" />
+          <CardTitle className="flex items-center gap-2 font-display tracking-tight">
+            <HelpCircle className="size-5 text-brand" aria-hidden="true" />
             Get help
           </CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -261,7 +261,7 @@ export default function MemberRequestPage() {
                 <label className="flex items-center gap-2 text-sm font-medium">
                   <input
                     type="checkbox"
-                    className="size-4 rounded border-input accent-blue-600"
+                    className="size-4 rounded border-input accent-[oklch(0.56_0.114_159)]"
                     checked={isEll}
                     onChange={(e) => setIsEll(e.target.checked)}
                   />
@@ -299,7 +299,7 @@ export default function MemberRequestPage() {
                       className={
                         "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors " +
                         (location === opt.value
-                          ? "border-blue-600 bg-blue-50 text-blue-700"
+                          ? "border-brand bg-brand-subtle text-brand-strong"
                           : "border-input text-muted-foreground hover:bg-muted/40")
                       }
                     >

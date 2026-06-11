@@ -79,8 +79,8 @@ export default function ManagerVerificationPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <BadgeCheck className="size-6 text-blue-600" aria-hidden="true" />
+        <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight">
+          <BadgeCheck className="size-6 text-brand" aria-hidden="true" />
           Verification
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -161,9 +161,9 @@ function QueueGroup({
   return (
     <section>
       <div className="mb-3">
-        <h2 className="text-lg font-semibold">
+        <h2 className="font-display text-lg font-semibold tracking-tight">
           {title}
-          <span className="ml-2 text-sm font-normal text-muted-foreground">({sessions.length})</span>
+          <span className="ml-2 text-sm font-normal text-muted-foreground tabular-nums">({sessions.length})</span>
         </h2>
         <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
@@ -194,7 +194,7 @@ function QueueGroup({
                       href={s.recording_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline"
                     >
                       <ExternalLink className="size-3.5" aria-hidden="true" />
                       Recording

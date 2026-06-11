@@ -23,7 +23,7 @@ export function VerifyEmailResend({ email }: { email: string | null }) {
 
   if (!email) {
     return (
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-muted-foreground">
         Didn&apos;t get the email? Sign in to resend it.
       </p>
     );

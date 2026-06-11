@@ -21,7 +21,7 @@ export default async function VerifyEmailPage({
         email ? (
           <>
             We sent a confirmation link to{" "}
-            <span className="font-medium text-gray-900">{email}</span>.
+            <span className="font-medium text-foreground">{email}</span>.
           </>
         ) : (
           "We sent you a confirmation link."
@@ -32,14 +32,14 @@ export default async function VerifyEmailPage({
           Already have an account?{" "}
           <Link
             href="/auth/login"
-            className="font-medium text-blue-600 underline-offset-4 hover:underline"
+            className="font-medium text-brand underline-offset-4 hover:underline"
           >
             Log in
           </Link>{" "}
           or{" "}
           <Link
             href="/auth/forgot-password"
-            className="font-medium text-blue-600 underline-offset-4 hover:underline"
+            className="font-medium text-brand underline-offset-4 hover:underline"
           >
             reset your password
           </Link>
@@ -49,12 +49,12 @@ export default async function VerifyEmailPage({
     >
       <div className="space-y-5">
         <div className="flex justify-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-subtle text-brand">
             <MailCheck aria-hidden className="h-7 w-7" />
           </div>
         </div>
 
-        <p className="text-center text-sm leading-6 text-gray-600">
+        <p className="text-center text-sm leading-6 text-muted-foreground">
           {isManager ? (
             <>
               Click the link to confirm your email, then sign in. The Scire team
